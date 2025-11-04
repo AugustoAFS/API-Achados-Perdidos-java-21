@@ -1,0 +1,51 @@
+HELP.md
+
+### Maven ###
+target/**
+target/classes/**
+!target/
+!target/*.jar
+
+### LOGS ###
+logs/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Environment Variables ###
+.env
+.env.local
+.env.*.local
+config.env
+*.env
+setup-env.ps1
+setup-env.bat
+### IDE ###
+*.swp
+*.swo
+*~
