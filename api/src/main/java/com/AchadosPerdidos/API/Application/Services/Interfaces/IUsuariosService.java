@@ -7,16 +7,9 @@ import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosUpdateDTO;
 
 public interface IUsuariosService {
     UsuariosListDTO getAllUsuarios();
-    UsuariosDTO getUsuarioById(int id);
+    UsuariosListDTO getUsuarioById(int id);
     UsuariosDTO getUsuarioByEmail(String email);
-    UsuariosDTO createUsuario(UsuariosDTO usuariosDTO);
-    UsuariosUpdateDTO updateUsuario(int id, UsuariosDTO usuariosDTO);
+    UsuariosCreateDTO createUsuario(UsuariosCreateDTO usuariosDTO);
+    UsuariosUpdateDTO updateUsuario(int id, UsuariosUpdateDTO usuariosDTO);
     boolean deleteUsuario(int id);
-    UsuariosListDTO getActiveUsuarios();
-    UsuariosListDTO getUsuariosByRole(int tipoRoleId);
-    UsuariosListDTO getUsuariosByInstitution(int instituicaoId);
-    UsuariosListDTO getUsuariosByCampus(int campusId);
-    UsuariosDTO authenticateUsuario(String email, String senha);
-    UsuariosDTO createUsuarioFromDTO(UsuariosCreateDTO createDTO);
-    UsuariosDTO updateUsuarioFromDTO(int id, UsuariosUpdateDTO updateDTO);
 }

@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.0</version>
+        <version>3.3.6</version>
         <relativePath/>
     </parent>
 
@@ -148,27 +148,65 @@
 
     </dependencies>
 
+    <!-- Repositórios Maven -->
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>Maven Central Repository</name>
+            <url>https://repo1.maven.org/maven2</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central</id>
+            <name>Maven Central Repository</name>
+            <url>https://repo1.maven.org/maven2</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+
     <!-- Versões forçadas seguras (CVE mitigadas) -->
     <dependencyManagement>
         <dependencies>
 
-            <!-- Logback corrigido -->
+            <!-- Logback corrigido - versão mais recente sem CVE conhecido -->
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
-                <version>1.5.13</version>
+                <version>1.5.14</version>
             </dependency>
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-core</artifactId>
-                <version>1.5.13</version>
+                <version>1.5.14</version>
             </dependency>
 
-            <!-- Spring Security corrigido -->
+            <!-- Spring Security corrigido - versão mais recente -->
             <dependency>
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-bom</artifactId>
-                <version>6.4.2</version>
+                <version>6.4.3</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Spring Framework corrigido - versão mais recente -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-framework-bom</artifactId>
+                <version>6.2.2</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -180,18 +218,20 @@
                 <version>2.5.2</version>
             </dependency>
 
-            <!-- Tomcat corrigido -->
+            <!-- Tomcat corrigido - versão mais recente -->
             <dependency>
                 <groupId>org.apache.tomcat.embed</groupId>
                 <artifactId>tomcat-embed-core</artifactId>
-                <version>10.1.34</version>
+                <version>10.1.35</version>
             </dependency>
 
-            <!-- Commons Lang corrigido -->
+            <!-- Netty corrigido -->
             <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-lang3</artifactId>
-                <version>3.17.1</version>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>4.1.120.Final</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
 
         </dependencies>

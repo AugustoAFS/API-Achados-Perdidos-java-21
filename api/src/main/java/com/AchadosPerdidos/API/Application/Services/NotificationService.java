@@ -1,5 +1,6 @@
 package com.AchadosPerdidos.API.Application.Services;
 
+import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosDTO;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.INotificationService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuariosService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IItensService;
@@ -42,9 +43,11 @@ public class NotificationService implements INotificationService {
         try {
             // Busca o item e o usuário que encontrou
             var item = itensService.getItemEntityById(itemId);
-            var finder = usuariosService.getUsuarioById(finderId);
+            var finderList = usuariosService.getUsuarioById(finderId);
             
-            if (item != null && finder != null) {
+            if (item != null && finderList != null && finderList.getUsuarios() != null && !finderList.getUsuarios().isEmpty()) {
+                UsuariosDTO finder = finderList.getUsuarios().get(0);
+                
                 // Cria mensagem de notificação
                 String message = String.format(
                     "Novo item encontrado: %s. Local: %s. Encontrado por: %s",
@@ -74,10 +77,15 @@ public class NotificationService implements INotificationService {
     public void notifyItemClaimed(int itemId, int claimantId, int ownerId) {
         try {
             var item = itensService.getItemEntityById(itemId);
-            var claimant = usuariosService.getUsuarioById(claimantId);
-            var owner = usuariosService.getUsuarioById(ownerId);
+            var claimantList = usuariosService.getUsuarioById(claimantId);
+            var ownerList = usuariosService.getUsuarioById(ownerId);
             
-            if (item != null && claimant != null && owner != null) {
+            if (item != null && claimantList != null && claimantList.getUsuarios() != null && !claimantList.getUsuarios().isEmpty() 
+                && ownerList != null && ownerList.getUsuarios() != null && !ownerList.getUsuarios().isEmpty()) {
+                
+                UsuariosDTO claimant = claimantList.getUsuarios().get(0);
+                UsuariosDTO owner = ownerList.getUsuarios().get(0);
+                
                 // Notifica o proprietário
                 String ownerMessage = String.format(
                     "Seu item '%s' foi reivindicado por %s. Verifique a reivindicação.",
@@ -113,10 +121,15 @@ public class NotificationService implements INotificationService {
     public void notifyItemReturned(int itemId, int ownerId, int finderId) {
         try {
             var item = itensService.getItemEntityById(itemId);
-            var owner = usuariosService.getUsuarioById(ownerId);
-            var finder = usuariosService.getUsuarioById(finderId);
+            var ownerList = usuariosService.getUsuarioById(ownerId);
+            var finderList = usuariosService.getUsuarioById(finderId);
             
-            if (item != null && owner != null && finder != null) {
+            if (item != null && ownerList != null && ownerList.getUsuarios() != null && !ownerList.getUsuarios().isEmpty()
+                && finderList != null && finderList.getUsuarios() != null && !finderList.getUsuarios().isEmpty()) {
+                
+                UsuariosDTO owner = ownerList.getUsuarios().get(0);
+                UsuariosDTO finder = finderList.getUsuarios().get(0);
+                
                 // Notifica o proprietário
                 String ownerMessage = String.format(
                     "Seu item '%s' foi devolvido com sucesso! Obrigado por usar o sistema de achados e perdidos.",

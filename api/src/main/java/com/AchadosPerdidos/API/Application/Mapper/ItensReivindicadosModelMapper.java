@@ -18,13 +18,13 @@ public class ItensReivindicadosModelMapper {
         
         ItensReivindicadosDTO dto = new ItensReivindicadosDTO();
         dto.setId(itensReivindicados.getId());
-        dto.setDetalhes_Reivindicacao(itensReivindicados.getDetalhes_Reivindicacao());
-        dto.setItem_Id(itensReivindicados.getItem_Id());
-        dto.setUsuario_Reivindicador_Id(itensReivindicados.getUsuario_Reivindicador_Id());
-        dto.setUsuario_Achou_Id(itensReivindicados.getUsuario_Achou_Id());
-        dto.setDta_Criacao(itensReivindicados.getDta_Criacao());
-        dto.setFlg_Inativo(itensReivindicados.getFlg_Inativo());
-        dto.setDta_Remocao(itensReivindicados.getDta_Remocao());
+        dto.setDetalhesReivindicacao(itensReivindicados.getDetalhes_Reivindicacao());
+        dto.setItemId(itensReivindicados.getItem_Id());
+        dto.setUsuarioReivindicadorId(itensReivindicados.getUsuario_Reivindicador_Id());
+        dto.setUsuarioAchouId(itensReivindicados.getUsuario_Achou_Id());
+        dto.setDtaCriacao(itensReivindicados.getDta_Criacao());
+        dto.setFlgInativo(itensReivindicados.getFlg_Inativo());
+        dto.setDtaRemocao(itensReivindicados.getDta_Remocao());
         
         return dto;
     }
@@ -36,13 +36,13 @@ public class ItensReivindicadosModelMapper {
         
         ItensReivindicados itensReivindicados = new ItensReivindicados();
         itensReivindicados.setId(dto.getId());
-        itensReivindicados.setDetalhes_Reivindicacao(dto.getDetalhes_Reivindicacao());
-        itensReivindicados.setItem_Id(dto.getItem_Id());
-        itensReivindicados.setUsuario_Reivindicador_Id(dto.getUsuario_Reivindicador_Id());
-        itensReivindicados.setUsuario_Achou_Id(dto.getUsuario_Achou_Id());
-        itensReivindicados.setDta_Criacao(dto.getDta_Criacao());
-        itensReivindicados.setFlg_Inativo(dto.getFlg_Inativo());
-        itensReivindicados.setDta_Remocao(dto.getDta_Remocao());
+        itensReivindicados.setDetalhes_Reivindicacao(dto.getDetalhesReivindicacao());
+        itensReivindicados.setItem_Id(dto.getItemId());
+        itensReivindicados.setUsuario_Reivindicador_Id(dto.getUsuarioReivindicadorId());
+        itensReivindicados.setUsuario_Achou_Id(dto.getUsuarioAchouId());
+        itensReivindicados.setDta_Criacao(dto.getDtaCriacao());
+        itensReivindicados.setFlg_Inativo(dto.getFlgInativo());
+        itensReivindicados.setDta_Remocao(dto.getDtaRemocao());
         
         return itensReivindicados;
     }

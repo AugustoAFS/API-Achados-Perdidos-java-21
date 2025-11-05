@@ -83,7 +83,9 @@ public class GoogleAuthController {
             
             // Buscar usuário no banco de dados pelo email
             logger.info("Buscando usuário no MySQL com email: {}", googleUser.getEmail());
-            UsuariosDTO usuario = usuariosService.getUsuarioByEmail(googleUser.getEmail());
+            UsuariosDTO usuario = usuariosService
+
+                    .getUsuarioByEmail(googleUser.getEmail());
             if (usuario == null) {
                 logger.warn("Usuário não encontrado no banco de dados MySQL: {}", googleUser.getEmail());
                 logger.info("Verifique se o usuário existe na tabela 'Usuarios' do MySQL");

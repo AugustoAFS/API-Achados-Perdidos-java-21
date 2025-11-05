@@ -1,6 +1,5 @@
 package com.AchadosPerdidos.API.Presentation.Controller;
 
-import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosUpdateDTO;
@@ -30,8 +29,9 @@ public class UsuariosController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UsuariosDTO> getUsuarioById(@PathVariable int id) {
-        UsuariosDTO usuario = usuariosService.getUsuarioById(id);
+    @Operation(summary = "Buscar usuário por ID", description = "Retorna um usuário específico pelo seu ID")
+    public ResponseEntity<UsuariosListDTO> getUsuarioById(@PathVariable int id) {
+        UsuariosListDTO usuario = usuariosService.getUsuarioById(id);
         if (usuario != null) {
             return ResponseEntity.ok(usuario);
         } else {
@@ -41,17 +41,17 @@ public class UsuariosController {
 
     @PostMapping
     @Operation(summary = "Criar novo usuário", description = "Cria um novo usuário no sistema. A instituição será preenchida automaticamente baseada no campus selecionado.")
-    public ResponseEntity<UsuariosDTO> createUsuario(@RequestBody UsuariosCreateDTO usuariosCreateDTO) {
-        UsuariosDTO createdUsuario = usuariosService.createUsuarioFromDTO(usuariosCreateDTO);
+    public ResponseEntity<UsuariosCreateDTO> createUsuario(@RequestBody UsuariosCreateDTO usuariosCreateDTO) {
+        UsuariosCreateDTO createdUsuario = usuariosService.createUsuario(usuariosCreateDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUsuario);
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Atualizar usuário", description = "Atualiza os dados de um usuário existente")
-    public ResponseEntity<UsuariosDTO> updateUsuario(
+    public ResponseEntity<UsuariosUpdateDTO> updateUsuario(
             @Parameter(description = "ID do usuário a ser atualizado") @PathVariable int id, 
             @RequestBody UsuariosUpdateDTO usuariosUpdateDTO) {
-        UsuariosDTO updatedUsuario = usuariosService.updateUsuarioFromDTO(id, usuariosUpdateDTO);
+        UsuariosUpdateDTO updatedUsuario = usuariosService.updateUsuario(id, usuariosUpdateDTO);
         if (updatedUsuario != null) {
             return ResponseEntity.ok(updatedUsuario);
         } else {
@@ -60,6 +60,7 @@ public class UsuariosController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Deletar usuário", description = "Remove um usuário do sistema")
     public ResponseEntity<Void> deleteUsuario(@PathVariable int id) {
         boolean deleted = usuariosService.deleteUsuario(id);
         if (deleted) {
