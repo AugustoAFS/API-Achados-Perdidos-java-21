@@ -70,7 +70,9 @@ public class SecurityConfig {
                 case "prd", "prod", "production" -> configuration.setAllowedOriginPatterns(Arrays.asList(
                     "https://achadosperdidos.com",
                     "https://www.achadosperdidos.com",
-                    "https://api.achadosperdidos.com"
+                    "https://api.achadosperdidos.com",
+                    "https://api-achadosperdidos.com.br",
+                    "https://www.api-achadosperdidos.com.br"
                 ));
                 default -> configuration.setAllowedOriginPatterns(Arrays.asList("*"));
             }
