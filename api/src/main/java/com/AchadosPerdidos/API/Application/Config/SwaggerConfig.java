@@ -33,13 +33,16 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
+        String serverUrlValue = getServerUrl();
+        String serverDescriptionValue = getServerDescription();
+        
+        Server server = new Server()
+                .url(serverUrlValue)
+                .description(serverDescriptionValue);
+        
         return new OpenAPI()
                 .info(apiInfo())
-                .servers(List.of(
-                        new Server()
-                                .url(getServerUrl())
-                                .description(getServerDescription())
-                ))
+                .servers(List.of(server))
                 .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
                 .components(new Components()
                         .addSecuritySchemes("Bearer Authentication", createAPIKeyScheme()));
@@ -54,20 +57,22 @@ public class SwaggerConfig {
     }
 
     private String getServerUrl() {
-        if (serverUrl != null && !serverUrl.isEmpty()) {
+        // Primeiro tenta usar a propriedade do arquivo de configuração
+        if (serverUrl != null && !serverUrl.isEmpty() && !serverUrl.equals("${swagger.server.url:}")) {
             return serverUrl;
         }
         
+        // Se não tiver propriedade, usa o perfil ativo
         String[] activeProfiles = environment.getActiveProfiles();
         if (activeProfiles.length > 0) {
             String profile = activeProfiles[0];
             return switch (profile.toLowerCase()) {
                 case "dev" -> "http://localhost:8080";
-                case "prd", "prod", "production" -> "https://api.achadosperdidos.com.br";
+                case "prd", "prod", "production" -> "https://api-achadosperdidos.com.br";
                 default -> "http://localhost:8080";
             };
         }
-        return "http://localhost:8080";
+        return "https://api-achadosperdidos.com.br";
     }
 
     private String getServerDescription() {
@@ -95,7 +100,7 @@ public class SwaggerConfig {
                 .contact(new Contact()
                         .name("Equipe de Desenvolvimento")
                         .email("contato@achadosperdidos.com.br")
-                        .url("https://api.achadosperdidos.com.br"))
+                        .url("https://api-achadosperdidos.com.br"))
                 .license(new License()
                         .name("MIT License")
                         .url("https://opensource.org/licenses/MIT"));
