@@ -33,5 +33,4 @@ COPY --from=build /app/target/API-0.0.1-SNAPSHOT.jar app.jar
 # Expõe a porta 8080 (porta padrão do Spring Boot)
 EXPOSE 8080
 
-# Comando para executar a aplicação quando o container iniciar
 ENTRYPOINT ["java", "-jar", "app.jar"]

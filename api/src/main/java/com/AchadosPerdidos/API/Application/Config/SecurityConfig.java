@@ -4,7 +4,6 @@ import com.AchadosPerdidos.API.Application.Services.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -30,7 +29,7 @@ public class SecurityConfig {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Autowired
-    private Environment environment;
+    private EnvironmentConfig environmentConfig;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -68,16 +67,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        String[] activeProfiles = environment.getActiveProfiles();
-        
-        // Verifica se está em produção
-        boolean isProduction = Arrays.stream(activeProfiles)
-                .anyMatch(profile -> {
-                    String lowerProfile = profile.toLowerCase();
-                    return lowerProfile.equals("prd") || 
-                           lowerProfile.equals("prod") || 
-                           lowerProfile.equals("production");
-                });
+        // Verifica se está em produção usando utilitário centralizado
+        boolean isProduction = environmentConfig.isProduction();
         
         if (isProduction) {
             configuration.setAllowedOrigins(Arrays.asList(

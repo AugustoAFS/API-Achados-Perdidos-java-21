@@ -2,20 +2,17 @@ package com.AchadosPerdidos.API.Application.Config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.util.Arrays;
-
 @Configuration
 public class CorsConfig {
 
-    private final Environment environment;
+    private final EnvironmentConfig environmentConfig;
 
-    public CorsConfig(Environment environment) {
-        this.environment = environment;
+    public CorsConfig(EnvironmentConfig environmentConfig) {
+        this.environmentConfig = environmentConfig;
     }
 
     @Bean
@@ -23,19 +20,8 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
-                String[] activeProfiles = environment.getActiveProfiles();
-                
-                // Verifica se está em produção
-                boolean isProduction = Arrays.stream(activeProfiles)
-                        .anyMatch(profile -> {
-                            String lowerProfile = profile.toLowerCase();
-                            return lowerProfile.equals("prd") || 
-                                   lowerProfile.equals("prod") || 
-                                   lowerProfile.equals("production");
-                        });
-                
-                // Log do ambiente ativo para debug
-                System.out.println("Ambiente ativo: " + Arrays.toString(activeProfiles));
+                // Verifica se está em produção usando utilitário centralizado
+                boolean isProduction = environmentConfig.isProduction();
                 
                 if (isProduction) {
                     registry.addMapping("/**")

@@ -12,7 +12,6 @@ import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,10 +28,10 @@ public class SwaggerConfig {
     @Value("${swagger.server.description:}")
     private String serverDescription;
 
-    private final Environment environment;
+    private final EnvironmentConfig environmentConfig;
 
-    public SwaggerConfig(Environment environment) {
-        this.environment = environment;
+    public SwaggerConfig(EnvironmentConfig environmentConfig) {
+        this.environmentConfig = environmentConfig;
     }
 
     @Bean
@@ -45,14 +44,7 @@ public class SwaggerConfig {
         logger.info(String.format("Swagger configurado - URL: %s | Descrição: %s", serverUrlValue, serverDescriptionValue));
         
         // Verifica se está em produção para decidir se mostra múltiplos servidores
-        String[] activeProfiles = environment.getActiveProfiles();
-        boolean isProduction = Arrays.stream(activeProfiles)
-                .anyMatch(profile -> {
-                    String lowerProfile = profile.toLowerCase();
-                    return lowerProfile.equals("prd") || 
-                           lowerProfile.equals("prod") || 
-                           lowerProfile.equals("production");
-                });
+        boolean isProduction = environmentConfig.isProduction();
         
         List<Server> servers;
         if (isProduction) {
@@ -96,26 +88,9 @@ public class SwaggerConfig {
             return serverUrl;
         }
         
-        // PRIORIDADE 2: Verifica os perfis ativos
-        String[] activeProfiles = environment.getActiveProfiles();
-        String[] defaultProfiles = environment.getDefaultProfiles();
-        
-        // Verifica se há perfil de PRODUÇÃO
-        boolean isProduction = Arrays.stream(activeProfiles)
-                .anyMatch(profile -> {
-                    String lowerProfile = profile.toLowerCase();
-                    return lowerProfile.equals("prd") || 
-                           lowerProfile.equals("prod") || 
-                           lowerProfile.equals("production");
-                });
-        
-        // Verifica se há perfil de DESENVOLVIMENTO
-        boolean isDevelopment = Arrays.stream(activeProfiles)
-                .anyMatch(profile -> {
-                    String lowerProfile = profile.toLowerCase();
-                    return lowerProfile.equals("dev") || 
-                           lowerProfile.equals("development");
-                });
+        // PRIORIDADE 2: Verifica os perfis ativos usando utilitário centralizado
+        boolean isProduction = environmentConfig.isProduction();
+        boolean isDevelopment = environmentConfig.isDevelopment();
         
         // Lógica de decisão baseada nos perfis
         if (isProduction) {
@@ -135,13 +110,9 @@ public class SwaggerConfig {
         }
         
         // Se não encontrou nenhum perfil conhecido, verifica os perfis padrão
+        String[] defaultProfiles = environmentConfig.getEnvironment().getDefaultProfiles();
         boolean isDefaultProduction = Arrays.stream(defaultProfiles)
-                .anyMatch(profile -> {
-                    String lowerProfile = profile.toLowerCase();
-                    return lowerProfile.equals("prd") || 
-                           lowerProfile.equals("prod") || 
-                           lowerProfile.equals("production");
-                });
+                .anyMatch(profile -> profile.equalsIgnoreCase("prd"));
         
         if (isDefaultProduction) {
             // Fallback robusto para perfis padrão também
@@ -155,8 +126,8 @@ public class SwaggerConfig {
         
         // TRATAMENTO DE ERRO: Nenhum perfil identificado
         logger.severe("ERRO: Nenhum perfil válido identificado!");
-        logger.severe(String.format("Perfis ativos: %s", Arrays.toString(activeProfiles)));
-        logger.severe(String.format("Perfis padrão: %s", Arrays.toString(defaultProfiles)));
+        logger.severe(String.format("Perfis ativos: %s", Arrays.toString(environmentConfig.getActiveProfiles())));
+        logger.severe(String.format("Perfis padrão: %s", Arrays.toString(environmentConfig.getEnvironment().getDefaultProfiles())));
         
         // Fallback final: tenta usar domínio da DigitalOcean se disponível
         String digitalOceanDomain = System.getenv("DIGITALOCEAN_APP_DOMAIN");
@@ -177,31 +148,12 @@ public class SwaggerConfig {
             return serverDescription;
         }
         
-        // PRIORIDADE 2: Baseado nos perfis ativos
-        String[] activeProfiles = environment.getActiveProfiles();
-        
-        // Verifica se há perfil de PRODUÇÃO
-        boolean isProduction = Arrays.stream(activeProfiles)
-                .anyMatch(profile -> {
-                    String lowerProfile = profile.toLowerCase();
-                    return lowerProfile.equals("prd") || 
-                           lowerProfile.equals("prod") || 
-                           lowerProfile.equals("production");
-                });
-        
-        if (isProduction) {
+        // PRIORIDADE 2: Baseado nos perfis ativos usando utilitário centralizado
+        if (environmentConfig.isProduction()) {
             return "Servidor de Produção - DigitalOcean";
         }
         
-        // Verifica se há perfil de DESENVOLVIMENTO
-        boolean isDevelopment = Arrays.stream(activeProfiles)
-                .anyMatch(profile -> {
-                    String lowerProfile = profile.toLowerCase();
-                    return lowerProfile.equals("dev") || 
-                           lowerProfile.equals("development");
-                });
-        
-        if (isDevelopment) {
+        if (environmentConfig.isDevelopment()) {
             return "Servidor de Desenvolvimento";
         }
         

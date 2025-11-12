@@ -6,15 +6,32 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.MutablePropertySources;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+
+@Component
 public class EnvironmentConfig implements ApplicationListener<ApplicationEnvironmentPreparedEvent> {
+    
+    private Environment environment;
 
     @Override
-    public void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
-        Environment environment = event.getEnvironment();
+    public void onApplicationEvent(@NonNull ApplicationEnvironmentPreparedEvent event) {
+        this.environment = event.getEnvironment();
+        
+        // Obtém o perfil ativo diretamente
+        String[] activeProfiles = environment.getActiveProfiles();
+        String activeProfile = activeProfiles.length > 0 ? activeProfiles[0] : 
+                              environment.getProperty("spring.profiles.active", "dev");
+        
+        // Log do ambiente detectado
+        logEnvironmentInfo(activeProfile);
         
         Dotenv dotenv = Dotenv.configure()
                 .directory("./")
@@ -49,6 +66,36 @@ public class EnvironmentConfig implements ApplicationListener<ApplicationEnviron
         
         MutablePropertySources propertySources = ((org.springframework.core.env.ConfigurableEnvironment) environment).getPropertySources();
         propertySources.addFirst(new MapPropertySource("dotenv", envProperties));
+    }
+    
+    /**
+     * Loga informações sobre o ambiente detectado
+     */
+    private void logEnvironmentInfo(String activeProfile) {
+        String propertiesFile = "application-" + activeProfile + ".properties";
+        
+        // Detecta a fonte do perfil
+        String source;
+        if (System.getenv("SPRING_PROFILES_ACTIVE") != null) {
+            source = "variável de ambiente SPRING_PROFILES_ACTIVE";
+        } else if (System.getProperty("spring.profiles.active") != null) {
+            source = "system property spring.profiles.active";
+        } else {
+            source = "application.properties (padrão: dev)";
+        }
+        
+        // Verifica se o arquivo existe (apenas para informação)
+        String filePath = "src/main/resources/" + propertiesFile;
+        boolean fileExists = new File(filePath).exists() || 
+                            Paths.get("target/classes/" + propertiesFile).toFile().exists() ||
+                            getClass().getClassLoader().getResource(propertiesFile) != null;
+        
+        System.out.println("═══════════════════════════════════════════════════════════");
+        System.out.println("🌍 AMBIENTE DETECTADO:");
+        System.out.println("   Perfil: " + activeProfile);
+        System.out.println("   Arquivo: " + propertiesFile + (fileExists ? " ✓" : " (não encontrado)"));
+        System.out.println("   Fonte: " + source);
+        System.out.println("═══════════════════════════════════════════════════════════");
     }
     
     private static final Map<String, String> PREFIX_MAPPINGS = Map.of(
@@ -93,5 +140,76 @@ public class EnvironmentConfig implements ApplicationListener<ApplicationEnviron
     
     private String toKebabCase(String upperSnake) {
         return upperSnake.toLowerCase().replace("_", "-");
+    }
+    
+    // ============== MÉTODOS AUXILIARES DE DETECÇÃO DE AMBIENTE ==============
+    
+    /**
+     * Verifica se o ambiente atual é de PRODUÇÃO
+     * @return true se o perfil for prd
+     */
+    public boolean isProduction() {
+        if (environment == null) {
+            return false;
+        }
+        String[] activeProfiles = environment.getActiveProfiles();
+        return Arrays.stream(activeProfiles)
+                .anyMatch(profile -> profile.equalsIgnoreCase("prd"));
+    }
+
+    /**
+     * Verifica se o ambiente atual é de DESENVOLVIMENTO
+     * @return true se o perfil for dev
+     */
+    public boolean isDevelopment() {
+        if (environment == null) {
+            return false;
+        }
+        String[] activeProfiles = environment.getActiveProfiles();
+        return Arrays.stream(activeProfiles)
+                .anyMatch(profile -> profile.equalsIgnoreCase("dev"));
+    }
+
+    /**
+     * Obtém o perfil ativo principal
+     * @return Nome do perfil ativo ou "dev" como padrão
+     */
+    public String getActiveProfile() {
+        if (environment == null) {
+            return "dev";
+        }
+        String[] activeProfiles = environment.getActiveProfiles();
+        if (activeProfiles.length > 0) {
+            return activeProfiles[0];
+        }
+        return environment.getProperty("spring.profiles.active", "dev");
+    }
+
+    /**
+     * Obtém todos os perfis ativos
+     * @return Array com todos os perfis ativos
+     */
+    public String[] getActiveProfiles() {
+        if (environment == null) {
+            return new String[]{"dev"};
+        }
+        return environment.getActiveProfiles();
+    }
+
+    /**
+     * Obtém o nome do arquivo de properties baseado no perfil ativo
+     * @return Nome do arquivo (ex: application-prd.properties)
+     */
+    public String getPropertiesFileName() {
+        String profile = getActiveProfile();
+        return "application-" + profile + ".properties";
+    }
+
+    /**
+     * Obtém o Environment do Spring (se necessário acessar diretamente)
+     * @return Environment do Spring
+     */
+    public Environment getEnvironment() {
+        return environment;
     }
 }
