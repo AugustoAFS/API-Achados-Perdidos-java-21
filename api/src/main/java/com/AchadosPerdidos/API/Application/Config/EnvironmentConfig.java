@@ -74,6 +74,11 @@ public class EnvironmentConfig implements ApplicationListener<ApplicationEnviron
     private void logEnvironmentInfo(String activeProfile) {
         String propertiesFile = "application-" + activeProfile + ".properties";
         
+        // DEBUG: Mostra o valor da variável de ambiente
+        String envValue = System.getenv("SPRING_PROFILES_ACTIVE");
+        System.out.println("🔍 DEBUG - SPRING_PROFILES_ACTIVE do sistema: " + 
+                          (envValue != null ? envValue : "(null - não definida)"));
+        
         // Detecta a fonte do perfil
         String source;
         if (System.getenv("SPRING_PROFILES_ACTIVE") != null) {
