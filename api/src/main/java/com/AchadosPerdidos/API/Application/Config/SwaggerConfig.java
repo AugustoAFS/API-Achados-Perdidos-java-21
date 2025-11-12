@@ -41,24 +41,42 @@ public class SwaggerConfig {
         String serverUrlValue = getServerUrl();
         String serverDescriptionValue = getServerDescription();
         
-        // Logs simplificados para produção
-        logger.info(String.format("Swagger Server URL: %s", serverUrlValue));
-        logger.info(String.format("Swagger Description: %s", serverDescriptionValue));
+        // Log único e essencial
+        logger.info(String.format("Swagger configurado - URL: %s | Descrição: %s", serverUrlValue, serverDescriptionValue));
         
-        Server server = new Server()
-                .url(serverUrlValue)
-                .description(serverDescriptionValue);
+        // Verifica se está em produção para decidir se mostra múltiplos servidores
+        String[] activeProfiles = environment.getActiveProfiles();
+        boolean isProduction = Arrays.stream(activeProfiles)
+                .anyMatch(profile -> {
+                    String lowerProfile = profile.toLowerCase();
+                    return lowerProfile.equals("prd") || 
+                           lowerProfile.equals("prod") || 
+                           lowerProfile.equals("production");
+                });
         
-        // OPÇÃO: Para mostrar múltiplos servidores no Swagger (produção + desenvolvimento)
-        // Descomente as linhas abaixo e comente a linha .servers(List.of(server))
-        // List<Server> servers = List.of(
-        //     new Server().url("https://api-achadosperdidos.com.br").description("Produção"),
-        //     new Server().url("http://localhost:8080").description("Desenvolvimento")
-        // );
+        List<Server> servers;
+        if (isProduction) {
+            // Em produção: mostra apenas o servidor de produção
+            servers = List.of(
+                    new Server()
+                            .url(serverUrlValue)
+                            .description(serverDescriptionValue)
+            );
+        } else {
+            // Em desenvolvimento: mostra ambos os servidores para facilitar testes
+            servers = List.of(
+                    new Server()
+                            .url(serverUrlValue)
+                            .description(serverDescriptionValue),
+                    new Server()
+                            .url("https://api-achadosperdidos.com.br")
+                            .description("Produção (para testes)")
+            );
+        }
         
         return new OpenAPI()
                 .info(apiInfo())
-                .servers(List.of(server)) // Use 'servers' se ativar múltiplos servidores acima
+                .servers(servers)
                 .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
                 .components(new Components()
                         .addSecuritySchemes("Bearer Authentication", createAPIKeyScheme()));
@@ -75,7 +93,6 @@ public class SwaggerConfig {
     private String getServerUrl() {
         // PRIORIDADE 1: Propriedade do arquivo de configuração (tem prioridade máxima)
         if (serverUrl != null && !serverUrl.isEmpty() && !serverUrl.equals("${swagger.server.url:}")) {
-            logger.info(String.format("Usando URL do arquivo de configuração: %s", serverUrl));
             return serverUrl;
         }
         
@@ -107,9 +124,7 @@ public class SwaggerConfig {
             if (digitalOceanDomain != null && !digitalOceanDomain.isEmpty()) {
                 // Remove protocolo se já estiver presente
                 String domain = digitalOceanDomain.replaceFirst("^https?://", "");
-                String productionUrl = "https://" + domain;
-                logger.info(String.format("Usando domínio detectado da DigitalOcean: %s", productionUrl));
-                return productionUrl;
+                return "https://" + domain;
             }
             // Domínio padrão de produção
             return "https://api-achadosperdidos.com.br";

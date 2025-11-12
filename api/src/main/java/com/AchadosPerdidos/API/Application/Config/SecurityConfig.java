@@ -39,15 +39,21 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
-                .requestMatchers("/api/usuarios/criar").permitAll()
-                .requestMatchers("/api/google-auth/**").permitAll()
+                // Permite requisições OPTIONS (pré-flight CORS)
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // Swagger UI
                 .requestMatchers("/swagger-ui/**").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()
                 .requestMatchers("/swagger-ui.html").permitAll()
                 .requestMatchers("/webjars/**").permitAll()
+                // Endpoints públicos
+                .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
+                .requestMatchers("/api/usuarios/criar").permitAll()
+                .requestMatchers("/api/google-auth/**").permitAll()
+                // Actuator e erros
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/error").permitAll()
+                // Demais requisições precisam de autenticação
                 .anyRequest().authenticated()
             )
             .addFilterBefore(
@@ -63,27 +69,37 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         
         String[] activeProfiles = environment.getActiveProfiles();
-        if (activeProfiles.length > 0) {
-            String profile = activeProfiles[0];
-            switch (profile.toLowerCase()) {
-                case "dev" -> configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-                case "prd", "prod", "production" -> configuration.setAllowedOriginPatterns(Arrays.asList(
-                    "https://achadosperdidos.com",
-                    "https://www.achadosperdidos.com",
-                    "https://api.achadosperdidos.com",
-                    "https://api-achadosperdidos.com.br",
-                    "https://www.api-achadosperdidos.com.br"
-                ));
-                default -> configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-            }
+        
+        // Verifica se está em produção
+        boolean isProduction = Arrays.stream(activeProfiles)
+                .anyMatch(profile -> {
+                    String lowerProfile = profile.toLowerCase();
+                    return lowerProfile.equals("prd") || 
+                           lowerProfile.equals("prod") || 
+                           lowerProfile.equals("production");
+                });
+        
+        if (isProduction) {
+            configuration.setAllowedOrigins(Arrays.asList(
+                "https://achadosperdidos.com",
+                "https://www.achadosperdidos.com",
+                "https://api.achadosperdidos.com",
+                "https://api-achadosperdidos.com.br",
+                "https://www.api-achadosperdidos.com.br"
+            ));
         } else {
-            configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+            // Desenvolvimento: remove "*" para compatibilidade com allowCredentials(true)
+            configuration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:*",
+                "http://127.0.0.1:*"
+            ));
         }
         
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "X-Token-Expiry"));
+        configuration.setMaxAge(3600L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
