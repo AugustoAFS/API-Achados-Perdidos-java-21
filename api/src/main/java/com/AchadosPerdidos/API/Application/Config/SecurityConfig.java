@@ -40,11 +40,15 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 // Permite requisições OPTIONS (pré-flight CORS)
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                // Swagger UI
+                // Swagger UI e Documentação da API
                 .requestMatchers("/swagger-ui/**").permitAll()
-                .requestMatchers("/v3/api-docs/**").permitAll()
                 .requestMatchers("/swagger-ui.html").permitAll()
+                .requestMatchers("/swagger/**").permitAll()
+                .requestMatchers("/v3/api-docs/**").permitAll()
+                .requestMatchers("/v3/api-docs").permitAll()
+                .requestMatchers("/swagger-resources/**").permitAll()
                 .requestMatchers("/webjars/**").permitAll()
+                .requestMatchers("/configuration/**").permitAll()
                 // Endpoints públicos
                 .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
                 .requestMatchers("/api/usuarios/criar").permitAll()
