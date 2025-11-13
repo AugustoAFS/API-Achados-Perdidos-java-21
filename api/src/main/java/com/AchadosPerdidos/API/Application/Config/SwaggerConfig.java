@@ -77,8 +77,9 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi publicApi() {
         return GroupedOpenApi.builder()
-                .group("public")
+                .group("api-achados-perdidos")
                 .pathsToMatch("/api/**")
+                .packagesToScan("com.AchadosPerdidos.API.Presentation.Controller")
                 .build();
     }
 
