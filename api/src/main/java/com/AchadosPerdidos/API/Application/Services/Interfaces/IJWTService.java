@@ -1,15 +1,14 @@
 package com.AchadosPerdidos.API.Application.Services.Interfaces;
 
-/**
- * Interface para serviços de JWT
- */
-public interface IJwtTokenService {
+public interface IJWTService {
 
     String generateToken(String email, String name, String role, String userId);
 
     boolean validateToken(String token);
 
     String getEmailFromToken(String token);
+
+    String getRoleFromToken(String token);
 
     String getUserIdFromToken(String token);
 

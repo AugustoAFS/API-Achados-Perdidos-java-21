@@ -27,7 +27,6 @@ public class UsuariosQueries implements IUsuariosQueries {
         usuarios.setMatricula(rs.getString("matricula"));
         usuarios.setNumeroTelefone(rs.getString("numero_telefone"));
         
-        // Tratamento correto para campos nullable
         Integer empresaId = rs.getObject("empresa_id", Integer.class);
         usuarios.setEmpresaId(empresaId);
         
@@ -60,11 +59,12 @@ public class UsuariosQueries implements IUsuariosQueries {
         return usuarios.isEmpty() ? null : usuarios.get(0);
     }
 
+    @Deprecated
     @Override
     public Usuarios findByEmailAndPassword(String email, String senha) {
-        String sql = "SELECT * FROM ap_achados_perdidos.usuarios WHERE email = ? AND hash_senha = ?";
-        List<Usuarios> usuarios = jdbcTemplate.query(sql, rowMapper, email, senha);
-        return usuarios.isEmpty() ? null : usuarios.get(0);
+        throw new UnsupportedOperationException(
+            "Este método não deve ser usado. Use UsuariosService.validateLogin() ao invés disso."
+        );
     }
 
     @Override
@@ -82,7 +82,6 @@ public class UsuariosQueries implements IUsuariosQueries {
             usuarios.getDtaCriacao(),
             usuarios.getFlgInativo());
         
-        // Buscar o registro inserido para retornar com o ID
         String selectSql = "SELECT * FROM ap_achados_perdidos.usuarios WHERE email = ? AND Dta_Criacao = ? ORDER BY id DESC LIMIT 1";
         List<Usuarios> inserted = jdbcTemplate.query(selectSql, rowMapper, 
             usuarios.getEmail(), 

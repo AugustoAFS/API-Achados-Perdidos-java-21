@@ -65,10 +65,4 @@ public class EmpresaController {
         EmpresaListDTO activeEmpresas = empresaService.getActiveEmpresas();
         return ResponseEntity.ok(activeEmpresas);
     }
-
-    @GetMapping("/country/{paisSede}")
-    public ResponseEntity<EmpresaListDTO> getEmpresasByCountry(@PathVariable String paisSede) {
-        EmpresaListDTO empresas = empresaService.getEmpresasByCountry(paisSede);
-        return ResponseEntity.ok(empresas);
-    }
 }

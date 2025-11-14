@@ -8,8 +8,14 @@ import com.AchadosPerdidos.API.Application.Mapper.InstituicaoModelMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IInstituicaoService;
 import com.AchadosPerdidos.API.Domain.Entity.Instituicao;
 import com.AchadosPerdidos.API.Domain.Repository.InstituicaoRepository;
+import com.AchadosPerdidos.API.Domain.Validator.EntityValidator;
+import com.AchadosPerdidos.API.Exeptions.BusinessException;
+import com.AchadosPerdidos.API.Exeptions.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.List;
@@ -24,19 +30,40 @@ public class InstituicaoService implements IInstituicaoService {
     private InstituicaoModelMapper instituicaoModelMapper;
 
     @Override
+    @Cacheable(value = "instituicoes", key = "'all'")
     public InstituicaoListDTO getAllInstituicoes() {
         List<Instituicao> instituicoes = instituicaoRepository.findAll();
         return instituicaoModelMapper.toListDTO(instituicoes);
     }
 
     @Override
+    @Cacheable(value = "instituicoes", key = "#id")
     public InstituicaoDTO getInstituicaoById(int id) {
+        if (id <= 0) {
+            throw new IllegalArgumentException("ID da instituição deve ser válido");
+        }
+        
         Instituicao instituicao = instituicaoRepository.findById(id);
+        if (instituicao == null) {
+            throw new ResourceNotFoundException("Instituição não encontrada com ID: " + id);
+        }
         return instituicaoModelMapper.toDTO(instituicao);
     }
 
     @Override
+    @CacheEvict(value = "instituicoes", allEntries = true)
     public InstituicaoDTO createInstituicao(InstituicaoDTO instituicaoDTO) {
+        if (instituicaoDTO == null) {
+            throw new IllegalArgumentException("Dados da instituição não podem ser nulos");
+        }
+        
+        validarInstituicaoParaCriacao(
+            instituicaoDTO.getNome(), 
+            instituicaoDTO.getCodigo(), 
+            instituicaoDTO.getTipo(), 
+            instituicaoDTO.getCnpj()
+        );
+        
         Instituicao instituicao = instituicaoModelMapper.toEntity(instituicaoDTO);
         instituicao.setDtaCriacao(new Date());
         instituicao.setFlgInativo(false);
@@ -46,7 +73,19 @@ public class InstituicaoService implements IInstituicaoService {
     }
 
     @Override
+    @CacheEvict(value = "instituicoes", allEntries = true)
     public InstituicaoDTO createInstituicaoFromDTO(InstituicaoCreateDTO createDTO) {
+        if (createDTO == null) {
+            throw new IllegalArgumentException("Dados da instituição não podem ser nulos");
+        }
+        
+        validarInstituicaoParaCriacao(
+            createDTO.getNome(), 
+            createDTO.getCodigo(), 
+            createDTO.getTipo(), 
+            createDTO.getCnpj()
+        );
+        
         Instituicao instituicao = new Instituicao();
         instituicao.setNome(createDTO.getNome());
         instituicao.setCodigo(createDTO.getCodigo());
@@ -60,10 +99,33 @@ public class InstituicaoService implements IInstituicaoService {
     }
 
     @Override
+    @CacheEvict(value = "instituicoes", allEntries = true)
     public InstituicaoDTO updateInstituicao(int id, InstituicaoDTO instituicaoDTO) {
+        if (id <= 0) {
+            throw new IllegalArgumentException("ID da instituição deve ser válido");
+        }
+        
+        if (instituicaoDTO == null) {
+            throw new IllegalArgumentException("Dados de atualização não podem ser nulos");
+        }
+        
         Instituicao existingInstituicao = instituicaoRepository.findById(id);
         if (existingInstituicao == null) {
-            return null;
+            throw new ResourceNotFoundException("Instituição não encontrada com ID: " + id);
+        }
+        
+        if (existingInstituicao.getDtaRemocao() != null) {
+            throw new BusinessException("Não é possível atualizar uma instituição que já foi removida");
+        }
+        
+        if (StringUtils.hasText(instituicaoDTO.getCodigo()) && 
+            !instituicaoDTO.getCodigo().equals(existingInstituicao.getCodigo())) {
+            validarCodigoUnico(instituicaoDTO.getCodigo(), id);
+        }
+        
+        if (StringUtils.hasText(instituicaoDTO.getCnpj()) && 
+            !instituicaoDTO.getCnpj().equals(existingInstituicao.getCnpj())) {
+            validarCnpjUnico(instituicaoDTO.getCnpj(), id);
         }
         
         existingInstituicao.setNome(instituicaoDTO.getNome());
@@ -78,25 +140,66 @@ public class InstituicaoService implements IInstituicaoService {
     }
 
     @Override
+    @CacheEvict(value = "instituicoes", allEntries = true)
     public InstituicaoDTO updateInstituicaoFromDTO(int id, InstituicaoUpdateDTO updateDTO) {
-        Instituicao existingInstituicao = instituicaoRepository.findById(id);
-        if (existingInstituicao == null) {
-            return null;
+        if (id <= 0) {
+            throw new IllegalArgumentException("ID da instituição deve ser válido");
         }
         
-        // Atualizar apenas os campos fornecidos
+        if (updateDTO == null) {
+            throw new IllegalArgumentException("Dados de atualização não podem ser nulos");
+        }
+        
+        Instituicao existingInstituicao = instituicaoRepository.findById(id);
+        if (existingInstituicao == null) {
+            throw new ResourceNotFoundException("Instituição não encontrada com ID: " + id);
+        }
+        
+        if (existingInstituicao.getDtaRemocao() != null) {
+            throw new BusinessException("Não é possível atualizar uma instituição que já foi removida");
+        }
+        
         if (updateDTO.getNome() != null) {
+            if (!StringUtils.hasText(updateDTO.getNome())) {
+                throw new BusinessException("Instituição", "atualizar", "Nome não pode ser vazio");
+            }
+            if (updateDTO.getNome().length() < 3) {
+                throw new BusinessException("Instituição", "atualizar", "Nome deve ter no mínimo 3 caracteres");
+            }
             existingInstituicao.setNome(updateDTO.getNome());
         }
+        
         if (updateDTO.getCodigo() != null) {
+            if (!StringUtils.hasText(updateDTO.getCodigo())) {
+                throw new BusinessException("Instituição", "atualizar", "Código não pode ser vazio");
+            }
+            if (!updateDTO.getCodigo().equals(existingInstituicao.getCodigo())) {
+                validarCodigoUnico(updateDTO.getCodigo(), id);
+            }
             existingInstituicao.setCodigo(updateDTO.getCodigo());
         }
+        
         if (updateDTO.getTipo() != null) {
+            if (!StringUtils.hasText(updateDTO.getTipo())) {
+                throw new BusinessException("Instituição", "atualizar", "Tipo não pode ser vazio");
+            }
             existingInstituicao.setTipo(updateDTO.getTipo());
         }
+        
         if (updateDTO.getCnpj() != null) {
+            if (StringUtils.hasText(updateDTO.getCnpj())) {
+                EntityValidator.validateCnpjFormat(updateDTO.getCnpj());
+                if (!EntityValidator.isValidCnpj(updateDTO.getCnpj())) {
+                    throw new BusinessException("CNPJ inválido");
+                }
+                
+                if (!updateDTO.getCnpj().equals(existingInstituicao.getCnpj())) {
+                    validarCnpjUnico(updateDTO.getCnpj(), id);
+                }
+            }
             existingInstituicao.setCnpj(updateDTO.getCnpj());
         }
+        
         if (updateDTO.getFlgInativo() != null) {
             existingInstituicao.setFlgInativo(updateDTO.getFlgInativo());
         }
@@ -106,24 +209,107 @@ public class InstituicaoService implements IInstituicaoService {
     }
 
     @Override
+    @CacheEvict(value = "instituicoes", allEntries = true)
     public boolean deleteInstituicao(int id) {
-        Instituicao instituicao = instituicaoRepository.findById(id);
-        if (instituicao == null) {
-            return false;
+        if (id <= 0) {
+            throw new IllegalArgumentException("ID da instituição deve ser válido");
         }
         
-        return instituicaoRepository.deleteById(id);
+        Instituicao instituicao = instituicaoRepository.findById(id);
+        if (instituicao == null) {
+            throw new ResourceNotFoundException("Instituição não encontrada com ID: " + id);
+        }
+        
+        if (Boolean.TRUE.equals(instituicao.getFlgInativo())) {
+            throw new BusinessException("A instituição já está inativa");
+        }
+        
+        instituicao.setFlgInativo(true);
+        instituicao.setDtaRemocao(new Date());
+        instituicaoRepository.save(instituicao);
+        
+        return true;
     }
 
     @Override
+    @Cacheable(value = "instituicoes", key = "'active'")
     public InstituicaoListDTO getActiveInstituicoes() {
         List<Instituicao> activeInstituicoes = instituicaoRepository.findActive();
         return instituicaoModelMapper.toListDTO(activeInstituicoes);
     }
 
     @Override
+    @Cacheable(value = "instituicoes", key = "'type_' + #tipoInstituicao")
     public InstituicaoListDTO getInstituicoesByType(String tipoInstituicao) {
+        if (!StringUtils.hasText(tipoInstituicao)) {
+            throw new IllegalArgumentException("Tipo da instituição não pode ser vazio");
+        }
+        
         List<Instituicao> instituicoes = instituicaoRepository.findByType(tipoInstituicao);
         return instituicaoModelMapper.toListDTO(instituicoes);
+    }
+    
+    private void validarInstituicaoParaCriacao(String nome, String codigo, String tipo, String cnpj) {
+        if (!StringUtils.hasText(nome)) {
+            throw new BusinessException("Instituição", "criar", "Nome é obrigatório");
+        }
+        
+        if (nome.length() < 3) {
+            throw new BusinessException("Instituição", "criar", "Nome deve ter no mínimo 3 caracteres");
+        }
+        
+        if (nome.length() > 255) {
+            throw new BusinessException("Instituição", "criar", "Nome deve ter no máximo 255 caracteres");
+        }
+        
+        if (!StringUtils.hasText(codigo)) {
+            throw new BusinessException("Instituição", "criar", "Código é obrigatório");
+        }
+        
+        if (codigo.length() > 100) {
+            throw new BusinessException("Instituição", "criar", "Código deve ter no máximo 100 caracteres");
+        }
+        
+        validarCodigoUnico(codigo, null);
+        
+        if (!StringUtils.hasText(tipo)) {
+            throw new BusinessException("Instituição", "criar", "Tipo é obrigatório");
+        }
+        
+        if (tipo.length() > 50) {
+            throw new BusinessException("Instituição", "criar", "Tipo deve ter no máximo 50 caracteres");
+        }
+        
+        if (StringUtils.hasText(cnpj)) {
+            EntityValidator.validateCnpjFormat(cnpj);
+            
+            if (!EntityValidator.isValidCnpj(cnpj)) {
+                throw new BusinessException("CNPJ inválido");
+            }
+            
+            validarCnpjUnico(cnpj, null);
+        }
+    }
+    
+    private void validarCodigoUnico(String codigo, Integer instituicaoIdExcluir) {
+        List<Instituicao> instituicoesComMesmoCodigo = instituicaoRepository.findAll().stream()
+            .filter(i -> codigo.equals(i.getCodigo()))
+            .filter(i -> instituicaoIdExcluir == null || !i.getId().equals(instituicaoIdExcluir))
+            .toList();
+        
+        if (!instituicoesComMesmoCodigo.isEmpty()) {
+            throw new BusinessException("Já existe uma instituição cadastrada com o código informado");
+        }
+    }
+    
+    private void validarCnpjUnico(String cnpj, Integer instituicaoIdExcluir) {
+        List<Instituicao> instituicoesComMesmoCnpj = instituicaoRepository.findAll().stream()
+            .filter(i -> cnpj.equals(i.getCnpj()))
+            .filter(i -> instituicaoIdExcluir == null || !i.getId().equals(instituicaoIdExcluir))
+            .toList();
+        
+        if (!instituicoesComMesmoCnpj.isEmpty()) {
+            throw new BusinessException("Já existe uma instituição cadastrada com o CNPJ informado");
+        }
     }
 }
