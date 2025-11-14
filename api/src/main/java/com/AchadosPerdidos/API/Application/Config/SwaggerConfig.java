@@ -151,7 +151,7 @@ public class SwaggerConfig {
         
         // PRIORIDADE 2: Baseado nos perfis ativos usando utilitário centralizado
         if (environmentConfig.isProduction()) {
-            return "Servidor de Produção - DigitalOcean";
+            return "Servidor de PRD";
         }
         
         if (environmentConfig.isDevelopment()) {

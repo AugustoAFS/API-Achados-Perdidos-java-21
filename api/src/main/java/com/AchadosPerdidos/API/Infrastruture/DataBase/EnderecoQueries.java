@@ -2,9 +2,9 @@ package com.AchadosPerdidos.API.Infrastruture.DataBase;
 
 import com.AchadosPerdidos.API.Domain.Entity.Endereco;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.Interfaces.IEnderecoQueries;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,9 +12,12 @@ import java.util.List;
 @Repository
 public class EnderecoQueries implements IEnderecoQueries {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
+    public EnderecoQueries(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
+    @NonNull
     private final RowMapper<Endereco> rowMapper = (rs, rowNum) -> {
         Endereco endereco = new Endereco();
         endereco.setId(rs.getInt("id"));

@@ -2,9 +2,9 @@ package com.AchadosPerdidos.API.Infrastruture.DataBase;
 
 import com.AchadosPerdidos.API.Domain.Entity.StatusItem;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.Interfaces.IStatusItemQueries;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,19 +12,22 @@ import java.util.List;
 @Repository
 public class StatusItemQueries implements IStatusItemQueries {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
+    public StatusItemQueries(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
+    @NonNull
     private final RowMapper<StatusItem> rowMapper = (rs, rowNum) -> {
-        StatusItem statusItem = new StatusItem();
-        statusItem.setId(rs.getInt("id"));
-        statusItem.setNome(rs.getString("nome"));
-        statusItem.setDescricao(rs.getString("descricao"));
-        statusItem.setStatusItem(rs.getString("status_item"));
-        statusItem.setDtaCriacao(rs.getTimestamp("Dta_Criacao"));
-        statusItem.setFlgInativo(rs.getBoolean("Flg_Inativo"));
-        statusItem.setDtaRemocao(rs.getTimestamp("Dta_Remocao"));
-        return statusItem;
+        var entity = new StatusItem();
+        entity.setId(rs.getInt("id"));
+        entity.setNome(rs.getString("nome"));
+        entity.setDescricao(rs.getString("descricao"));
+        entity.setStatusItem(rs.getString("status_item"));
+        entity.setDtaCriacao(rs.getTimestamp("Dta_Criacao"));
+        entity.setFlgInativo(rs.getBoolean("Flg_Inativo"));
+        entity.setDtaRemocao(rs.getTimestamp("Dta_Remocao"));
+        return entity;
     };
 
     @Override

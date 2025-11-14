@@ -16,17 +16,16 @@ public class InstituicaoModelMapper {
             return null;
         }
         
-        InstituicaoDTO dto = new InstituicaoDTO();
-        dto.setId(instituicao.getId());
-        dto.setNome(instituicao.getNome());
-        dto.setCodigo(instituicao.getCodigo());
-        dto.setTipo(instituicao.getTipo());
-        dto.setCnpj(instituicao.getCnpj());
-        dto.setDtaCriacao(instituicao.getDtaCriacao());
-        dto.setFlgInativo(instituicao.getFlgInativo());
-        dto.setDtaRemocao(instituicao.getDtaRemocao());
-        
-        return dto;
+        return new InstituicaoDTO(
+            instituicao.getId(),
+            instituicao.getNome(),
+            instituicao.getCodigo(),
+            instituicao.getTipo(),
+            instituicao.getCnpj(),
+            instituicao.getDtaCriacao(),
+            instituicao.getFlgInativo(),
+            instituicao.getDtaRemocao()
+        );
     }
 
     public Instituicao toEntity(InstituicaoDTO dto) {
@@ -56,10 +55,6 @@ public class InstituicaoModelMapper {
                 .map(this::toDTO)
                 .collect(Collectors.toList());
         
-        InstituicaoListDTO listDTO = new InstituicaoListDTO();
-        listDTO.setInstituicoes(dtoList);
-        listDTO.setTotalCount(dtoList.size());
-        
-        return listDTO;
+        return new InstituicaoListDTO(dtoList, dtoList.size());
     }
 }

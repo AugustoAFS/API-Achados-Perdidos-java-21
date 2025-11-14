@@ -19,6 +19,7 @@
 
     <properties>
         <java.version>21</java.version>
+        <aws-sdk.version>2.29.16</aws-sdk.version>
     </properties>
 
     <dependencies>
@@ -105,24 +106,13 @@
             <version>3.0.0</version>
         </dependency>
 
-        <!-- AWS SDK (S3, Auth, Regions) -->
+        <!-- AWS SDK BOM (gerencia versões) -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
-            <version>2.34.7</version>
-        </dependency>
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>auth</artifactId>
-            <version>2.34.7</version>
-        </dependency>
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>regions</artifactId>
-            <version>2.34.7</version>
         </dependency>
 
-        <!-- Cache -->
+        <!-- Cache Caffeine -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-cache</artifactId>
@@ -132,17 +122,17 @@
             <artifactId>caffeine</artifactId>
         </dependency>
 
-        <!-- Lombok -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-
         <!-- Testes -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- H2 Database (in-memory for tests) -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -180,6 +170,22 @@
     <!-- Versões forçadas seguras (CVE mitigadas) -->
     <dependencyManagement>
         <dependencies>
+
+            <!-- Checker Framework (DEVE VIR PRIMEIRO - resolve conflito do Caffeine) -->
+            <dependency>
+                <groupId>org.checkerframework</groupId>
+                <artifactId>checker-qual</artifactId>
+                <version>3.42.0</version>
+            </dependency>
+
+            <!-- AWS SDK BOM (gerencia versões compatíveis com Java 21) -->
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${aws-sdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
 
             <!-- Logback corrigido - versão mais recente sem CVE conhecido -->
             <dependency>
@@ -246,6 +252,9 @@
                 <version>3.13.0</version>
                 <configuration>
                     <release>21</release>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
 

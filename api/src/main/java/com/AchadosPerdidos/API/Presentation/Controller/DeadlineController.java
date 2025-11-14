@@ -110,8 +110,8 @@ public class DeadlineController {
             DeadlineStats stats = new DeadlineStats();
             stats.setItemsNearDeadline(nearDeadline.size());
             stats.setExpiredItems(expired.size());
-            stats.setDonatedItems(donated.getTotalCount());
-            stats.setTotalProcessed(nearDeadline.size() + expired.size() + donated.getTotalCount());
+            stats.setDonatedItems(donated.getItens() != null ? donated.getItens().size() : 0);
+            stats.setTotalProcessed(nearDeadline.size() + expired.size() + (donated.getItens() != null ? donated.getItens().size() : 0));
             
             return ResponseEntity.ok(stats);
         } catch (Exception e) {

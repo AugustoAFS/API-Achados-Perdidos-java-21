@@ -113,18 +113,16 @@ public class GoogleAuthController {
             logger.info("Token JWT gerado com sucesso para o usuário: {}", usuario.getEmail());
             
             // Criar resposta com token e informações do usuário
-            AuthResponseDTO.UserInfoDTO userInfo = new AuthResponseDTO.UserInfoDTO();
-            userInfo.setId(usuario.getId());
-            userInfo.setNome(usuario.getNomeCompleto());
-            userInfo.setEmail(usuario.getEmail());
-            userInfo.setRole("User");
-            userInfo.setCampus("");
-            
-            AuthResponseDTO response = new AuthResponseDTO();
-            response.setToken(token);
-            response.setTokenType("Bearer");
-            response.setExpiresIn(3600); // 1 hora
-            response.setUser(userInfo);
+            AuthResponseDTO response = new AuthResponseDTO(
+                token,
+                "Bearer",
+                3600, // 1 hora
+                usuario.getId(),
+                usuario.getNomeCompleto(),
+                usuario.getEmail(),
+                "User",
+                ""
+            );
             
             return ResponseEntity.ok(response);
             

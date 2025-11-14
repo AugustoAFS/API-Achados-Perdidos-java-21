@@ -9,15 +9,15 @@ public class StatusItemModelMapper {
 
     public StatusItemDTO toDTO(StatusItem status) {
         if (status == null) return null;
-        StatusItemDTO dto = new StatusItemDTO();
-        dto.setId(status.getId());
-        dto.setNome(status.getNome());
-        dto.setDescricao(status.getDescricao());
-        dto.setStatusItem(status.getStatusItem());
-        dto.setDtaCriacao(status.getDtaCriacao());
-        dto.setFlgInativo(status.getFlgInativo());
-        dto.setDtaRemocao(status.getDtaRemocao());
-        return dto;
+        return new StatusItemDTO(
+            status.getId(),
+            status.getNome(),
+            status.getDescricao(),
+            status.getStatusItem(),
+            status.getDtaCriacao(),
+            status.getFlgInativo(),
+            status.getDtaRemocao()
+        );
     }
 
     public StatusItem toEntity(StatusItemDTO dto) {

@@ -2,9 +2,9 @@ package com.AchadosPerdidos.API.Infrastruture.DataBase;
 
 import com.AchadosPerdidos.API.Domain.Entity.Instituicao;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.Interfaces.IInstituicaoQueries;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,9 +12,12 @@ import java.util.List;
 @Repository
 public class InstituicaoQueries implements IInstituicaoQueries {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
+    public InstituicaoQueries(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
+    @NonNull
     private final RowMapper<Instituicao> rowMapper = (rs, rowNum) -> {
         Instituicao instituicao = new Instituicao();
         instituicao.setId(rs.getInt("id"));

@@ -16,19 +16,18 @@ public class ItensModelMapper {
             return null;
         }
         
-        ItensDTO dto = new ItensDTO();
-        dto.setId(itens.getId());
-        dto.setNome(itens.getNome());
-        dto.setDescricao(itens.getDescricao());
-        dto.setEncontradoEm(itens.getEncontradoEm());
-        dto.setUsuarioRelatorId(itens.getUsuarioRelatorId());
-        dto.setLocalId(itens.getLocalId());
-        dto.setStatusItemId(itens.getStatusItemId());
-        dto.setDtaCriacao(itens.getDtaCriacao());
-        dto.setFlgInativo(itens.getFlgInativo());
-        dto.setDtaRemocao(itens.getDtaRemocao());
-        
-        return dto;
+        return new ItensDTO(
+            itens.getId(),
+            itens.getNome(),
+            itens.getDescricao(),
+            itens.getEncontradoEm(),
+            itens.getUsuarioRelatorId(),
+            itens.getLocalId(),
+            itens.getStatusItemId(),
+            itens.getDtaCriacao(),
+            itens.getFlgInativo(),
+            itens.getDtaRemocao()
+        );
     }
 
     public Itens toEntity(ItensDTO dto) {
@@ -60,10 +59,6 @@ public class ItensModelMapper {
                 .map(this::toDTO)
                 .collect(Collectors.toList());
         
-        ItensListDTO listDTO = new ItensListDTO();
-        listDTO.setItens(dtoList);
-        listDTO.setTotalCount(dtoList.size());
-        
-        return listDTO;
+        return new ItensListDTO(dtoList, dtoList.size());
     }
 }

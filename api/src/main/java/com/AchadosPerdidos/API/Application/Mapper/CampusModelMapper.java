@@ -16,16 +16,15 @@ public class CampusModelMapper {
             return null;
         }
         
-        CampusDTO dto = new CampusDTO();
-        dto.setId(campus.getId());
-        dto.setNome(campus.getNome());
-        dto.setInstituicaoId(campus.getInstituicaoId());
-        dto.setEnderecoId(campus.getEnderecoId());
-        dto.setDtaCriacao(campus.getDtaCriacao());
-        dto.setFlgInativo(campus.getFlgInativo());
-        dto.setDtaRemocao(campus.getDtaRemocao());
-        
-        return dto;
+        return new CampusDTO(
+            campus.getId(),
+            campus.getNome(),
+            campus.getInstituicaoId(),
+            campus.getEnderecoId(),
+            campus.getDtaCriacao(),
+            campus.getFlgInativo(),
+            campus.getDtaRemocao()
+        );
     }
 
     public Campus toEntity(CampusDTO dto) {
@@ -54,10 +53,6 @@ public class CampusModelMapper {
                 .map(this::toDTO)
                 .collect(Collectors.toList());
         
-        CampusListDTO listDTO = new CampusListDTO();
-        listDTO.setCampi(dtoList);
-        listDTO.setTotalCount(dtoList.size());
-        
-        return listDTO;
+        return new CampusListDTO(dtoList, dtoList.size());
     }
 }

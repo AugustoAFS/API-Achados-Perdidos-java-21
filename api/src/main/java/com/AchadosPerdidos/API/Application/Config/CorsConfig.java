@@ -20,7 +20,6 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
-                // Verifica se está em produção usando utilitário centralizado
                 boolean isProduction = environmentConfig.isProduction();
                 
                 if (isProduction) {
@@ -38,7 +37,6 @@ public class CorsConfig {
                             .allowCredentials(true)
                             .maxAge(3600);
                 } else {
-                    // Desenvolvimento: remove "*" para compatibilidade com allowCredentials(true)
                     registry.addMapping("/**")
                             .allowedOriginPatterns(
                                     "http://localhost:*",

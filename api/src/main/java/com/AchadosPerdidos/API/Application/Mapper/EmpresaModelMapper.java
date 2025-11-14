@@ -16,17 +16,16 @@ public class EmpresaModelMapper {
             return null;
         }
         
-        EmpresaDTO dto = new EmpresaDTO();
-        dto.setId(empresa.getId());
-        dto.setNome(empresa.getNome());
-        dto.setNomeFantasia(empresa.getNomeFantasia());
-        dto.setCnpj(empresa.getCnpj());
-        dto.setEnderecoId(empresa.getEnderecoId());
-        dto.setDtaCriacao(empresa.getDtaCriacao());
-        dto.setFlgInativo(empresa.getFlgInativo());
-        dto.setDtaRemocao(empresa.getDtaRemocao());
-        
-        return dto;
+        return new EmpresaDTO(
+            empresa.getId(),
+            empresa.getNome(),
+            empresa.getNomeFantasia(),
+            empresa.getCnpj(),
+            empresa.getEnderecoId(),
+            empresa.getDtaCriacao(),
+            empresa.getFlgInativo(),
+            empresa.getDtaRemocao()
+        );
     }
 
     public Empresa toEntity(EmpresaDTO dto) {
@@ -56,10 +55,6 @@ public class EmpresaModelMapper {
                 .map(this::toDTO)
                 .collect(Collectors.toList());
         
-        EmpresaListDTO listDTO = new EmpresaListDTO();
-        listDTO.setEmpresas(dtoList);
-        listDTO.setTotalCount(dtoList.size());
-        
-        return listDTO;
+        return new EmpresaListDTO(dtoList, dtoList.size());
     }
 }

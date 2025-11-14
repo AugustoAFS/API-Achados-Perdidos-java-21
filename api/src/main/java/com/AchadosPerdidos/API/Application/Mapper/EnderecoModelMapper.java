@@ -9,18 +9,18 @@ public class EnderecoModelMapper {
 
     public EnderecoDTO toDTO(Endereco endereco) {
         if (endereco == null) return null;
-        EnderecoDTO dto = new EnderecoDTO();
-        dto.setId(endereco.getId());
-        dto.setLogradouro(endereco.getLogradouro());
-        dto.setNumero(endereco.getNumero());
-        dto.setComplemento(endereco.getComplemento());
-        dto.setBairro(endereco.getBairro());
-        dto.setCep(endereco.getCep());
-        dto.setCidadeId(endereco.getCidadeId());
-        dto.setDtaCriacao(endereco.getDtaCriacao());
-        dto.setFlgInativo(endereco.getFlgInativo());
-        dto.setDtaRemocao(endereco.getDtaRemocao());
-        return dto;
+        return new EnderecoDTO(
+            endereco.getId(),
+            endereco.getLogradouro(),
+            endereco.getNumero(),
+            endereco.getComplemento(),
+            endereco.getBairro(),
+            endereco.getCep(),
+            endereco.getCidadeId(),
+            endereco.getDtaCriacao(),
+            endereco.getFlgInativo(),
+            endereco.getDtaRemocao()
+        );
     }
 
     public Endereco toEntity(EnderecoDTO dto) {

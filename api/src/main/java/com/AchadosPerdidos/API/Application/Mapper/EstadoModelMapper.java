@@ -9,14 +9,14 @@ public class EstadoModelMapper {
 
     public EstadoDTO toDTO(Estado estado) {
         if (estado == null) return null;
-        EstadoDTO dto = new EstadoDTO();
-        dto.setId(estado.getId());
-        dto.setNome(estado.getNome());
-        dto.setUf(estado.getUf());
-        dto.setDtaCriacao(estado.getDtaCriacao());
-        dto.setFlgInativo(estado.getFlgInativo());
-        dto.setDtaRemocao(estado.getDtaRemocao());
-        return dto;
+        return new EstadoDTO(
+            estado.getId(),
+            estado.getNome(),
+            estado.getUf(),
+            estado.getDtaCriacao(),
+            estado.getFlgInativo(),
+            estado.getDtaRemocao()
+        );
     }
 
     public Estado toEntity(EstadoDTO dto) {

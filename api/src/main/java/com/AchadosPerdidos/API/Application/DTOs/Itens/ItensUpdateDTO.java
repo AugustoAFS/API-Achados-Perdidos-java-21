@@ -1,25 +1,17 @@
 package com.AchadosPerdidos.API.Application.DTOs.Itens;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.util.Date;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "DTO para atualização de item")
+@Schema(description = "DTO para atualizacao de item")
 public class ItensUpdateDTO {
-    @Schema(description = "Nome do item", example = "Chave do Laboratório")
+    @Schema(description = "Nome do item", example = "Chave do Laboratorio")
     private String nome;
 
-    @Schema(description = "Descrição do item", example = "Chave do laboratório de informática, cor prata")
+    @Schema(description = "Descricao do item", example = "Chave do laboratorio de informatica, cor prata")
     private String descricao;
 
-    @Schema(description = "Flag de inativação", example = "false")
+    @Schema(description = "Flag de inativacao", example = "false")
     private Boolean flgInativo;
 
     @Schema(description = "ID do status do item", example = "1")
@@ -30,4 +22,66 @@ public class ItensUpdateDTO {
 
     @Schema(description = "Data/hora em que o item foi encontrado", example = "2024-01-01T10:30:00")
     private Date encontradoEm;
+
+    public ItensUpdateDTO() {
+        // Construtor padrao para frameworks de serializacao
+    }
+
+    public ItensUpdateDTO(String nome, String descricao, Boolean flgInativo, Integer statusItemId, Integer localId, Date encontradoEm) {
+        this.nome = nome;
+        this.descricao = descricao;
+        this.flgInativo = flgInativo;
+        this.statusItemId = statusItemId;
+        this.localId = localId;
+        this.encontradoEm = encontradoEm;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
+    }
+
+    public Boolean getFlgInativo() {
+        return flgInativo;
+    }
+
+    public void setFlgInativo(Boolean flgInativo) {
+        this.flgInativo = flgInativo;
+    }
+
+    public Integer getStatusItemId() {
+        return statusItemId;
+    }
+
+    public void setStatusItemId(Integer statusItemId) {
+        this.statusItemId = statusItemId;
+    }
+
+    public Integer getLocalId() {
+        return localId;
+    }
+
+    public void setLocalId(Integer localId) {
+        this.localId = localId;
+    }
+
+    public Date getEncontradoEm() {
+        return encontradoEm;
+    }
+
+    public void setEncontradoEm(Date encontradoEm) {
+        this.encontradoEm = encontradoEm;
+    }
 }
+
