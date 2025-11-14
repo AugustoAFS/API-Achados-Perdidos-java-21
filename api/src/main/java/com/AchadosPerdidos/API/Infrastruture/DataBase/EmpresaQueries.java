@@ -91,10 +91,4 @@ public class EmpresaQueries implements IEmpresaQueries {
         String sql = "SELECT * FROM ap_achados_perdidos.empresas WHERE Flg_Inativo = false ORDER BY nome";
         return jdbcTemplate.query(sql, rowMapper);
     }
-
-    @Override
-    public List<Empresa> findByCountry(String paisSede) {
-        // TODO: Este método não faz mais sentido com o novo schema - remover ou adaptar
-        return new java.util.ArrayList<>();
-    }
 }
