@@ -3,9 +3,9 @@ package com.AchadosPerdidos.API.Infrastruture.DataBase;
 import com.AchadosPerdidos.API.Domain.Entity.Fotos;
 import com.AchadosPerdidos.API.Domain.Enum.Provedor_Armazenamento;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.Interfaces.IFotosQueries;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -13,9 +13,12 @@ import java.util.List;
 @Repository
 public class FotosQueries implements IFotosQueries {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
+    public FotosQueries(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
+    @NonNull
     private final RowMapper<Fotos> rowMapper = (rs, rowNum) -> {
         Fotos fotos = new Fotos();
         fotos.setId(rs.getInt("id"));

@@ -2,18 +2,21 @@ package com.AchadosPerdidos.API.Infrastruture.DataBase;
 
 import com.AchadosPerdidos.API.Domain.Entity.Itens;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.Interfaces.IItensQueries;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
 public class ItensQueries implements IItensQueries {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
+    public ItensQueries(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
+    @NonNull
     private final RowMapper<Itens> rowMapper = (rs, rowNum) -> {
         Itens itens = new Itens();
         itens.setId(rs.getInt("id"));

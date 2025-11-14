@@ -1,22 +1,14 @@
 package com.AchadosPerdidos.API.Application.DTOs.Usuario;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.util.Date;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "DTO completo de usuário")
+@Schema(description = "DTO completo de usuario")
 public class UsuariosDTO {
-    @Schema(description = "ID do usuário", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "ID do usuario", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
     private Integer id;
 
-    @Schema(description = "Nome completo", example = "João Silva")
+    @Schema(description = "Nome completo", example = "Joao Silva")
     private String nomeCompleto;
 
     @Schema(description = "CPF", example = "12345678901")
@@ -25,27 +17,119 @@ public class UsuariosDTO {
     @Schema(description = "Email", example = "joao@ifpr.edu.br")
     private String email;
 
-    @Schema(description = "Senha (hash)", example = "$2a$10$...", accessMode = Schema.AccessMode.WRITE_ONLY)
-    private String hashSenha;
-
-    @Schema(description = "Matrícula", example = "2024001")
+    @Schema(description = "Matricula", example = "2024001")
     private String matricula;
-
-    @Schema(description = "Telefone", example = "(41) 99999-9999")
-    private String numeroTelefone;
 
     @Schema(description = "Empresa ID", example = "10")
     private Integer empresaId;
 
-    @Schema(description = "Endereço ID", example = "5")
+    @Schema(description = "Endereco ID", example = "5")
     private Integer enderecoId;
 
-    @Schema(description = "Data de criação", example = "2024-01-01T00:00:00")
+    @Schema(description = "Data de criacao", example = "2024-01-01T00:00:00")
     private Date dtaCriacao;
 
-    @Schema(description = "Flag de inativação", example = "false")
+    @Schema(description = "Flag de inativacao", example = "false")
     private Boolean flgInativo;
 
-    @Schema(description = "Data de remoção lógica", example = "2024-02-01T00:00:00")
+    @Schema(description = "Data de remocao logica", example = "2024-02-01T00:00:00")
     private Date dtaRemocao;
+
+    public UsuariosDTO() {
+        // Construtor padrao para frameworks de serializacao
+    }
+
+    public UsuariosDTO(Integer id, String nomeCompleto, String cpf, String email, String matricula, Integer empresaId, Integer enderecoId, Date dtaCriacao, Boolean flgInativo, Date dtaRemocao) {
+        this.id = id;
+        this.nomeCompleto = nomeCompleto;
+        this.cpf = cpf;
+        this.email = email;
+        this.matricula = matricula;
+        this.empresaId = empresaId;
+        this.enderecoId = enderecoId;
+        this.dtaCriacao = dtaCriacao;
+        this.flgInativo = flgInativo;
+        this.dtaRemocao = dtaRemocao;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getNomeCompleto() {
+        return nomeCompleto;
+    }
+
+    public void setNomeCompleto(String nomeCompleto) {
+        this.nomeCompleto = nomeCompleto;
+    }
+
+    public String getCpf() {
+        return cpf;
+    }
+
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getMatricula() {
+        return matricula;
+    }
+
+    public void setMatricula(String matricula) {
+        this.matricula = matricula;
+    }
+
+    public Integer getEmpresaId() {
+        return empresaId;
+    }
+
+    public void setEmpresaId(Integer empresaId) {
+        this.empresaId = empresaId;
+    }
+
+    public Integer getEnderecoId() {
+        return enderecoId;
+    }
+
+    public void setEnderecoId(Integer enderecoId) {
+        this.enderecoId = enderecoId;
+    }
+
+    public Date getDtaCriacao() {
+        return dtaCriacao;
+    }
+
+    public void setDtaCriacao(Date dtaCriacao) {
+        this.dtaCriacao = dtaCriacao;
+    }
+
+    public Boolean getFlgInativo() {
+        return flgInativo;
+    }
+
+    public void setFlgInativo(Boolean flgInativo) {
+        this.flgInativo = flgInativo;
+    }
+
+    public Date getDtaRemocao() {
+        return dtaRemocao;
+    }
+
+    public void setDtaRemocao(Date dtaRemocao) {
+        this.dtaRemocao = dtaRemocao;
+    }
 }
+

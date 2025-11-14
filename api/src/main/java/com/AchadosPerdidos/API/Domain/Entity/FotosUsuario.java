@@ -1,17 +1,32 @@
 package com.AchadosPerdidos.API.Domain.Entity;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class FotosUsuario {
     private Integer usuarioId;
     private Integer fotoId;
-}
 
+    public FotosUsuario() {}
+
+    public FotosUsuario(Integer usuarioId, Integer fotoId) {
+        this.usuarioId = usuarioId;
+        this.fotoId = fotoId;
+    }
+
+    public Integer getUsuarioId() {
+        return usuarioId;
+    }
+
+    public void setUsuarioId(Integer usuarioId) {
+        this.usuarioId = usuarioId;
+    }
+
+    public Integer getFotoId() {
+        return fotoId;
+    }
+
+    public void setFotoId(Integer fotoId) {
+        this.fotoId = fotoId;
+    }
+
+}
 

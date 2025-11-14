@@ -9,14 +9,14 @@ public class RoleModelMapper {
 
     public RoleDTO toDTO(Role role) {
         if (role == null) return null;
-        RoleDTO dto = new RoleDTO();
-        dto.setId(role.getId());
-        dto.setNome(role.getNome());
-        dto.setDescricao(role.getDescricao());
-        dto.setDtaCriacao(role.getDtaCriacao());
-        dto.setFlgInativo(role.getFlgInativo());
-        dto.setDtaRemocao(role.getDtaRemocao());
-        return dto;
+        return new RoleDTO(
+            role.getId(),
+            role.getNome(),
+            role.getDescricao(),
+            role.getDtaCriacao(),
+            role.getFlgInativo(),
+            role.getDtaRemocao()
+        );
     }
 
     public Role toEntity(RoleDTO dto) {

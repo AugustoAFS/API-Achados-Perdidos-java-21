@@ -24,21 +24,18 @@ public class UsuariosModelMapper {
             return null;
         }
         
-        UsuariosDTO dto = new UsuariosDTO();
-        dto.setId(usuarios.getId());
-        dto.setNomeCompleto(usuarios.getNomeCompleto());
-        dto.setCpf(usuarios.getCpf());
-        dto.setEmail(usuarios.getEmail());
-        dto.setHashSenha(usuarios.getHashSenha());
-        dto.setMatricula(usuarios.getMatricula());
-        dto.setNumeroTelefone(usuarios.getNumeroTelefone());
-        dto.setEmpresaId(usuarios.getEmpresaId());
-        dto.setEnderecoId(usuarios.getEnderecoId());
-        dto.setDtaCriacao(usuarios.getDtaCriacao());
-        dto.setFlgInativo(usuarios.getFlgInativo());
-        dto.setDtaRemocao(usuarios.getDtaRemocao());
-        
-        return dto;
+        return new UsuariosDTO(
+            usuarios.getId(),
+            usuarios.getNomeCompleto(),
+            usuarios.getCpf(),
+            usuarios.getEmail(),
+            usuarios.getMatricula(),
+            usuarios.getEmpresaId(),
+            usuarios.getEnderecoId(),
+            usuarios.getDtaCriacao(),
+            usuarios.getFlgInativo(),
+            usuarios.getDtaRemocao()
+        );
     }
 
     public Usuarios toEntity(UsuariosDTO dto) {
@@ -46,19 +43,17 @@ public class UsuariosModelMapper {
             return null;
         }
         
-        Usuarios usuarios = new Usuarios();
-        usuarios.setId(dto.getId());
-        usuarios.setNomeCompleto(dto.getNomeCompleto());
-        usuarios.setCpf(dto.getCpf());
-        usuarios.setEmail(dto.getEmail());
-        usuarios.setHashSenha(dto.getHashSenha());
-        usuarios.setMatricula(dto.getMatricula());
-        usuarios.setNumeroTelefone(dto.getNumeroTelefone());
-        usuarios.setEmpresaId(dto.getEmpresaId());
-        usuarios.setEnderecoId(dto.getEnderecoId());
-        usuarios.setDtaCriacao(dto.getDtaCriacao());
-        usuarios.setFlgInativo(dto.getFlgInativo());
-        usuarios.setDtaRemocao(dto.getDtaRemocao());
+    Usuarios usuarios = new Usuarios();
+    usuarios.setId(dto.getId());
+    usuarios.setNomeCompleto(dto.getNomeCompleto());
+    usuarios.setCpf(dto.getCpf());
+    usuarios.setEmail(dto.getEmail());
+    usuarios.setMatricula(dto.getMatricula());
+    usuarios.setEmpresaId(dto.getEmpresaId());
+    usuarios.setEnderecoId(dto.getEnderecoId());
+    usuarios.setDtaCriacao(dto.getDtaCriacao());
+    usuarios.setFlgInativo(dto.getFlgInativo());
+    usuarios.setDtaRemocao(dto.getDtaRemocao());
         
         return usuarios;
     }
@@ -69,13 +64,13 @@ public class UsuariosModelMapper {
         }
         
         Usuarios usuarios = new Usuarios();
-        usuarios.setNomeCompleto(dto.getNomeCompleto());
-        usuarios.setCpf(dto.getCpf());
-        usuarios.setEmail(dto.getEmail());
-        usuarios.setHashSenha(passwordEncoder.encode(dto.getSenha()));
-        usuarios.setMatricula(dto.getMatricula());
-        usuarios.setNumeroTelefone(dto.getNumeroTelefone());
-        usuarios.setEnderecoId(dto.getEnderecoId());
+    usuarios.setNomeCompleto(dto.getNomeCompleto());
+    usuarios.setCpf(dto.getCpf());
+    usuarios.setEmail(dto.getEmail());
+    usuarios.setHashSenha(passwordEncoder.encode(dto.getSenha()));
+    usuarios.setMatricula(dto.getMatricula());
+    usuarios.setNumeroTelefone(dto.getNumeroTelefone());
+    usuarios.setEnderecoId(dto.getEnderecoId());
         
         return usuarios;
     }
@@ -94,14 +89,8 @@ public class UsuariosModelMapper {
         if (dto.getEmail() != null) {
             usuarios.setEmail(dto.getEmail());
         }
-        if (dto.getSenha() != null && !dto.getSenha().isEmpty()) {
-            usuarios.setHashSenha(passwordEncoder.encode(dto.getSenha()));
-        }
         if (dto.getMatricula() != null) {
             usuarios.setMatricula(dto.getMatricula());
-        }
-        if (dto.getNumeroTelefone() != null) {
-            usuarios.setNumeroTelefone(dto.getNumeroTelefone());
         }
         if (dto.getEmpresaId() != null) {
             usuarios.setEmpresaId(dto.getEmpresaId());
@@ -119,15 +108,15 @@ public class UsuariosModelMapper {
             return null;
         }
         
-        UsuariosCreateDTO dto = new UsuariosCreateDTO();
-        dto.setNomeCompleto(usuarios.getNomeCompleto());
-        dto.setCpf(usuarios.getCpf());
-        dto.setEmail(usuarios.getEmail());
-        dto.setMatricula(usuarios.getMatricula());
-        dto.setNumeroTelefone(usuarios.getNumeroTelefone());
-        dto.setEnderecoId(usuarios.getEnderecoId());
-        
-        return dto;
+        return new UsuariosCreateDTO(
+            usuarios.getNomeCompleto(),
+            usuarios.getCpf(),
+            usuarios.getEmail(),
+            null, // senha não é retornada
+            usuarios.getMatricula(),
+            usuarios.getNumeroTelefone(),
+            usuarios.getEnderecoId()
+        );
     }
 
     public UsuariosUpdateDTO toUpdateDTO(Usuarios usuarios) {
@@ -135,17 +124,15 @@ public class UsuariosModelMapper {
             return null;
         }
         
-        UsuariosUpdateDTO dto = new UsuariosUpdateDTO();
-        dto.setNomeCompleto(usuarios.getNomeCompleto());
-        dto.setCpf(usuarios.getCpf());
-        dto.setEmail(usuarios.getEmail());
-        dto.setMatricula(usuarios.getMatricula());
-        dto.setNumeroTelefone(usuarios.getNumeroTelefone());
-        dto.setEmpresaId(usuarios.getEmpresaId());
-        dto.setEnderecoId(usuarios.getEnderecoId());
-        dto.setFlgInativo(usuarios.getFlgInativo());
-        
-        return dto;
+        return new UsuariosUpdateDTO(
+            usuarios.getNomeCompleto(),
+            usuarios.getCpf(),
+            usuarios.getEmail(),
+            usuarios.getMatricula(),
+            usuarios.getEmpresaId(),
+            usuarios.getEnderecoId(),
+            usuarios.getFlgInativo()
+        );
     }
 
     public UsuariosListDTO toListDTO(List<Usuarios> usuarios) {
@@ -157,11 +144,7 @@ public class UsuariosModelMapper {
                 .map(this::toDTO)
                 .collect(Collectors.toList());
         
-        UsuariosListDTO listDTO = new UsuariosListDTO();
-        listDTO.setUsuarios(dtoList);
-        listDTO.setTotalCount(dtoList.size());
-        
-        return listDTO;
+        return new UsuariosListDTO(dtoList, dtoList.size());
     }
 
     public UsuariosListDTO toListDTO(Usuarios usuario) {
@@ -170,12 +153,9 @@ public class UsuariosModelMapper {
         }
         
         UsuariosDTO dto = toDTO(usuario);
-        UsuariosListDTO listDTO = new UsuariosListDTO();
         List<UsuariosDTO> dtoList = new ArrayList<>();
         dtoList.add(dto);
-        listDTO.setUsuarios(dtoList);
-        listDTO.setTotalCount(1);
         
-        return listDTO;
+        return new UsuariosListDTO(dtoList, 1);
     }
 }

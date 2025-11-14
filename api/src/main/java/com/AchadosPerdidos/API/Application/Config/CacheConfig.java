@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Profile;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 
 @Configuration
 @EnableCaching
@@ -22,7 +23,6 @@ public class CacheConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(CacheConfig.class);
     
-    // Nomes dos caches utilizados na aplicação
     private static final List<String> CACHE_NAMES = List.of(
         "itens",
         "usuarios", 
@@ -41,6 +41,9 @@ public class CacheConfig {
     @Value("${cache.max-size:500}")
     private int maxCacheSize;
 
+    @Value("${cache.initial-capacity:128}")
+    private int initialCapacity;
+
     @Value("${cache.expire-minutes:15}")
     private int expireMinutes;
 
@@ -55,12 +58,18 @@ public class CacheConfig {
             return createFallbackCacheManager();
         }
 
-        logger.info("Configurando CaffeineCacheManager com maxSize={}, expireMinutes={}", 
-                   maxCacheSize, expireMinutes);
+        logger.info(
+                "Configurando CaffeineCacheManager com initialCapacity={}, maxSize={}, expireMinutes={}, expireAfterAccessMinutes={}",
+                initialCapacity,
+                maxCacheSize,
+                expireMinutes,
+                expireAfterAccessMinutes
+        );
 
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
-        cacheManager.setCaffeine(createCaffeineBuilder());
+    cacheManager.setCaffeine(Objects.requireNonNull(createCaffeineBuilder()));
         cacheManager.setCacheNames(CACHE_NAMES);
+        cacheManager.setAllowNullValues(false);
         
         return cacheManager;
     }
@@ -79,16 +88,18 @@ public class CacheConfig {
 
     private Caffeine<Object, Object> createCaffeineBuilder() {
         return Caffeine.newBuilder()
+                .initialCapacity(initialCapacity)
                 .maximumSize(maxCacheSize)
                 .expireAfterWrite(Duration.ofMinutes(expireMinutes))
                 .expireAfterAccess(Duration.ofMinutes(expireAfterAccessMinutes))
                 .recordStats()
-                .removalListener((key, value, cause) -> {
-                    logger.debug("Cache entry removida: key={}, cause={}", key, cause);
-                });
+                .removalListener((key, value, cause) ->
+                        logger.debug("Cache entry removida: key={}, cause={}", key, cause));
     }
 
     private ConcurrentMapCacheManager createFallbackCacheManager() {
-        return new ConcurrentMapCacheManager(CACHE_NAMES.toArray(String[]::new));
+        ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager();
+        cacheManager.setCacheNames(CACHE_NAMES);
+        return cacheManager;
     }
 }

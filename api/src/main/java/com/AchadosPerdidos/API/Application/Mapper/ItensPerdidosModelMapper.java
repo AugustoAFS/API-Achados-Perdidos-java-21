@@ -16,19 +16,18 @@ public class ItensPerdidosModelMapper {
             return null;
         }
         
-        ItensPerdidosDTO dto = new ItensPerdidosDTO();
-        dto.setId(itensPerdidos.getId());
-        dto.setNome(itensPerdidos.getNome());
-        dto.setDescricao(itensPerdidos.getDescricao());
-        dto.setEncontradoEm(itensPerdidos.getEncontrado_Em());
-        dto.setUsuarioRelatorId(itensPerdidos.getUsuario_Relator_Id());
-        dto.setLocalId(itensPerdidos.getLocal_Id());
-        dto.setStatusItemId(itensPerdidos.getStatus_Item_Id());
-        dto.setDtaCriacao(itensPerdidos.getDta_Criacao());
-        dto.setFlgInativo(itensPerdidos.getFlg_Inativo());
-        dto.setDtaRemocao(itensPerdidos.getDta_Remocao());
-        
-        return dto;
+        return new ItensPerdidosDTO(
+            itensPerdidos.getId(),
+            itensPerdidos.getNome(),
+            itensPerdidos.getDescricao(),
+            itensPerdidos.getEncontrado_Em(),
+            itensPerdidos.getUsuario_Relator_Id(),
+            itensPerdidos.getLocal_Id(),
+            itensPerdidos.getStatus_Item_Id(),
+            itensPerdidos.getDta_Criacao(),
+            itensPerdidos.getFlg_Inativo(),
+            itensPerdidos.getDta_Remocao()
+        );
     }
 
     public ItensPerdidos toEntity(ItensPerdidosDTO dto) {
@@ -36,17 +35,17 @@ public class ItensPerdidosModelMapper {
             return null;
         }
         
-        ItensPerdidos itensPerdidos = new ItensPerdidos();
-        itensPerdidos.setId(dto.getId());
-        itensPerdidos.setNome(dto.getNome());
-        itensPerdidos.setDescricao(dto.getDescricao());
-        itensPerdidos.setEncontrado_Em(dto.getEncontradoEm());
-        itensPerdidos.setUsuario_Relator_Id(dto.getUsuarioRelatorId());
-        itensPerdidos.setLocal_Id(dto.getLocalId());
-        itensPerdidos.setStatus_Item_Id(dto.getStatusItemId());
-        itensPerdidos.setDta_Criacao(dto.getDtaCriacao());
-        itensPerdidos.setFlg_Inativo(dto.getFlgInativo());
-        itensPerdidos.setDta_Remocao(dto.getDtaRemocao());
+    ItensPerdidos itensPerdidos = new ItensPerdidos();
+    itensPerdidos.setId(dto.getId());
+    itensPerdidos.setNome(dto.getNome());
+    itensPerdidos.setDescricao(dto.getDescricao());
+    itensPerdidos.setEncontrado_Em(dto.getEncontradoEm());
+    itensPerdidos.setUsuario_Relator_Id(dto.getUsuarioRelatorId());
+    itensPerdidos.setLocal_Id(dto.getLocalId());
+    itensPerdidos.setStatus_Item_Id(dto.getStatusItemId());
+    itensPerdidos.setDta_Criacao(dto.getDtaCriacao());
+    itensPerdidos.setFlg_Inativo(dto.getFlgInativo());
+    itensPerdidos.setDta_Remocao(dto.getDtaRemocao());
         
         return itensPerdidos;
     }
@@ -60,11 +59,7 @@ public class ItensPerdidosModelMapper {
                 .map(this::toDTO)
                 .collect(Collectors.toList());
         
-        ItensPerdidosListDTO listDTO = new ItensPerdidosListDTO();
-        listDTO.setItensPerdidos(dtoList);
-        listDTO.setTotalCount(dtoList.size());
-        
-        return listDTO;
+        return new ItensPerdidosListDTO(dtoList, dtoList.size());
     }
 }
 

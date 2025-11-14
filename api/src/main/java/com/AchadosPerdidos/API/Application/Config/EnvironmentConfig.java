@@ -25,12 +25,10 @@ public class EnvironmentConfig implements ApplicationListener<ApplicationEnviron
     public void onApplicationEvent(@NonNull ApplicationEnvironmentPreparedEvent event) {
         this.environment = event.getEnvironment();
         
-        // Obtém o perfil ativo diretamente
         String[] activeProfiles = environment.getActiveProfiles();
         String activeProfile = activeProfiles.length > 0 ? activeProfiles[0] : 
                               environment.getProperty("spring.profiles.active", "dev");
         
-        // Log do ambiente detectado
         logEnvironmentInfo(activeProfile);
         
         Dotenv dotenv = Dotenv.configure()

@@ -1,15 +1,7 @@
 package com.AchadosPerdidos.API.Application.DTOs.Fotos;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Schema(description = "DTO completo de foto")
 public class FotosDTO {
     @Schema(description = "ID da foto", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
@@ -30,12 +22,101 @@ public class FotosDTO {
     @Schema(description = "Tamanho em bytes", example = "1024000")
     private Long tamanhoArquivoBytes;
 
-    @Schema(description = "Data de criação", example = "2024-01-01T00:00:00")
+    @Schema(description = "Data de criacao", example = "2024-01-01T00:00:00")
     private java.util.Date dtaCriacao;
 
-    @Schema(description = "Flag de inativação", example = "false")
+    @Schema(description = "Flag de inativacao", example = "false")
     private Boolean flgInativo;
 
-    @Schema(description = "Data de remoção lógica", example = "2024-02-01T00:00:00")
+    @Schema(description = "Data de remocao logica", example = "2024-02-01T00:00:00")
     private java.util.Date dtaRemocao;
+
+    public FotosDTO() {
+        // Construtor padrao para frameworks de serializacao
+    }
+
+    public FotosDTO(Integer id, String url, String provedorArmazenamento, String chaveArmazenamento, String nomeArquivoOriginal, Long tamanhoArquivoBytes, java.util.Date dtaCriacao, Boolean flgInativo, java.util.Date dtaRemocao) {
+        this.id = id;
+        this.url = url;
+        this.provedorArmazenamento = provedorArmazenamento;
+        this.chaveArmazenamento = chaveArmazenamento;
+        this.nomeArquivoOriginal = nomeArquivoOriginal;
+        this.tamanhoArquivoBytes = tamanhoArquivoBytes;
+        this.dtaCriacao = dtaCriacao;
+        this.flgInativo = flgInativo;
+        this.dtaRemocao = dtaRemocao;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getProvedorArmazenamento() {
+        return provedorArmazenamento;
+    }
+
+    public void setProvedorArmazenamento(String provedorArmazenamento) {
+        this.provedorArmazenamento = provedorArmazenamento;
+    }
+
+    public String getChaveArmazenamento() {
+        return chaveArmazenamento;
+    }
+
+    public void setChaveArmazenamento(String chaveArmazenamento) {
+        this.chaveArmazenamento = chaveArmazenamento;
+    }
+
+    public String getNomeArquivoOriginal() {
+        return nomeArquivoOriginal;
+    }
+
+    public void setNomeArquivoOriginal(String nomeArquivoOriginal) {
+        this.nomeArquivoOriginal = nomeArquivoOriginal;
+    }
+
+    public Long getTamanhoArquivoBytes() {
+        return tamanhoArquivoBytes;
+    }
+
+    public void setTamanhoArquivoBytes(Long tamanhoArquivoBytes) {
+        this.tamanhoArquivoBytes = tamanhoArquivoBytes;
+    }
+
+    public java.util.Date getDtaCriacao() {
+        return dtaCriacao;
+    }
+
+    public void setDtaCriacao(java.util.Date dtaCriacao) {
+        this.dtaCriacao = dtaCriacao;
+    }
+
+    public Boolean getFlgInativo() {
+        return flgInativo;
+    }
+
+    public void setFlgInativo(Boolean flgInativo) {
+        this.flgInativo = flgInativo;
+    }
+
+    public java.util.Date getDtaRemocao() {
+        return dtaRemocao;
+    }
+
+    public void setDtaRemocao(java.util.Date dtaRemocao) {
+        this.dtaRemocao = dtaRemocao;
+    }
 }
+

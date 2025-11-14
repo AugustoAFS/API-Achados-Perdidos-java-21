@@ -2,7 +2,6 @@ package com.AchadosPerdidos.API.Infrastruture.DataBase;
 
 import com.AchadosPerdidos.API.Domain.Entity.Local;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.Interfaces.ILocalQueries;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -12,8 +11,11 @@ import java.util.List;
 @Repository
 public class LocalQueries implements ILocalQueries {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
+
+    public LocalQueries(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     private final RowMapper<Local> rowMapper = (rs, rowNum) -> {
         Local local = new Local();

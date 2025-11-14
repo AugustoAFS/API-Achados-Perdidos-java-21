@@ -16,18 +16,17 @@ public class FotosModelMapper {
             return null;
         }
         
-        FotosDTO dto = new FotosDTO();
-        dto.setId(fotos.getId());
-        dto.setUrl(fotos.getUrl());
-        dto.setProvedorArmazenamento(fotos.getProvedorArmazenamento() != null ? fotos.getProvedorArmazenamento().toString() : null);
-        dto.setChaveArmazenamento(fotos.getChaveArmazenamento());
-        dto.setNomeArquivoOriginal(fotos.getNomeArquivoOriginal());
-        dto.setTamanhoArquivoBytes(fotos.getTamanhoArquivoBytes());
-        dto.setDtaCriacao(fotos.getDtaCriacao());
-        dto.setFlgInativo(fotos.getFlgInativo());
-        dto.setDtaRemocao(fotos.getDtaRemocao());
-        
-        return dto;
+        return new FotosDTO(
+            fotos.getId(),
+            fotos.getUrl(),
+            fotos.getProvedorArmazenamento() != null ? fotos.getProvedorArmazenamento().toString() : null,
+            fotos.getChaveArmazenamento(),
+            fotos.getNomeArquivoOriginal(),
+            fotos.getTamanhoArquivoBytes(),
+            fotos.getDtaCriacao(),
+            fotos.getFlgInativo(),
+            fotos.getDtaRemocao()
+        );
     }
 
     public Fotos toEntity(FotosDTO dto) {
@@ -60,10 +59,6 @@ public class FotosModelMapper {
                 .map(this::toDTO)
                 .collect(Collectors.toList());
         
-        FotosListDTO listDTO = new FotosListDTO();
-        listDTO.setFotos(dtoList);
-        listDTO.setTotalCount(dtoList.size());
-        
-        return listDTO;
+        return new FotosListDTO(dtoList, dtoList.size());
     }
 }

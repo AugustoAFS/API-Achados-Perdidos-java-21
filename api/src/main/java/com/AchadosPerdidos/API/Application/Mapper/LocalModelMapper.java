@@ -9,15 +9,15 @@ public class LocalModelMapper {
 
     public LocalDTO toDTO(Local local) {
         if (local == null) return null;
-        LocalDTO dto = new LocalDTO();
-        dto.setId(local.getId());
-        dto.setNome(local.getNome());
-        dto.setDescricao(local.getDescricao());
-        dto.setCampusId(local.getCampusId());
-        dto.setDtaCriacao(local.getDtaCriacao());
-        dto.setFlgInativo(local.getFlgInativo());
-        dto.setDtaRemocao(local.getDtaRemocao());
-        return dto;
+        return new LocalDTO(
+            local.getId(),
+            local.getNome(),
+            local.getDescricao(),
+            local.getCampusId(),
+            local.getDtaCriacao(),
+            local.getFlgInativo(),
+            local.getDtaRemocao()
+        );
     }
 
     public Local toEntity(LocalDTO dto) {

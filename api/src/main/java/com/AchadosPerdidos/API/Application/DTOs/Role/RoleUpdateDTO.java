@@ -2,26 +2,49 @@ package com.AchadosPerdidos.API.Application.DTOs.Role;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(description = "DTO para atualização de role")
+@Schema(description = "DTO para atualizacao de role")
 public class RoleUpdateDTO {
-    
     @Schema(description = "Nome da role", example = "Admin")
     private String nome;
-    
-    @Schema(description = "Descrição da role", example = "Administrador do sistema")
+
+    @Schema(description = "Descricao da role", example = "Administrador do sistema")
     private String descricao;
-    
-    @Schema(description = "Flag indicando se está inativo", example = "false")
+
+    @Schema(description = "Flag indicando se esta inativo", example = "false")
     private Boolean flgInativo;
 
-    // Getters e Setters
-    public String getNome() { return nome; }
-    public void setNome(String nome) { this.nome = nome; }
+    public RoleUpdateDTO() {
+        // Construtor padrao para frameworks de serializacao
+    }
 
-    public String getDescricao() { return descricao; }
-    public void setDescricao(String descricao) { this.descricao = descricao; }
+    public RoleUpdateDTO(String nome, String descricao, Boolean flgInativo) {
+        this.nome = nome;
+        this.descricao = descricao;
+        this.flgInativo = flgInativo;
+    }
 
-    public Boolean getFlgInativo() { return flgInativo; }
-    public void setFlgInativo(Boolean flgInativo) { this.flgInativo = flgInativo; }
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
+    }
+
+    public Boolean getFlgInativo() {
+        return flgInativo;
+    }
+
+    public void setFlgInativo(Boolean flgInativo) {
+        this.flgInativo = flgInativo;
+    }
 }
 

@@ -2,9 +2,9 @@ package com.AchadosPerdidos.API.Infrastruture.DataBase;
 
 import com.AchadosPerdidos.API.Domain.Entity.Campus;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.Interfaces.ICampusQueries;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,9 +12,12 @@ import java.util.List;
 @Repository
 public class CampusQueries implements ICampusQueries {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
+    public CampusQueries(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
+    @NonNull
     private final RowMapper<Campus> rowMapper = (rs, rowNum) -> {
         Campus campus = new Campus();
         campus.setId(rs.getInt("id"));

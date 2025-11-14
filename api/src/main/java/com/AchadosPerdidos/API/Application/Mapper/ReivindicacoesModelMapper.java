@@ -16,17 +16,16 @@ public class ReivindicacoesModelMapper {
             return null;
         }
         
-        ReivindicacoesDTO dto = new ReivindicacoesDTO();
-        dto.setId(reivindicacoes.getId());
-        dto.setDetalhesReivindicacao(reivindicacoes.getDetalhesReivindicacao());
-        dto.setItemId(reivindicacoes.getItemId());
-        dto.setUsuarioReivindicadorId(reivindicacoes.getUsuarioReivindicadorId());
-        dto.setUsuarioAchouId(reivindicacoes.getUsuarioAchouId());
-        dto.setDtaCriacao(reivindicacoes.getDtaCriacao());
-        dto.setFlgInativo(reivindicacoes.getFlgInativo());
-        dto.setDtaRemocao(reivindicacoes.getDtaRemocao());
-        
-        return dto;
+        return new ReivindicacoesDTO(
+            reivindicacoes.getId(),
+            reivindicacoes.getDetalhesReivindicacao(),
+            reivindicacoes.getItemId(),
+            reivindicacoes.getUsuarioReivindicadorId(),
+            reivindicacoes.getUsuarioAchouId(),
+            reivindicacoes.getDtaCriacao(),
+            reivindicacoes.getFlgInativo(),
+            reivindicacoes.getDtaRemocao()
+        );
     }
 
     public Reivindicacoes toEntity(ReivindicacoesDTO dto) {
@@ -35,14 +34,14 @@ public class ReivindicacoesModelMapper {
         }
         
         Reivindicacoes reivindicacoes = new Reivindicacoes();
-        reivindicacoes.setId(dto.getId());
-        reivindicacoes.setDetalhesReivindicacao(dto.getDetalhesReivindicacao());
-        reivindicacoes.setItemId(dto.getItemId());
-        reivindicacoes.setUsuarioReivindicadorId(dto.getUsuarioReivindicadorId());
-        reivindicacoes.setUsuarioAchouId(dto.getUsuarioAchouId());
-        reivindicacoes.setDtaCriacao(dto.getDtaCriacao());
-        reivindicacoes.setFlgInativo(dto.getFlgInativo());
-        reivindicacoes.setDtaRemocao(dto.getDtaRemocao());
+    reivindicacoes.setId(dto.getId());
+    reivindicacoes.setDetalhesReivindicacao(dto.getDetalhesReivindicacao());
+    reivindicacoes.setItemId(dto.getItemId());
+    reivindicacoes.setUsuarioReivindicadorId(dto.getUsuarioReivindicadorId());
+    reivindicacoes.setUsuarioAchouId(dto.getUsuarioAchouId());
+    reivindicacoes.setDtaCriacao(dto.getDtaCriacao());
+    reivindicacoes.setFlgInativo(dto.getFlgInativo());
+    reivindicacoes.setDtaRemocao(dto.getDtaRemocao());
         
         return reivindicacoes;
     }
@@ -56,10 +55,6 @@ public class ReivindicacoesModelMapper {
                 .map(this::toDTO)
                 .collect(Collectors.toList());
         
-        ReivindicacoesListDTO listDTO = new ReivindicacoesListDTO();
-        listDTO.setReivindicacoes(dtoList);
-        listDTO.setTotalCount(dtoList.size());
-        
-        return listDTO;
+        return new ReivindicacoesListDTO(dtoList, dtoList.size());
     }
 }

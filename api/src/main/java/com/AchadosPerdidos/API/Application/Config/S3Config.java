@@ -9,12 +9,6 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 
-
-/**
- * Configuração do AWS S3 para upload e download de arquivos
- * Esta classe configura o cliente S3 com as credenciais AWS
- * Funciona tanto localmente quanto em produção
- */
 @Configuration
 public class S3Config {
     

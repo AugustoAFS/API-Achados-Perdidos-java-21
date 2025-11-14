@@ -9,14 +9,14 @@ public class CidadeModelMapper {
 
     public CidadeDTO toDTO(Cidade cidade) {
         if (cidade == null) return null;
-        CidadeDTO dto = new CidadeDTO();
-        dto.setId(cidade.getId());
-        dto.setNome(cidade.getNome());
-        dto.setEstadoId(cidade.getEstadoId());
-        dto.setDtaCriacao(cidade.getDtaCriacao());
-        dto.setFlgInativo(cidade.getFlgInativo());
-        dto.setDtaRemocao(cidade.getDtaRemocao());
-        return dto;
+        return new CidadeDTO(
+            cidade.getId(),
+            cidade.getNome(),
+            cidade.getEstadoId(),
+            cidade.getDtaCriacao(),
+            cidade.getFlgInativo(),
+            cidade.getDtaRemocao()
+        );
     }
 
     public Cidade toEntity(CidadeDTO dto) {
