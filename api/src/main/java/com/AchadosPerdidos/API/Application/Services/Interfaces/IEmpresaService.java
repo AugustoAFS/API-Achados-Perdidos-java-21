@@ -10,5 +10,4 @@ public interface IEmpresaService {
     EmpresaDTO updateEmpresa(int id, EmpresaDTO empresaDTO);
     boolean deleteEmpresa(int id);
     EmpresaListDTO getActiveEmpresas();
-    EmpresaListDTO getEmpresasByCountry(String paisSede);
 }

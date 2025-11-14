@@ -1,5 +1,7 @@
 package com.AchadosPerdidos.API.Domain.Entity;
 
+import com.AchadosPerdidos.API.Domain.Validator.EntityValidator;
+
 import java.util.Date;
 
 public class Reivindicacoes {
@@ -89,5 +91,33 @@ public class Reivindicacoes {
         this.dtaRemocao = dtaRemocao;
     }
 
+    public void validate() {
+        EntityValidator.validateRequired(detalhesReivindicacao, "detalhes da reivindicação");
+        EntityValidator.validateMinLength(detalhesReivindicacao, 20, "detalhes da reivindicação");
+        EntityValidator.validateMaxLength(detalhesReivindicacao, 1000, "detalhes da reivindicação");
+        
+        EntityValidator.validateRequired(itemId, "item");
+        EntityValidator.validatePositive(itemId, "item");
+        
+        EntityValidator.validateRequired(usuarioReivindicadorId, "usuário reivindicador");
+        EntityValidator.validatePositive(usuarioReivindicadorId, "usuário reivindicador");
+    }
+    
+    public void marcarComoInativa() {
+        this.flgInativo = true;
+        this.dtaRemocao = new Date();
+    }
+    
+    public boolean isAtiva() {
+        return !Boolean.TRUE.equals(flgInativo) && dtaRemocao == null;
+    }
+    
+    public boolean isAprovada() {
+        return usuarioAchouId != null;
+    }
+    
+    public void aprovar(Integer usuarioQueAchouId) {
+        this.usuarioAchouId = usuarioQueAchouId;
+    }
 }
 

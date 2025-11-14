@@ -1,6 +1,6 @@
 package com.AchadosPerdidos.API.Application.Services;
 
-import com.AchadosPerdidos.API.Application.Services.Interfaces.IJwtTokenService;
+import com.AchadosPerdidos.API.Application.Services.Interfaces.IJWTService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -15,13 +15,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Implementação do serviço de geração de tokens JWT
- */
 @Service
-public class JwtTokenService implements IJwtTokenService {
+public class JWTService implements IJWTService {
     
-    private static final Logger _log = LoggerFactory.getLogger(JwtTokenService.class);
+    private static final Logger _log = LoggerFactory.getLogger(JWTService.class);
     
     @Value("${jwt.secret-key}")
     private String secretKey;
@@ -38,7 +35,7 @@ public class JwtTokenService implements IJwtTokenService {
     @Override
     public String generateToken(String email, String name, String role, String userId) {
         try {
-            SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
+            SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
             
             Map<String, Object> claims = new HashMap<>();
             claims.put("sub", userId);
@@ -70,11 +67,7 @@ public class JwtTokenService implements IJwtTokenService {
     @Override
     public boolean validateToken(String token) {
         try {
-            SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-            Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token);
+            getClaims(token);
             return true;
         } catch (Exception e) {
             _log.warn("Token JWT inválido: {}", e.getMessage());
@@ -85,12 +78,7 @@ public class JwtTokenService implements IJwtTokenService {
     @Override
     public String getEmailFromToken(String token) {
         try {
-            SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-            Claims claims = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+            Claims claims = getClaims(token);
             return claims.get("email", String.class);
         } catch (Exception e) {
             _log.error("Erro ao extrair email do token", e);
@@ -99,14 +87,20 @@ public class JwtTokenService implements IJwtTokenService {
     }
 
     @Override
+    public String getRoleFromToken(String token) {
+        try {
+            Claims claims = getClaims(token);
+            return claims.get("role", String.class);
+        } catch (Exception e) {
+            _log.error("Erro ao extrair role do token", e);
+            return null;
+        }
+    }
+
+    @Override
     public String getUserIdFromToken(String token) {
         try {
-            SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-            Claims claims = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+            Claims claims = getClaims(token);
             return claims.getSubject();
         } catch (Exception e) {
             _log.error("Erro ao extrair ID do usuário do token", e);
@@ -117,16 +111,20 @@ public class JwtTokenService implements IJwtTokenService {
     @Override
     public boolean isTokenExpired(String token) {
         try {
-            SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-            Claims claims = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+            Claims claims = getClaims(token);
             return claims.getExpiration().before(new Date());
         } catch (Exception e) {
             _log.error("Erro ao verificar expiração do token", e);
             return true;
         }
+    }
+
+    private Claims getClaims(String token) {
+        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+        return Jwts.parser()
+            .verifyWith(key)
+            .build()
+            .parseSignedClaims(token)
+            .getPayload();
     }
 }

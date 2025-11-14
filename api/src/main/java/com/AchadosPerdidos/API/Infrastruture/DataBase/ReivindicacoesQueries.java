@@ -55,7 +55,6 @@ public class ReivindicacoesQueries implements IReivindicacoesQueries {
             reivindicacoes.getDtaCriacao(),
             reivindicacoes.getFlgInativo());
         
-        // Buscar o registro inserido para retornar com o ID
         String selectSql = "SELECT * FROM ap_achados_perdidos.itens_reivindicados WHERE item_id = ? AND usuario_reivindicador_id = ? AND Dta_Criacao = ? ORDER BY id DESC LIMIT 1";
         List<Reivindicacoes> inserted = jdbcTemplate.query(selectSql, rowMapper, 
             reivindicacoes.getItemId(),
@@ -101,7 +100,6 @@ public class ReivindicacoesQueries implements IReivindicacoesQueries {
 
     @Override
     public List<Reivindicacoes> findByProprietario(int proprietarioId) {
-        // TODO: Verificar se usuario_achou_id é o proprietário ou se precisa de outra lógica
         String sql = "SELECT * FROM ap_achados_perdidos.itens_reivindicados WHERE usuario_achou_id = ? AND Flg_Inativo = false ORDER BY Dta_Criacao DESC";
         return jdbcTemplate.query(sql, rowMapper, proprietarioId);
     }

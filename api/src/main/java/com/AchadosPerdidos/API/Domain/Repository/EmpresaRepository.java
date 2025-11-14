@@ -42,9 +42,4 @@ public class EmpresaRepository implements IEmpresaRepository {
     public List<Empresa> findActive() {
         return empresaQueries.findActive();
     }
-
-    @Override
-    public List<Empresa> findByCountry(String paisSede) {
-        return empresaQueries.findByCountry(paisSede);
-    }
 }

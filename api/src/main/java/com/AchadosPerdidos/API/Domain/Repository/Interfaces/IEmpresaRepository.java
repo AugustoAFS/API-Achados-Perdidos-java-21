@@ -9,5 +9,4 @@ public interface IEmpresaRepository {
     Empresa save(Empresa empresa);
     boolean deleteById(int id);
     List<Empresa> findActive();
-    List<Empresa> findByCountry(String paisSede);
 }
