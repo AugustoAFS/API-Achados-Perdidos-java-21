@@ -7,7 +7,7 @@ import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosUpdateDTO;
 import com.AchadosPerdidos.API.Application.Mapper.UsuariosModelMapper;
-import com.AchadosPerdidos.API.Application.Services.Interfaces.IJwtTokenService;
+import com.AchadosPerdidos.API.Application.Services.Interfaces.IJWTService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuariosService;
 import com.AchadosPerdidos.API.Exeptions.BusinessException;
 import com.AchadosPerdidos.API.Exeptions.ResourceNotFoundException;
@@ -34,7 +34,7 @@ public class UsuariosService implements IUsuariosService {
     private UsuariosModelMapper usuariosModelMapper;
 
     @Autowired
-    private IJwtTokenService jwtTokenService;
+    private IJWTService jwtTokenService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
