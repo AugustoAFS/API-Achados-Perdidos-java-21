@@ -8,6 +8,8 @@ import com.AchadosPerdidos.API.Application.Mapper.ItensModelMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IItensService;
 import com.AchadosPerdidos.API.Domain.Entity.Itens;
 import com.AchadosPerdidos.API.Domain.Repository.ItensRepository;
+import com.AchadosPerdidos.API.Exeptions.BusinessException;
+import com.AchadosPerdidos.API.Exeptions.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
@@ -43,11 +45,18 @@ public class ItensService implements IItensService {
     @CacheEvict(value = "itens", allEntries = true)
     public ItensDTO createItem(ItensDTO itensDTO) {
         Itens itens = itensModelMapper.toEntity(itensDTO);
+        
         itens.setDtaCriacao(new Date());
         if (itens.getEncontradoEm() == null) {
             itens.setEncontradoEm(new Date());
         }
         itens.setFlgInativo(false);
+        
+        if (itens.getStatusItemId() == null) {
+            itens.setStatusItemId(1);
+        }
+        
+        itens.validate();
         
         Itens savedItens = itensRepository.save(itens);
         return itensModelMapper.toDTO(savedItens);
@@ -59,11 +68,15 @@ public class ItensService implements IItensService {
         Itens itens = new Itens();
         itens.setNome(createDTO.getNome());
         itens.setDescricao(createDTO.getDescricao());
-        itens.setStatusItemId(createDTO.getStatusItemId());
         itens.setLocalId(createDTO.getLocalId());
         itens.setEncontradoEm(createDTO.getEncontradoEm() != null ? createDTO.getEncontradoEm() : new Date());
         itens.setDtaCriacao(new Date());
         itens.setFlgInativo(false);
+        
+        Integer statusId = createDTO.getStatusItemId();
+        itens.setStatusItemId(statusId != null ? statusId : 1);
+        
+        itens.validate();
         
         Itens savedItens = itensRepository.save(itens);
         return itensModelMapper.toDTO(savedItens);
@@ -74,7 +87,11 @@ public class ItensService implements IItensService {
     public ItensDTO updateItem(int id, ItensDTO itensDTO) {
         Itens existingItens = itensRepository.findById(id);
         if (existingItens == null) {
-            return null;
+            throw new ResourceNotFoundException("Item não encontrado com ID: " + id);
+        }
+        
+        if (existingItens.getDtaRemocao() != null) {
+            throw new BusinessException("Não é possível atualizar um item que já foi removido");
         }
         
         existingItens.setNome(itensDTO.getNome());
@@ -85,6 +102,8 @@ public class ItensService implements IItensService {
         existingItens.setUsuarioRelatorId(itensDTO.getUsuarioRelatorId());
         existingItens.setLocalId(itensDTO.getLocalId());
         existingItens.setDtaRemocao(itensDTO.getDtaRemocao());
+        
+        existingItens.validate();
         
         Itens updatedItens = itensRepository.save(existingItens);
         return itensModelMapper.toDTO(updatedItens);
@@ -98,7 +117,6 @@ public class ItensService implements IItensService {
             return null;
         }
         
-        // Atualizar apenas os campos fornecidos
         if (updateDTO.getNome() != null) {
             existingItens.setNome(updateDTO.getNome());
         }
@@ -127,10 +145,12 @@ public class ItensService implements IItensService {
     public boolean deleteItem(int id) {
         Itens itens = itensRepository.findById(id);
         if (itens == null) {
-            return false;
+            throw new ResourceNotFoundException("Item não encontrado com ID: " + id);
         }
         
-        return itensRepository.deleteById(id);
+        itens.marcarComoInativo();
+        itensRepository.save(itens);
+        return true;
     }
 
     @Override
@@ -195,13 +215,32 @@ public class ItensService implements IItensService {
     @Override
     public boolean markItemAsDonated(int itemId) {
         Itens item = itensRepository.findById(itemId);
-        if (item != null) {
-            // Status 3 = "Doado" (conforme status_item)
-            item.setStatusItemId(3);
-            itensRepository.save(item);
-            return true;
+        if (item == null) {
+            throw new ResourceNotFoundException("Item não encontrado com ID: " + itemId);
         }
-        return false;
+        
+        if (!item.isAtivo()) {
+            throw new BusinessException("Não é possível doar um item inativo");
+        }
+        
+        item.setStatusItemId(3);
+        itensRepository.save(item);
+        return true;
+    }
+    
+    public boolean markItemAsReturned(int itemId) {
+        Itens item = itensRepository.findById(itemId);
+        if (item == null) {
+            throw new ResourceNotFoundException("Item não encontrado com ID: " + itemId);
+        }
+        
+        if (!item.isAtivo()) {
+            throw new BusinessException("Não é possível marcar como devolvido um item inativo");
+        }
+        
+        item.setStatusItemId(2);
+        itensRepository.save(item);
+        return true;
     }
 
     @Override

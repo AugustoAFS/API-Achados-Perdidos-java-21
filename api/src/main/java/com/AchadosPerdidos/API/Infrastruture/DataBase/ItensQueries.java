@@ -58,7 +58,6 @@ public class ItensQueries implements IItensQueries {
             itens.getDtaCriacao(),
             itens.getFlgInativo());
         
-        // Buscar o registro inserido para retornar com o ID
         String selectSql = "SELECT * FROM ap_achados_perdidos.itens_perdidos WHERE nome = ? AND Dta_Criacao = ? ORDER BY id DESC LIMIT 1";
         List<Itens> inserted = jdbcTemplate.query(selectSql, rowMapper, 
             itens.getNome(), 
@@ -111,7 +110,6 @@ public class ItensQueries implements IItensQueries {
 
     @Override
     public List<Itens> findByCampus(int campusId) {
-        // TODO: Implementar join com locais para buscar por campus
         String sql = "SELECT ip.* FROM ap_achados_perdidos.itens_perdidos ip " +
                      "INNER JOIN ap_achados_perdidos.locais l ON ip.local_id = l.id " +
                      "WHERE l.campus_id = ? ORDER BY ip.Dta_Criacao DESC";
@@ -126,7 +124,6 @@ public class ItensQueries implements IItensQueries {
 
     @Override
     public List<Itens> findByEmpresa(int empresaId) {
-        // TODO: Implementar join com usuarios para buscar por empresa
         String sql = "SELECT ip.* FROM ap_achados_perdidos.itens_perdidos ip " +
                      "INNER JOIN ap_achados_perdidos.usuarios u ON ip.usuario_relator_id = u.id " +
                      "WHERE u.empresa_id = ? ORDER BY ip.Dta_Criacao DESC";
@@ -144,19 +141,19 @@ public class ItensQueries implements IItensQueries {
     public List<Itens> findItemsNearDonationDeadline(int daysFromNow) {
         String sql = "SELECT * FROM ap_achados_perdidos.itens_perdidos WHERE " +
                      "Flg_Inativo = false AND " +
-                     "status_item_id = 1 AND " + // Status "Ativo"
-                     "Dta_Criacao <= (CURRENT_DATE - INTERVAL '" + daysFromNow + " days') " +
+                     "status_item_id = 1 AND " +
+                     "Dta_Criacao <= (CURRENT_DATE - INTERVAL '1 day' * ?) " +
                      "ORDER BY Dta_Criacao ASC";
-        return jdbcTemplate.query(sql, rowMapper);
+        return jdbcTemplate.query(sql, rowMapper, daysFromNow);
     }
 
     @Override
     public List<Itens> findExpiredItems(int daysExpired) {
         String sql = "SELECT * FROM ap_achados_perdidos.itens_perdidos WHERE " +
                      "Flg_Inativo = false AND " +
-                     "status_item_id = 1 AND " + // Status "Ativo"
-                     "Dta_Criacao <= (CURRENT_DATE - INTERVAL '" + daysExpired + " days') " +
+                     "status_item_id = 1 AND " +
+                     "Dta_Criacao <= (CURRENT_DATE - INTERVAL '1 day' * ?) " +
                      "ORDER BY Dta_Criacao ASC";
-        return jdbcTemplate.query(sql, rowMapper);
+        return jdbcTemplate.query(sql, rowMapper, daysExpired);
     }
 }

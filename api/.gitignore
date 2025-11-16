@@ -49,3 +49,6 @@ setup-env.bat
 *.swp
 *.swo
 *~
+
+### Documentation (Internal) ###
+.github/instructions/
