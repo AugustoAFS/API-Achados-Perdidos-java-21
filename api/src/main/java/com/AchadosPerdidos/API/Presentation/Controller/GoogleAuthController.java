@@ -4,7 +4,7 @@ import com.AchadosPerdidos.API.Application.DTOs.Auth.AuthResponseDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Auth.GoogleUserDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosDTO;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IGoogleAuthService;
-import com.AchadosPerdidos.API.Application.Services.Interfaces.IJwtTokenService;
+import com.AchadosPerdidos.API.Application.Services.Interfaces.IJWTService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuariosService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
@@ -24,15 +24,15 @@ public class GoogleAuthController {
     private static final Logger logger = LoggerFactory.getLogger(GoogleAuthController.class);
     
     private final IGoogleAuthService googleAuthService;
-    private final IJwtTokenService jwtTokenService;
+    private final IJWTService jwtService;
     private final IUsuariosService usuariosService;
     
     public GoogleAuthController(
             IGoogleAuthService googleAuthService,
-            IJwtTokenService jwtTokenService,
+            IJWTService jwtService,
             IUsuariosService usuariosService) {
         this.googleAuthService = googleAuthService;
-        this.jwtTokenService = jwtTokenService;
+        this.jwtService = jwtService;
         this.usuariosService = usuariosService;
         logger.info("GoogleAuthController inicializado");
     }
@@ -102,7 +102,7 @@ public class GoogleAuthController {
             logger.info("Informações do usuário obtidas: {}", usuario.getEmail());
             
             // Gerar token JWT com informações do usuário
-            String token = jwtTokenService.generateToken(
+            String token = jwtService.generateToken(
                 usuario.getEmail(),
                 usuario.getNomeCompleto(),
                 "User",

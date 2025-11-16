@@ -35,4 +35,3 @@ public class LoginRequestDTO {
         this.senha = senha;
     }
 }
-

@@ -47,4 +47,3 @@ public class RedefinirSenhaDTO {
         this.novaSenha = novaSenha;
     }
 }
-

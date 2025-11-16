@@ -1,5 +1,7 @@
 package com.AchadosPerdidos.API.Domain.Entity;
 
+import com.AchadosPerdidos.API.Domain.Validator.EntityValidator;
+
 import java.util.Date;
 
 public class Usuarios {
@@ -53,4 +55,35 @@ public class Usuarios {
     
     public Date getDtaRemocao() { return dtaRemocao; }
     public void setDtaRemocao(Date dtaRemocao) { this.dtaRemocao = dtaRemocao; }
+    
+    public void validate() {
+        EntityValidator.validateRequired(nomeCompleto, "nome completo");
+        EntityValidator.validateMinLength(nomeCompleto, 3, "nome completo");
+        EntityValidator.validateMaxLength(nomeCompleto, 255, "nome completo");
+        
+        EntityValidator.validateRequired(email, "email");
+        EntityValidator.validateEmail(email);
+        
+        EntityValidator.validateRequired(hashSenha, "senha");
+        
+        if (cpf != null && !cpf.trim().isEmpty()) {
+            EntityValidator.validateCpfFormat(cpf);
+            if (!EntityValidator.isValidCpf(cpf)) {
+                throw new com.AchadosPerdidos.API.Exeptions.BusinessException("CPF inválido");
+            }
+        }
+        
+        if (numeroTelefone != null && !numeroTelefone.trim().isEmpty()) {
+            EntityValidator.validatePhoneFormat(numeroTelefone);
+        }
+    }
+    
+    public void marcarComoInativo() {
+        this.flgInativo = true;
+        this.dtaRemocao = new Date();
+    }
+    
+    public boolean isAtivo() {
+        return !Boolean.TRUE.equals(flgInativo);
+    }
 }

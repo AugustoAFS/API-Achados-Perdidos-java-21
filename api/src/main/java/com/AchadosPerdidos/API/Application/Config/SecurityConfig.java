@@ -54,7 +54,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/usuarios/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/usuarios/redefinir-senha").permitAll()
                 .requestMatchers("/api/usuarios/criar").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/usuarios/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/usuarios/*/redefinir-senha").permitAll()
                 .requestMatchers("/api/google-auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET,"/api/campus").permitAll()
                 // Actuator e erros
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/error").permitAll()
@@ -73,7 +76,6 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Verifica se está em produção usando utilitário centralizado
         boolean isProduction = environmentConfig.isProduction();
         
         if (isProduction) {
@@ -85,7 +87,6 @@ public class SecurityConfig {
                 "https://www.api-achadosperdidos.com.br"
             ));
         } else {
-            // Desenvolvimento: remove "*" para compatibilidade com allowCredentials(true)
             configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:*",
                 "http://127.0.0.1:*"
