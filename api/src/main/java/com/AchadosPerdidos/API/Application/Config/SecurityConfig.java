@@ -52,6 +52,8 @@ public class SecurityConfig {
                 // Endpoints públicos
                 .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
                 .requestMatchers("/api/usuarios/criar").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/usuarios/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/usuarios/*/redefinir-senha").permitAll()
                 .requestMatchers("/api/google-auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET,"/api/campus").permitAll()
                 // Actuator e erros
