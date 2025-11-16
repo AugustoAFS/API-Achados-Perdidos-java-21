@@ -15,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/locais")
-@CrossOrigin(origins = "*")
 @Tag(name = "Locais", description = "API para gerenciamento de locais")
 public class LocalController {
 

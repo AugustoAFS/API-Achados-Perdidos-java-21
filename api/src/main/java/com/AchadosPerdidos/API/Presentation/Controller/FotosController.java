@@ -15,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/fotos")
-@CrossOrigin(origins = "*")
 @Tag(name = "Fotos", description = "API para gerenciamento de fotos")
 public class FotosController {
 

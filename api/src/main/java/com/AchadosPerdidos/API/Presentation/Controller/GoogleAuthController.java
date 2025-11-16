@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/google-auth")
-@CrossOrigin(origins = "*")
 @Tag(name = "Autenticação Google", description = "API para autenticação via Google OAuth2")
 public class GoogleAuthController {
     

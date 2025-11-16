@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/instituicao")
-@CrossOrigin(origins = "*")
 @Tag(name = "Instituições", description = "API para gerenciamento de instituições")
 public class InstituicaoController {
 

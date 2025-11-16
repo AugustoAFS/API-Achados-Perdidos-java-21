@@ -15,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/status-item")
-@CrossOrigin(origins = "*")
 @Tag(name = "Status Item", description = "API para gerenciamento de status de itens")
 public class StatusItemController {
 

@@ -8,10 +8,14 @@ public interface IUsuariosRepository {
     Usuarios findById(int id);
     Usuarios findByEmail(String email);
     Usuarios findByEmailAndPassword(String email, String senha);
+    Usuarios findByCpf(String cpf);
+    Usuarios findByMatricula(String matricula);
     Usuarios save(Usuarios usuarios);
     boolean deleteById(int id);
     List<Usuarios> findActive();
     List<Usuarios> findByRole(int tipoRoleId);
     List<Usuarios> findByInstitution(int instituicaoId);
     List<Usuarios> findByCampus(int campusId);
+    String getCampusNomeAtivoByUsuarioId(int usuarioId);
+    boolean associarUsuarioCampus(int usuarioId, int campusId);
 }

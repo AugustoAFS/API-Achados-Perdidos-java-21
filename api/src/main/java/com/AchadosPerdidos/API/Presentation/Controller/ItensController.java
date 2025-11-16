@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/itens")
-@CrossOrigin(origins = "*")
 @Tag(name = "Itens", description = "API para gerenciamento de itens achados/perdidos")
 public class ItensController {
 

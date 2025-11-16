@@ -35,6 +35,16 @@ public class UsuariosRepository implements IUsuariosRepository {
     }
 
     @Override
+    public Usuarios findByCpf(String cpf) {
+        return usuariosQueries.findByCpf(cpf);
+    }
+
+    @Override
+    public Usuarios findByMatricula(String matricula) {
+        return usuariosQueries.findByMatricula(matricula);
+    }
+
+    @Override
     public Usuarios save(Usuarios usuarios) {
         if (usuarios.getId() == null || usuarios.getId() == 0) {
             return usuariosQueries.insert(usuarios);
@@ -66,5 +76,15 @@ public class UsuariosRepository implements IUsuariosRepository {
     @Override
     public List<Usuarios> findByCampus(int campusId) {
         return usuariosQueries.findByCampus(campusId);
+    }
+
+    @Override
+    public String getCampusNomeAtivoByUsuarioId(int usuarioId) {
+        return usuariosQueries.getCampusNomeAtivoByUsuarioId(usuarioId);
+    }
+
+    @Override
+    public boolean associarUsuarioCampus(int usuarioId, int campusId) {
+        return usuariosQueries.associarUsuarioCampus(usuarioId, campusId);
     }
 }

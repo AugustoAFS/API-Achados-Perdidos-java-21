@@ -68,6 +68,20 @@ public class UsuariosQueries implements IUsuariosQueries {
     }
 
     @Override
+    public Usuarios findByCpf(String cpf) {
+        String sql = "SELECT * FROM ap_achados_perdidos.usuarios WHERE cpf = ?";
+        List<Usuarios> usuarios = jdbcTemplate.query(sql, rowMapper, cpf);
+        return usuarios.isEmpty() ? null : usuarios.get(0);
+    }
+
+    @Override
+    public Usuarios findByMatricula(String matricula) {
+        String sql = "SELECT * FROM ap_achados_perdidos.usuarios WHERE matricula = ?";
+        List<Usuarios> usuarios = jdbcTemplate.query(sql, rowMapper, matricula);
+        return usuarios.isEmpty() ? null : usuarios.get(0);
+    }
+
+    @Override
     public Usuarios insert(Usuarios usuarios) {
         String sql = "INSERT INTO ap_achados_perdidos.usuarios (nome_completo, cpf, email, hash_senha, matricula, numero_telefone, empresa_id, endereco_id, Dta_Criacao, Flg_Inativo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql, 
@@ -146,5 +160,32 @@ public class UsuariosQueries implements IUsuariosQueries {
                      "INNER JOIN ap_achados_perdidos.usuario_campus uc ON u.id = uc.usuario_id " +
                      "WHERE uc.campus_id = ? AND uc.Flg_Inativo = false ORDER BY u.nome_completo";
         return jdbcTemplate.query(sql, rowMapper, campusId);
+    }
+
+    @Override
+    public String getCampusNomeAtivoByUsuarioId(int usuarioId) {
+        String sql = "SELECT c.nome FROM ap_achados_perdidos.usuario_campus uc " +
+                     "INNER JOIN ap_achados_perdidos.campus c ON uc.campus_id = c.id " +
+                     "WHERE uc.usuario_id = ? AND uc.Flg_Inativo = false AND c.Flg_Inativo = false " +
+                     "ORDER BY uc.Dta_Criacao ASC LIMIT 1";
+        try {
+            List<String> resultados = jdbcTemplate.query(sql, (rs, rowNum) -> {
+                String nome = rs.getString("nome");
+                return nome != null ? nome : "";
+            }, usuarioId);
+            return resultados.isEmpty() ? "" : resultados.get(0);
+        } catch (Exception e) {
+            // Se houver erro na query, retorna string vazia
+            return "";
+        }
+    }
+
+    @Override
+    public boolean associarUsuarioCampus(int usuarioId, int campusId) {
+        String sql = "INSERT INTO ap_achados_perdidos.usuario_campus (usuario_id, campus_id, Flg_Inativo) " +
+                     "VALUES (?, ?, false) " +
+                     "ON CONFLICT (usuario_id, campus_id) DO UPDATE SET Flg_Inativo = false, Dta_Remocao = NULL";
+        int rowsAffected = jdbcTemplate.update(sql, usuarioId, campusId);
+        return rowsAffected > 0;
     }
 }

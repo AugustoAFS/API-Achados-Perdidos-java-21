@@ -5,8 +5,6 @@ import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosUpdateDTO;
 import com.AchadosPerdidos.API.Domain.Entity.Usuarios;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -15,9 +13,6 @@ import java.util.stream.Collectors;
 
 @Component
 public class UsuariosModelMapper {
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     public UsuariosDTO toDTO(Usuarios usuarios) {
         if (usuarios == null) {
@@ -64,13 +59,13 @@ public class UsuariosModelMapper {
         }
         
         Usuarios usuarios = new Usuarios();
-    usuarios.setNomeCompleto(dto.getNomeCompleto());
-    usuarios.setCpf(dto.getCpf());
-    usuarios.setEmail(dto.getEmail());
-    usuarios.setHashSenha(passwordEncoder.encode(dto.getSenha()));
-    usuarios.setMatricula(dto.getMatricula());
-    usuarios.setNumeroTelefone(dto.getNumeroTelefone());
-    usuarios.setEnderecoId(dto.getEnderecoId());
+        usuarios.setNomeCompleto(dto.getNomeCompleto());
+        usuarios.setCpf(dto.getCpf());
+        usuarios.setEmail(dto.getEmail());
+        // Nota: O hash da senha é feito no serviço, não no mapper
+        usuarios.setMatricula(dto.getMatricula());
+        usuarios.setNumeroTelefone(dto.getNumeroTelefone());
+        usuarios.setEnderecoId(dto.getEnderecoId());
         
         return usuarios;
     }
@@ -115,7 +110,8 @@ public class UsuariosModelMapper {
             null, // senha não é retornada
             usuarios.getMatricula(),
             usuarios.getNumeroTelefone(),
-            usuarios.getEnderecoId()
+            usuarios.getEnderecoId(),
+            null // campusId não está na entidade Usuarios, está na tabela usuario_campus
         );
     }
 
