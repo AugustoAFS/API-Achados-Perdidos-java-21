@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/reivindicacoes")
-@CrossOrigin(origins = "*")
 @Tag(name = "Reivindicações", description = "API para gerenciamento de reivindicações")
 public class ReivindicacoesController {
 

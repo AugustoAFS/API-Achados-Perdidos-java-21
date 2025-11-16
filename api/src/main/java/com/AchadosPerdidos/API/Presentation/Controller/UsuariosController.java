@@ -7,6 +7,7 @@ import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosUpdateDTO;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuariosService;
+import com.AchadosPerdidos.API.Exeptions.BusinessException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/usuarios")
-@CrossOrigin(origins = "*")
 @Tag(name = "Usuários", description = "Rota para gerenciamento de usuários")
 public class UsuariosController {
 
@@ -39,6 +39,17 @@ public class UsuariosController {
             return ResponseEntity.ok(usuario);
         } else {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/login")
+    @Operation(summary = "Login de usuário", description = "Autentica um usuário com email e senha, retornando um token JWT")
+    public ResponseEntity<AuthResponseDTO> login(@RequestBody LoginRequestDTO loginRequestDTO) {
+        try {
+            AuthResponseDTO response = usuariosService.login(loginRequestDTO);
+            return ResponseEntity.ok(response);
+        } catch (BusinessException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 
@@ -73,23 +84,22 @@ public class UsuariosController {
         }
     }
 
-    @PostMapping("/login")
-    @Operation(summary = "Login de usuário", description = "Autentica um usuário e retorna um token JWT")
-    public ResponseEntity<AuthResponseDTO> login(@RequestBody LoginRequestDTO loginRequest) {
-        AuthResponseDTO authResponse = usuariosService.login(loginRequest);
-        return ResponseEntity.ok(authResponse);
-    }
-
-    @PostMapping("/{id}/redefinir-senha")
-    @Operation(summary = "Redefinir senha do usuário", description = "Redefine a senha de um usuário, gerando um novo hash BCrypt. Use este endpoint para corrigir hashes incorretos no banco de dados.")
-    public ResponseEntity<String> redefinirSenha(
-            @Parameter(description = "ID do usuário") @PathVariable int id,
-            @RequestBody RedefinirSenhaDTO redefinirSenhaDTO) {
-        boolean sucesso = usuariosService.redefinirSenha(id, redefinirSenhaDTO.getNovaSenha());
-        if (sucesso) {
-            return ResponseEntity.ok("Senha redefinida com sucesso");
-        } else {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao redefinir senha");
+    @PostMapping("/redefinir-senha")
+    @Operation(summary = "Redefinir senha do usuário", description = "Redefine a senha de um usuário usando CPF ou matrícula, gerando um novo hash BCrypt. É necessário fornecer pelo menos um dos campos: CPF ou matrícula.")
+    public ResponseEntity<String> redefinirSenha(@RequestBody RedefinirSenhaDTO redefinirSenhaDTO) {
+        try {
+            boolean sucesso = usuariosService.redefinirSenha(
+                redefinirSenhaDTO.getCpf(),
+                redefinirSenhaDTO.getMatricula(),
+                redefinirSenhaDTO.getNovaSenha()
+            );
+            if (sucesso) {
+                return ResponseEntity.ok("Senha redefinida com sucesso");
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao redefinir senha");
+            }
+        } catch (BusinessException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 }

@@ -7,15 +7,16 @@ import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosUpdateDTO;
 import com.AchadosPerdidos.API.Application.Mapper.UsuariosModelMapper;
-import com.AchadosPerdidos.API.Application.Services.Interfaces.IJwtTokenService;
+import com.AchadosPerdidos.API.Application.Services.Interfaces.IJWTService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuariosService;
 import com.AchadosPerdidos.API.Exeptions.BusinessException;
+import com.AchadosPerdidos.API.Exeptions.ResourceNotFoundException;
 import com.AchadosPerdidos.API.Domain.Entity.Usuarios;
 import com.AchadosPerdidos.API.Domain.Repository.UsuariosRepository;
-import com.AchadosPerdidos.API.Exeptions.BusinessException;
-import com.AchadosPerdidos.API.Exeptions.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -33,7 +34,7 @@ public class UsuariosService implements IUsuariosService {
     private UsuariosModelMapper usuariosModelMapper;
 
     @Autowired
-    private IJwtTokenService jwtTokenService;
+    private IJWTService jwtTokenService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -83,6 +84,12 @@ public class UsuariosService implements IUsuariosService {
             throw new IllegalArgumentException("Dados do usuário não podem ser nulos");
         }
         
+        // Validação da senha
+        if (usuariosCreateDTO.getSenha() == null || usuariosCreateDTO.getSenha().trim().isEmpty()) {
+            throw new BusinessException("A senha é obrigatória");
+        }
+        
+        // Validação de email duplicado
         if (StringUtils.hasText(usuariosCreateDTO.getEmail())) {
             Usuarios usuarioExistente = usuariosRepository.findByEmail(usuariosCreateDTO.getEmail());
             if (usuarioExistente != null) {
@@ -90,6 +97,7 @@ public class UsuariosService implements IUsuariosService {
             }
         }
         
+        // Validação de CPF duplicado
         if (StringUtils.hasText(usuariosCreateDTO.getCpf())) {
             List<Usuarios> usuariosComMesmoCpf = usuariosRepository.findAll().stream()
                 .filter(u -> usuariosCreateDTO.getCpf().equals(u.getCpf()))
@@ -100,18 +108,25 @@ public class UsuariosService implements IUsuariosService {
             }
         }
         
+        // Converter DTO para entidade (sem hash ainda)
         Usuarios usuarios = usuariosModelMapper.toEntity(usuariosCreateDTO);
-        
-        if (StringUtils.hasText(usuarios.getHashSenha())) {
-            usuarios.setHashSenha(passwordEncoder.encode(usuarios.getHashSenha()));
-        }
-        
+
+        // Gerar hash BCrypt da senha no serviço
+        String hashSenha = passwordEncoder.encode(usuariosCreateDTO.getSenha());
+        usuarios.setHashSenha(hashSenha);
+
         usuarios.setDtaCriacao(new Date());
         usuarios.setFlgInativo(false);
         
         usuarios.validate();
         
         Usuarios savedUsuarios = usuariosRepository.save(usuarios);
+        
+        // Associar usuário ao campus se fornecido
+        if (usuariosCreateDTO.getCampusId() != null && usuariosCreateDTO.getCampusId() > 0) {
+            usuariosRepository.associarUsuarioCampus(savedUsuarios.getId(), usuariosCreateDTO.getCampusId());
+        }
+        
         return usuariosModelMapper.toCreateDTO(savedUsuarios);
     }
 
@@ -183,121 +198,33 @@ public class UsuariosService implements IUsuariosService {
         
         return true;
     }
-    
-    @Cacheable(value = "usuarios", key = "'active'")
-    public List<UsuariosDTO> getActiveUsuarios() {
-        List<Usuarios> activeUsuarios = usuariosRepository.findActive();
-        return activeUsuarios.stream()
-            .map(usuariosModelMapper::toDTO)
-            .toList();
-    }
-    
-    public UsuariosDTO validateLogin(String email, String senhaPlainText) {
-        if (!StringUtils.hasText(email) || !StringUtils.hasText(senhaPlainText)) {
-            throw new BusinessException("Email e senha são obrigatórios");
-        }
-        
-        Usuarios usuario = usuariosRepository.findByEmail(email);
-        if (usuario == null) {
-            throw new BusinessException("Credenciais inválidas");
-        }
-        
-        if (!usuario.isAtivo()) {
-            throw new BusinessException("Usuário inativo. Entre em contato com o administrador.");
-        }
-        
-        if (!passwordEncoder.matches(senhaPlainText, usuario.getHashSenha())) {
-            throw new BusinessException("Credenciais inválidas");
-        }
-        
-        return usuariosModelMapper.toDTO(usuario);
-    }
-    
-    @CacheEvict(value = "usuarios", allEntries = true)
-    public boolean alterarSenha(int id, String senhaAtual, String novaSenha) {
-        if (id <= 0) {
-            throw new IllegalArgumentException("ID do usuário deve ser válido");
-        }
-        
-        if (!StringUtils.hasText(senhaAtual) || !StringUtils.hasText(novaSenha)) {
-            throw new BusinessException("Senha atual e nova senha são obrigatórias");
-        }
-        
-        if (novaSenha.length() < 6) {
-            throw new BusinessException("Nova senha deve ter no mínimo 6 caracteres");
-        }
-        
-        Usuarios usuario = usuariosRepository.findById(id);
-        if (usuario == null) {
-            throw new ResourceNotFoundException("Usuário não encontrado com ID: " + id);
-        }
-        
-        if (!usuario.isAtivo()) {
-            throw new BusinessException("Não é possível alterar senha de usuário inativo");
-        }
-        
-        if (!passwordEncoder.matches(senhaAtual, usuario.getHashSenha())) {
-            throw new BusinessException("Senha atual incorreta");
-        }
-        
-        usuario.setHashSenha(passwordEncoder.encode(novaSenha));
-        usuariosRepository.save(usuario);
-        
-        return true;
-    }
 
     @Override
-    public AuthResponseDTO login(LoginRequestDTO loginRequest) {
-        if (loginRequest == null || loginRequest.getEmail() == null || loginRequest.getSenha() == null) {
-            throw new BusinessException("Email e senha são obrigatórios");
-        }
-
-        Usuarios usuario = usuariosRepository.findByEmail(loginRequest.getEmail());
-        if (usuario == null) {
-            throw new BusinessException("Email ou senha inválidos");
-        }
-
-        if (usuario.getFlgInativo() != null && usuario.getFlgInativo()) {
-            throw new BusinessException("Usuário inativo");
-        }
-
-        if (usuario.getHashSenha() == null || usuario.getHashSenha().trim().isEmpty()) {
-            throw new BusinessException("Usuário sem senha cadastrada");
-        }
-
-        if (!passwordEncoder.matches(loginRequest.getSenha(), usuario.getHashSenha())) {
-            throw new BusinessException("Email ou senha inválidos");
-        }
-
-        String role = "USER";
-        String token = jwtTokenService.generateToken(
-            usuario.getEmail(),
-            usuario.getNomeCompleto(),
-            role,
-            String.valueOf(usuario.getId())
-        );
-
-        long expiresIn = jwtExpiryInMinutes * 60L;
-
-        return new AuthResponseDTO(
-            token,
-            "Bearer",
-            expiresIn,
-            usuario.getId(),
-            usuario.getNomeCompleto(),
-            usuario.getEmail(),
-            role,
-            null
-        );
-    }
-
-    @Override
-    public boolean redefinirSenha(int id, String novaSenha) {
+    public boolean redefinirSenha(String cpf, String matricula, String novaSenha) {
+        // Validação da nova senha
         if (novaSenha == null || novaSenha.trim().isEmpty()) {
             throw new BusinessException("A nova senha não pode ser vazia");
         }
 
-        Usuarios usuario = usuariosRepository.findById(id);
+        // Validação: deve fornecer CPF ou matrícula (pelo menos um)
+        if ((cpf == null || cpf.trim().isEmpty()) && (matricula == null || matricula.trim().isEmpty())) {
+            throw new BusinessException("É necessário fornecer CPF ou matrícula para redefinir a senha");
+        }
+
+        // Buscar usuário por CPF ou matrícula
+        Usuarios usuario = null;
+        if (cpf != null && !cpf.trim().isEmpty()) {
+            usuario = usuariosRepository.findByCpf(cpf.trim());
+            if (usuario == null) {
+                throw new BusinessException("Usuário não encontrado com o CPF fornecido");
+            }
+        } else if (matricula != null && !matricula.trim().isEmpty()) {
+            usuario = usuariosRepository.findByMatricula(matricula.trim());
+            if (usuario == null) {
+                throw new BusinessException("Usuário não encontrado com a matrícula fornecida");
+            }
+        }
+
         if (usuario == null) {
             throw new BusinessException("Usuário não encontrado");
         }
@@ -308,5 +235,62 @@ public class UsuariosService implements IUsuariosService {
         
         Usuarios updatedUsuario = usuariosRepository.save(usuario);
         return updatedUsuario != null;
+    }
+
+    @Override
+    public AuthResponseDTO login(LoginRequestDTO loginRequestDTO) {
+        // Validação dos campos de entrada
+        if (loginRequestDTO.getEmail() == null || loginRequestDTO.getEmail().trim().isEmpty()) {
+            throw new BusinessException("Email é obrigatório");
+        }
+        if (loginRequestDTO.getSenha() == null || loginRequestDTO.getSenha().trim().isEmpty()) {
+            throw new BusinessException("Senha é obrigatória");
+        }
+
+        // Buscar usuário pelo email
+        Usuarios usuario = usuariosRepository.findByEmail(loginRequestDTO.getEmail());
+        if (usuario == null) {
+            throw new BusinessException("Email ou senha inválidos");
+        }
+
+        // Verificar se o usuário está ativo
+        if (usuario.getFlgInativo() != null && usuario.getFlgInativo()) {
+            throw new BusinessException("Usuário inativo");
+        }
+
+        // Verificar senha usando BCrypt
+        if (usuario.getHashSenha() == null || usuario.getHashSenha().trim().isEmpty()) {
+            throw new BusinessException("Usuário não possui senha cadastrada. Use o endpoint de redefinir senha.");
+        }
+
+        boolean senhaValida = passwordEncoder.matches(loginRequestDTO.getSenha(), usuario.getHashSenha());
+        if (!senhaValida) {
+            throw new BusinessException("Email ou senha inválidos");
+        }
+
+        // Buscar campus ativo do usuário
+        String campusNome = usuariosRepository.getCampusNomeAtivoByUsuarioId(usuario.getId());
+
+        // Gerar token JWT
+        String token = jwtTokenService.generateToken(
+            usuario.getEmail(),
+            usuario.getNomeCompleto() != null ? usuario.getNomeCompleto() : "",
+            "User", // Role padrão
+            String.valueOf(usuario.getId())
+        );
+
+        long expiresIn = jwtExpiryInMinutes * 60L;
+
+        // Criar resposta com token e informações do usuário
+        return new AuthResponseDTO(
+            token,
+            "Bearer",
+            expiresIn,
+            usuario.getId(),
+            usuario.getNomeCompleto() != null ? usuario.getNomeCompleto() : "",
+            usuario.getEmail(),
+            "User",
+            campusNome
+        );
     }
 }

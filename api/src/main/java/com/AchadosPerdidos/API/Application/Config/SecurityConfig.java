@@ -51,6 +51,8 @@ public class SecurityConfig {
                 .requestMatchers("/configuration/**").permitAll()
                 // Endpoints públicos
                 .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/usuarios/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/usuarios/redefinir-senha").permitAll()
                 .requestMatchers("/api/usuarios/criar").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/usuarios/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/usuarios/*/redefinir-senha").permitAll()

@@ -15,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/enderecos")
-@CrossOrigin(origins = "*")
 @Tag(name = "Endereços", description = "API para gerenciamento de endereços")
 public class EnderecoController {
 

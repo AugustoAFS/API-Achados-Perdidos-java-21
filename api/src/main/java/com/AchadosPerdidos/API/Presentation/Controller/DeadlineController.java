@@ -17,7 +17,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/deadline")
-@CrossOrigin(origins = "*")
 @Tag(name = "Deadlines", description = "API para gerenciamento de prazos e doações")
 public class DeadlineController {
 

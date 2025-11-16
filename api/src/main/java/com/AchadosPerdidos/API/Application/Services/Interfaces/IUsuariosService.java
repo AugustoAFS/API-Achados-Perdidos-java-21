@@ -14,6 +14,6 @@ public interface IUsuariosService {
     UsuariosCreateDTO createUsuario(UsuariosCreateDTO usuariosDTO);
     UsuariosUpdateDTO updateUsuario(int id, UsuariosUpdateDTO usuariosDTO);
     boolean deleteUsuario(int id);
-    AuthResponseDTO login(LoginRequestDTO loginRequest);
-    boolean redefinirSenha(int id, String novaSenha);
+    boolean redefinirSenha(String cpf, String matricula, String novaSenha);
+    AuthResponseDTO login(LoginRequestDTO loginRequestDTO);
 }

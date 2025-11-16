@@ -15,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/estados")
-@CrossOrigin(origins = "*")
 @Tag(name = "Estados", description = "API para gerenciamento de estados")
 public class EstadoController {
 

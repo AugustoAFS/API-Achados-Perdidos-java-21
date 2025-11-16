@@ -11,12 +11,13 @@ public class UsuariosCreateDTO {
     private String matricula;
     private String numeroTelefone;
     private Integer enderecoId;
+    private Integer campusId;
 
     public UsuariosCreateDTO() {
         // Construtor padrao para frameworks de serializacao
     }
 
-    public UsuariosCreateDTO(String nomeCompleto, String cpf, String email, String senha, String matricula, String numeroTelefone, Integer enderecoId) {
+    public UsuariosCreateDTO(String nomeCompleto, String cpf, String email, String senha, String matricula, String numeroTelefone, Integer enderecoId, Integer campusId) {
         this.nomeCompleto = nomeCompleto;
         this.cpf = cpf;
         this.email = email;
@@ -24,6 +25,7 @@ public class UsuariosCreateDTO {
         this.matricula = matricula;
         this.numeroTelefone = numeroTelefone;
         this.enderecoId = enderecoId;
+        this.campusId = campusId;
     }
 
     public String getNomeCompleto() {
@@ -80,6 +82,14 @@ public class UsuariosCreateDTO {
 
     public void setEnderecoId(Integer enderecoId) {
         this.enderecoId = enderecoId;
+    }
+
+    public Integer getCampusId() {
+        return campusId;
+    }
+
+    public void setCampusId(Integer campusId) {
+        this.campusId = campusId;
     }
 }
 
