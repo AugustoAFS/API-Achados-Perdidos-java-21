@@ -1,5 +1,8 @@
 package com.AchadosPerdidos.API.Presentation.Controller;
 
+import com.AchadosPerdidos.API.Application.DTOs.Auth.AuthResponseDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Auth.LoginRequestDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Auth.RedefinirSenhaDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosUpdateDTO;
@@ -67,6 +70,26 @@ public class UsuariosController {
             return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/login")
+    @Operation(summary = "Login de usuário", description = "Autentica um usuário e retorna um token JWT")
+    public ResponseEntity<AuthResponseDTO> login(@RequestBody LoginRequestDTO loginRequest) {
+        AuthResponseDTO authResponse = usuariosService.login(loginRequest);
+        return ResponseEntity.ok(authResponse);
+    }
+
+    @PostMapping("/{id}/redefinir-senha")
+    @Operation(summary = "Redefinir senha do usuário", description = "Redefine a senha de um usuário, gerando um novo hash BCrypt. Use este endpoint para corrigir hashes incorretos no banco de dados.")
+    public ResponseEntity<String> redefinirSenha(
+            @Parameter(description = "ID do usuário") @PathVariable int id,
+            @RequestBody RedefinirSenhaDTO redefinirSenhaDTO) {
+        boolean sucesso = usuariosService.redefinirSenha(id, redefinirSenhaDTO.getNovaSenha());
+        if (sucesso) {
+            return ResponseEntity.ok("Senha redefinida com sucesso");
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao redefinir senha");
         }
     }
 }
