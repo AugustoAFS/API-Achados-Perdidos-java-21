@@ -6,7 +6,7 @@ import com.AchadosPerdidos.API.Application.DTOs.Instituicao.InstituicaoCreateDTO
 import com.AchadosPerdidos.API.Application.DTOs.Instituicao.InstituicaoUpdateDTO;
 import com.AchadosPerdidos.API.Application.Mapper.InstituicaoModelMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IInstituicaoService;
-import com.AchadosPerdidos.API.Domain.Entity.Instituicao;
+import com.AchadosPerdidos.API.Domain.Entity.Instituicoes;
 import com.AchadosPerdidos.API.Domain.Repository.InstituicaoRepository;
 import com.AchadosPerdidos.API.Domain.Validator.EntityValidator;
 import com.AchadosPerdidos.API.Exeptions.BusinessException;
@@ -17,7 +17,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -32,7 +32,7 @@ public class InstituicaoService implements IInstituicaoService {
     @Override
     @Cacheable(value = "instituicoes", key = "'all'")
     public InstituicaoListDTO getAllInstituicoes() {
-        List<Instituicao> instituicoes = instituicaoRepository.findAll();
+        List<Instituicoes> instituicoes = instituicaoRepository.findAll();
         return instituicaoModelMapper.toListDTO(instituicoes);
     }
 
@@ -43,7 +43,7 @@ public class InstituicaoService implements IInstituicaoService {
             throw new IllegalArgumentException("ID da instituição deve ser válido");
         }
         
-        Instituicao instituicao = instituicaoRepository.findById(id);
+        Instituicoes instituicao = instituicaoRepository.findById(id);
         if (instituicao == null) {
             throw new ResourceNotFoundException("Instituição não encontrada com ID: " + id);
         }
@@ -64,11 +64,11 @@ public class InstituicaoService implements IInstituicaoService {
             instituicaoDTO.getCnpj()
         );
         
-        Instituicao instituicao = instituicaoModelMapper.toEntity(instituicaoDTO);
-        instituicao.setDtaCriacao(new Date());
+        Instituicoes instituicao = instituicaoModelMapper.toEntity(instituicaoDTO);
+        instituicao.setDtaCriacao(LocalDateTime.now());
         instituicao.setFlgInativo(false);
         
-        Instituicao savedInstituicao = instituicaoRepository.save(instituicao);
+        Instituicoes savedInstituicao = instituicaoRepository.save(instituicao);
         return instituicaoModelMapper.toDTO(savedInstituicao);
     }
 
@@ -86,15 +86,15 @@ public class InstituicaoService implements IInstituicaoService {
             createDTO.getCnpj()
         );
         
-        Instituicao instituicao = new Instituicao();
+        Instituicoes instituicao = new Instituicoes();
         instituicao.setNome(createDTO.getNome());
         instituicao.setCodigo(createDTO.getCodigo());
         instituicao.setTipo(createDTO.getTipo());
         instituicao.setCnpj(createDTO.getCnpj());
-        instituicao.setDtaCriacao(new Date());
+        instituicao.setDtaCriacao(LocalDateTime.now());
         instituicao.setFlgInativo(false);
         
-        Instituicao savedInstituicao = instituicaoRepository.save(instituicao);
+        Instituicoes savedInstituicao = instituicaoRepository.save(instituicao);
         return instituicaoModelMapper.toDTO(savedInstituicao);
     }
 
@@ -109,7 +109,7 @@ public class InstituicaoService implements IInstituicaoService {
             throw new IllegalArgumentException("Dados de atualização não podem ser nulos");
         }
         
-        Instituicao existingInstituicao = instituicaoRepository.findById(id);
+        Instituicoes existingInstituicao = instituicaoRepository.findById(id);
         if (existingInstituicao == null) {
             throw new ResourceNotFoundException("Instituição não encontrada com ID: " + id);
         }
@@ -133,9 +133,13 @@ public class InstituicaoService implements IInstituicaoService {
         existingInstituicao.setTipo(instituicaoDTO.getTipo());
         existingInstituicao.setCnpj(instituicaoDTO.getCnpj());
         existingInstituicao.setFlgInativo(instituicaoDTO.getFlgInativo());
-        existingInstituicao.setDtaRemocao(instituicaoDTO.getDtaRemocao());
+        if (instituicaoDTO.getDtaRemocao() != null) {
+            existingInstituicao.setDtaRemocao(instituicaoDTO.getDtaRemocao().toInstant()
+                .atZone(java.time.ZoneId.systemDefault())
+                .toLocalDateTime());
+        }
         
-        Instituicao updatedInstituicao = instituicaoRepository.save(existingInstituicao);
+        Instituicoes updatedInstituicao = instituicaoRepository.save(existingInstituicao);
         return instituicaoModelMapper.toDTO(updatedInstituicao);
     }
 
@@ -150,7 +154,7 @@ public class InstituicaoService implements IInstituicaoService {
             throw new IllegalArgumentException("Dados de atualização não podem ser nulos");
         }
         
-        Instituicao existingInstituicao = instituicaoRepository.findById(id);
+        Instituicoes existingInstituicao = instituicaoRepository.findById(id);
         if (existingInstituicao == null) {
             throw new ResourceNotFoundException("Instituição não encontrada com ID: " + id);
         }
@@ -204,7 +208,7 @@ public class InstituicaoService implements IInstituicaoService {
             existingInstituicao.setFlgInativo(updateDTO.getFlgInativo());
         }
         
-        Instituicao updatedInstituicao = instituicaoRepository.save(existingInstituicao);
+        Instituicoes updatedInstituicao = instituicaoRepository.save(existingInstituicao);
         return instituicaoModelMapper.toDTO(updatedInstituicao);
     }
 
@@ -215,7 +219,7 @@ public class InstituicaoService implements IInstituicaoService {
             throw new IllegalArgumentException("ID da instituição deve ser válido");
         }
         
-        Instituicao instituicao = instituicaoRepository.findById(id);
+        Instituicoes instituicao = instituicaoRepository.findById(id);
         if (instituicao == null) {
             throw new ResourceNotFoundException("Instituição não encontrada com ID: " + id);
         }
@@ -225,7 +229,7 @@ public class InstituicaoService implements IInstituicaoService {
         }
         
         instituicao.setFlgInativo(true);
-        instituicao.setDtaRemocao(new Date());
+        instituicao.setDtaRemocao(LocalDateTime.now());
         instituicaoRepository.save(instituicao);
         
         return true;
@@ -234,7 +238,7 @@ public class InstituicaoService implements IInstituicaoService {
     @Override
     @Cacheable(value = "instituicoes", key = "'active'")
     public InstituicaoListDTO getActiveInstituicoes() {
-        List<Instituicao> activeInstituicoes = instituicaoRepository.findActive();
+        List<Instituicoes> activeInstituicoes = instituicaoRepository.findActive();
         return instituicaoModelMapper.toListDTO(activeInstituicoes);
     }
 
@@ -245,7 +249,7 @@ public class InstituicaoService implements IInstituicaoService {
             throw new IllegalArgumentException("Tipo da instituição não pode ser vazio");
         }
         
-        List<Instituicao> instituicoes = instituicaoRepository.findByType(tipoInstituicao);
+        List<Instituicoes> instituicoes = instituicaoRepository.findByType(tipoInstituicao);
         return instituicaoModelMapper.toListDTO(instituicoes);
     }
     
@@ -292,7 +296,7 @@ public class InstituicaoService implements IInstituicaoService {
     }
     
     private void validarCodigoUnico(String codigo, Integer instituicaoIdExcluir) {
-        List<Instituicao> instituicoesComMesmoCodigo = instituicaoRepository.findAll().stream()
+        List<Instituicoes> instituicoesComMesmoCodigo = instituicaoRepository.findAll().stream()
             .filter(i -> codigo.equals(i.getCodigo()))
             .filter(i -> instituicaoIdExcluir == null || !i.getId().equals(instituicaoIdExcluir))
             .toList();
@@ -303,7 +307,7 @@ public class InstituicaoService implements IInstituicaoService {
     }
     
     private void validarCnpjUnico(String cnpj, Integer instituicaoIdExcluir) {
-        List<Instituicao> instituicoesComMesmoCnpj = instituicaoRepository.findAll().stream()
+        List<Instituicoes> instituicoesComMesmoCnpj = instituicaoRepository.findAll().stream()
             .filter(i -> cnpj.equals(i.getCnpj()))
             .filter(i -> instituicaoIdExcluir == null || !i.getId().equals(instituicaoIdExcluir))
             .toList();

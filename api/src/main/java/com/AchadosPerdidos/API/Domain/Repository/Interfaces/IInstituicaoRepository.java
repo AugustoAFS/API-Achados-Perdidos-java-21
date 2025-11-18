@@ -1,13 +1,13 @@
 package com.AchadosPerdidos.API.Domain.Repository.Interfaces;
 
-import com.AchadosPerdidos.API.Domain.Entity.Instituicao;
+import com.AchadosPerdidos.API.Domain.Entity.Instituicoes;
 import java.util.List;
 
 public interface IInstituicaoRepository {
-    List<Instituicao> findAll();
-    Instituicao findById(int id);
-    Instituicao save(Instituicao instituicao);
+    List<Instituicoes> findAll();
+    Instituicoes findById(int id);
+    Instituicoes save(Instituicoes instituicao);
     boolean deleteById(int id);
-    List<Instituicao> findActive();
-    List<Instituicao> findByType(String tipoInstituicao);
+    List<Instituicoes> findActive();
+    List<Instituicoes> findByType(String tipoInstituicao);
 }

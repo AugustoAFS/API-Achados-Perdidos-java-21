@@ -62,7 +62,7 @@ public class SwaggerConfig {
                             .description(serverDescriptionValue),
                     new Server()
                             .url("https://api-achadosperdidos.com.br")
-                            .description("Produção (para testes)")
+                            .description("Producao (para testes)")
             );
         }
         

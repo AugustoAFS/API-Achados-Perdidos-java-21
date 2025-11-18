@@ -7,6 +7,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -27,9 +29,17 @@ public class EnderecoQueries implements IEnderecoQueries {
         endereco.setBairro(rs.getString("bairro"));
         endereco.setCep(rs.getString("cep"));
         endereco.setCidadeId(rs.getInt("cidade_id"));
-        endereco.setDtaCriacao(rs.getTimestamp("Dta_Criacao"));
+        
+        Timestamp dtaCriacao = rs.getTimestamp("Dta_Criacao");
+        if (dtaCriacao != null) {
+            endereco.setDtaCriacao(dtaCriacao.toLocalDateTime());
+        }
+        
         endereco.setFlgInativo(rs.getBoolean("Flg_Inativo"));
-        endereco.setDtaRemocao(rs.getTimestamp("Dta_Remocao"));
+        
+        // Endereco não tem setDtaRemocao, apenas getter
+        // Dta_Remocao é lido mas não pode ser setado
+        
         return endereco;
     };
 
@@ -56,22 +66,22 @@ public class EnderecoQueries implements IEnderecoQueries {
             endereco.getBairro(),
             endereco.getCep(),
             endereco.getCidadeId(),
-            endereco.getDtaCriacao(),
-            endereco.getFlgInativo());
+            endereco.getDtaCriacao() != null ? Timestamp.valueOf(endereco.getDtaCriacao()) : Timestamp.valueOf(LocalDateTime.now()),
+            endereco.getFlgInativo() != null ? endereco.getFlgInativo() : false);
 
         String selectSql = "SELECT * FROM ap_achados_perdidos.enderecos WHERE logradouro = ? AND numero = ? AND cidade_id = ? AND Dta_Criacao = ? ORDER BY id DESC LIMIT 1";
         List<Endereco> inserted = jdbcTemplate.query(selectSql, rowMapper,
             endereco.getLogradouro(),
             endereco.getNumero(),
             endereco.getCidadeId(),
-            endereco.getDtaCriacao());
+            endereco.getDtaCriacao() != null ? Timestamp.valueOf(endereco.getDtaCriacao()) : Timestamp.valueOf(LocalDateTime.now()));
 
         return inserted.isEmpty() ? null : inserted.get(0);
     }
 
     @Override
     public Endereco update(Endereco endereco) {
-        String sql = "UPDATE ap_achados_perdidos.enderecos SET logradouro = ?, numero = ?, complemento = ?, bairro = ?, cep = ?, cidade_id = ?, Flg_Inativo = ?, Dta_Remocao = ? WHERE id = ?";
+        String sql = "UPDATE ap_achados_perdidos.enderecos SET logradouro = ?, numero = ?, complemento = ?, bairro = ?, cep = ?, cidade_id = ?, Flg_Inativo = ? WHERE id = ?";
         jdbcTemplate.update(sql,
             endereco.getLogradouro(),
             endereco.getNumero(),
@@ -80,7 +90,6 @@ public class EnderecoQueries implements IEnderecoQueries {
             endereco.getCep(),
             endereco.getCidadeId(),
             endereco.getFlgInativo(),
-            endereco.getDtaRemocao(),
             endereco.getId());
 
         return findById(endereco.getId());

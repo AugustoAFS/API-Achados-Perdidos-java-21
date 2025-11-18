@@ -5,6 +5,8 @@ import com.AchadosPerdidos.API.Application.DTOs.Campus.CampusListDTO;
 import com.AchadosPerdidos.API.Domain.Entity.Campus;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,9 +23,9 @@ public class CampusModelMapper {
             campus.getNome(),
             campus.getInstituicaoId(),
             campus.getEnderecoId(),
-            campus.getDtaCriacao(),
+            campus.getDtaCriacao() != null ? Date.from(campus.getDtaCriacao().atZone(ZoneId.systemDefault()).toInstant()) : null,
             campus.getFlgInativo(),
-            campus.getDtaRemocao()
+            campus.getDtaRemocao() != null ? Date.from(campus.getDtaRemocao().atZone(ZoneId.systemDefault()).toInstant()) : null
         );
     }
 
@@ -37,9 +39,13 @@ public class CampusModelMapper {
         campus.setNome(dto.getNome());
         campus.setInstituicaoId(dto.getInstituicaoId());
         campus.setEnderecoId(dto.getEnderecoId());
-        campus.setDtaCriacao(dto.getDtaCriacao());
+        if (dto.getDtaCriacao() != null) {
+            campus.setDtaCriacao(dto.getDtaCriacao().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
         campus.setFlgInativo(dto.getFlgInativo());
-        campus.setDtaRemocao(dto.getDtaRemocao());
+        if (dto.getDtaRemocao() != null) {
+            campus.setDtaRemocao(dto.getDtaRemocao().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
         
         return campus;
     }

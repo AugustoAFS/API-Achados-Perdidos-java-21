@@ -4,6 +4,9 @@ import com.AchadosPerdidos.API.Application.DTOs.Role.RoleDTO;
 import com.AchadosPerdidos.API.Domain.Entity.Role;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneId;
+import java.util.Date;
+
 @Component
 public class RoleModelMapper {
 
@@ -13,9 +16,9 @@ public class RoleModelMapper {
             role.getId(),
             role.getNome(),
             role.getDescricao(),
-            role.getDtaCriacao(),
+            role.getDtaCriacao() != null ? Date.from(role.getDtaCriacao().atZone(ZoneId.systemDefault()).toInstant()) : null,
             role.getFlgInativo(),
-            role.getDtaRemocao()
+            role.getDtaRemocao() != null ? Date.from(role.getDtaRemocao().atZone(ZoneId.systemDefault()).toInstant()) : null
         );
     }
 
@@ -25,9 +28,13 @@ public class RoleModelMapper {
         entity.setId(dto.getId());
         entity.setNome(dto.getNome());
         entity.setDescricao(dto.getDescricao());
-        entity.setDtaCriacao(dto.getDtaCriacao());
+        if (dto.getDtaCriacao() != null) {
+            entity.setDtaCriacao(dto.getDtaCriacao().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
         entity.setFlgInativo(dto.getFlgInativo());
-        entity.setDtaRemocao(dto.getDtaRemocao());
+        if (dto.getDtaRemocao() != null) {
+            entity.setDtaRemocao(dto.getDtaRemocao().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
         return entity;
     }
 }

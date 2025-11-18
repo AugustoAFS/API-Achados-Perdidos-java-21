@@ -1,20 +1,33 @@
 package com.AchadosPerdidos.API.Application.Services;
 
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Item.ItemDTO;
+import com.AchadosPerdidos.API.Application.DTOs.ItemDoado.ItemDoadoCreateDTO;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.INotificationService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuariosService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IItensService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IChatService;
+import com.AchadosPerdidos.API.Application.Services.Interfaces.IItemDoadoService;
+import com.AchadosPerdidos.API.Application.Config.OneSignalConfig;
 import com.AchadosPerdidos.API.Domain.Entity.Chat.ChatMessage;
 import com.AchadosPerdidos.API.Domain.Enum.Tipo_Menssagem;
 import com.AchadosPerdidos.API.Domain.Enum.Status_Menssagem;
+import com.AchadosPerdidos.API.Domain.Repository.UsuariosRepository;
+import com.AchadosPerdidos.API.Domain.Repository.ItensRepository;
+import com.AchadosPerdidos.API.Domain.Repository.ItemDoadoRepository;
+import com.AchadosPerdidos.API.Domain.Repository.DeviceTokenRepository;
+import com.AchadosPerdidos.API.Domain.Entity.DeviceToken;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Serviço de notificações automáticas para o sistema de achados e perdidos
@@ -32,6 +45,24 @@ public class NotificationService implements INotificationService {
     @Autowired
     private IChatService chatService;
 
+    @Autowired
+    private UsuariosRepository usuariosRepository;
+
+    @Autowired
+    private IItemDoadoService itemDoadoService;
+
+    @Autowired
+    private ItensRepository itensRepository;
+
+    @Autowired
+    private ItemDoadoRepository itemDoadoRepository;
+
+    @Autowired
+    private DeviceTokenRepository deviceTokenRepository;
+
+    @Autowired(required = false)
+    private OneSignalConfig oneSignalConfig;
+
     /**
      * Notifica quando um item é encontrado e registrado no sistema
      * @param itemId ID do item encontrado
@@ -42,17 +73,23 @@ public class NotificationService implements INotificationService {
     public void notifyItemFound(int itemId, int finderId) {
         try {
             // Busca o item e o usuário que encontrou
-            var item = itensService.getItemEntityById(itemId);
+            ItemDTO item = itensService.getItemById(itemId);
             var finderList = usuariosService.getUsuarioById(finderId);
             
             if (item != null && finderList != null && finderList.getUsuarios() != null && !finderList.getUsuarios().isEmpty()) {
                 UsuariosDTO finder = finderList.getUsuarios().get(0);
                 
+                // Busca o nome do campus do usuário que encontrou o item
+                String campusNome = usuariosRepository.getCampusNomeAtivoByUsuarioId(finderId);
+                if (campusNome == null || campusNome.trim().isEmpty()) {
+                    campusNome = "Campus não informado";
+                }
+                
                 // Cria mensagem de notificação
                 String message = String.format(
                     "Novo item encontrado: %s. Local: %s. Encontrado por: %s",
                     item.getNome(),
-                    "Campus", // TODO: Implementar busca do local
+                    campusNome,
                     finder.getNomeCompleto()
                 );
                 
@@ -76,7 +113,7 @@ public class NotificationService implements INotificationService {
     @Async
     public void notifyItemClaimed(int itemId, int claimantId, int ownerId) {
         try {
-            var item = itensService.getItemEntityById(itemId);
+            ItemDTO item = itensService.getItemById(itemId);
             var claimantList = usuariosService.getUsuarioById(claimantId);
             var ownerList = usuariosService.getUsuarioById(ownerId);
             
@@ -84,7 +121,6 @@ public class NotificationService implements INotificationService {
                 && ownerList != null && ownerList.getUsuarios() != null && !ownerList.getUsuarios().isEmpty()) {
                 
                 UsuariosDTO claimant = claimantList.getUsuarios().get(0);
-                UsuariosDTO owner = ownerList.getUsuarios().get(0);
                 
                 // Notifica o proprietário
                 String ownerMessage = String.format(
@@ -120,15 +156,12 @@ public class NotificationService implements INotificationService {
     @Async
     public void notifyItemReturned(int itemId, int ownerId, int finderId) {
         try {
-            var item = itensService.getItemEntityById(itemId);
+            ItemDTO item = itensService.getItemById(itemId);
             var ownerList = usuariosService.getUsuarioById(ownerId);
             var finderList = usuariosService.getUsuarioById(finderId);
             
             if (item != null && ownerList != null && ownerList.getUsuarios() != null && !ownerList.getUsuarios().isEmpty()
                 && finderList != null && finderList.getUsuarios() != null && !finderList.getUsuarios().isEmpty()) {
-                
-                UsuariosDTO owner = ownerList.getUsuarios().get(0);
-                UsuariosDTO finder = finderList.getUsuarios().get(0);
                 
                 // Notifica o proprietário
                 String ownerMessage = String.format(
@@ -161,8 +194,18 @@ public class NotificationService implements INotificationService {
     @Scheduled(cron = "0 0 9 * * ?")
     public void notifyItemsNearDonationDeadline() {
         try {
-            // Busca itens próximos do prazo (25+ dias)
-            List<com.AchadosPerdidos.API.Domain.Entity.Itens> itemsNearDeadline = itensService.getItemsNearDonationDeadline(25);
+            // Busca itens ativos e filtra os que estão próximos do prazo (25+ dias desde a criação)
+            LocalDateTime deadlineDate = LocalDateTime.now().minus(25, ChronoUnit.DAYS);
+            List<com.AchadosPerdidos.API.Domain.Entity.Itens> allActiveItems = itensRepository.findActive();
+            
+            // Filtra itens criados há 25+ dias e que ainda não foram doados
+            List<com.AchadosPerdidos.API.Domain.Entity.Itens> itemsNearDeadline = allActiveItems.stream()
+                .filter(item -> item.getDtaCriacao() != null && item.getDtaCriacao().isBefore(deadlineDate))
+                .filter(item -> {
+                    // Verifica se o item já não está na tabela itens_doados
+                    return itemDoadoRepository.findByItemId(item.getId()) == null;
+                })
+                .collect(Collectors.toList());
             
             for (com.AchadosPerdidos.API.Domain.Entity.Itens item : itemsNearDeadline) {
                 String message = String.format(
@@ -171,7 +214,7 @@ public class NotificationService implements INotificationService {
                     item.getNome()
                 );
                 
-                sendNotificationToUser(item.getUsuarioRelatorId(), message, "PRAZO_DOACAO");
+                sendNotificationToUser(item.getUsuario_relator_id(), message, "PRAZO_DOACAO");
                 
                 System.out.println("Notificação de prazo enviada para item: " + item.getNome());
             }
@@ -188,11 +231,28 @@ public class NotificationService implements INotificationService {
     @Scheduled(cron = "0 0 10 * * ?")
     public void markItemsAsDonated() {
         try {
-            List<com.AchadosPerdidos.API.Domain.Entity.Itens> expiredItems = itensService.getExpiredItems(30);
+            // Busca itens ativos que foram criados há 30+ dias e ainda não foram doados
+            LocalDateTime expiredDate = LocalDateTime.now().minus(30, ChronoUnit.DAYS);
+            List<com.AchadosPerdidos.API.Domain.Entity.Itens> allActiveItems = itensRepository.findActive();
+            
+            // Filtra itens criados há 30+ dias e que ainda não foram doados
+            List<com.AchadosPerdidos.API.Domain.Entity.Itens> expiredItems = allActiveItems.stream()
+                .filter(item -> item.getDtaCriacao() != null && item.getDtaCriacao().isBefore(expiredDate))
+                .filter(item -> {
+                    // Verifica se o item já não está na tabela itens_doados
+                    return itemDoadoRepository.findByItemId(item.getId()) == null;
+                })
+                .collect(Collectors.toList());
             
             for (com.AchadosPerdidos.API.Domain.Entity.Itens item : expiredItems) {
-                // Atualiza status para "Doado"
-                itensService.markItemAsDonated(item.getId());
+                // Cria registro na tabela itens_doados
+                try {
+                    ItemDoadoCreateDTO itemDoadoCreateDTO = new ItemDoadoCreateDTO(item.getId(), java.time.LocalDateTime.now());
+                    itemDoadoService.createItemDoado(itemDoadoCreateDTO);
+                } catch (Exception e) {
+                    // Se já existe um registro, ignora o erro e continua
+                    System.err.println("Item já está marcado como doado ou erro ao criar: " + e.getMessage());
+                }
                 
                 // Notifica o usuário que encontrou
                 String message = String.format(
@@ -201,7 +261,7 @@ public class NotificationService implements INotificationService {
                     item.getNome()
                 );
                 
-                sendNotificationToUser(item.getUsuarioRelatorId(), message, "ITEM_DOADO");
+                sendNotificationToUser(item.getUsuario_relator_id(), message, "ITEM_DOADO");
                 
                 System.out.println("Item marcado como doado: " + item.getNome());
             }
@@ -228,7 +288,23 @@ public class NotificationService implements INotificationService {
             // Salva no MongoDB
             chatService.saveMessage(notification);
             
-            // TODO: Implementar notificação push para dispositivos móveis
+            // Envia notificação push para dispositivos móveis (se configurado)
+            if (oneSignalConfig != null && oneSignalConfig.isEnabled()) {
+                try {
+                    List<String> deviceTokens = getDeviceTokensForUser(userId);
+                    if (deviceTokens != null && !deviceTokens.isEmpty()) {
+                        oneSignalConfig.sendPushNotificationToMultiple(
+                            deviceTokens,
+                            "Achados e Perdidos",
+                            message,
+                            Map.of("type", type, "userId", String.valueOf(userId))
+                        );
+                    }
+                } catch (Exception e) {
+                    // Não interrompe o fluxo se push notification falhar
+                    System.err.println("Erro ao enviar notificação push: " + e.getMessage());
+                }
+            }
             
         } catch (Exception e) {
             System.err.println("Erro ao enviar notificação para usuário " + userId + ": " + e.getMessage());
@@ -240,12 +316,30 @@ public class NotificationService implements INotificationService {
      */
     private void sendNotificationToAllUsers(String message, String type) {
         try {
-            // TODO: Implementar busca de todos os usuários ativos
-            // Por enquanto, apenas log da notificação
-            System.out.println("Notificação geral: " + message);
+            // Busca todos os usuários ativos
+            List<com.AchadosPerdidos.API.Domain.Entity.Usuario> activeUsers = usuariosRepository.findActive();
+            
+            // Envia notificação para cada usuário ativo
+            for (com.AchadosPerdidos.API.Domain.Entity.Usuario usuario : activeUsers) {
+                sendNotificationToUser(usuario.getId(), message, type);
+            }
+            
+            System.out.println("Notificação geral enviada para " + activeUsers.size() + " usuários ativos: " + message);
             
         } catch (Exception e) {
             System.err.println("Erro ao enviar notificação geral: " + e.getMessage());
         }
+    }
+
+    /**
+     * Busca os tokens de dispositivos de um usuário para envio de push notifications
+     * @param userId ID do usuário
+     * @return Lista de tokens de dispositivos ativos do usuário
+     */
+    private List<String> getDeviceTokensForUser(int userId) {
+        List<DeviceToken> deviceTokens = deviceTokenRepository.findActiveTokensByUsuarioId(userId);
+        return deviceTokens.stream()
+            .map(DeviceToken::getToken)
+            .collect(Collectors.toList());
     }
 }

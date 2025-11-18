@@ -1,25 +1,26 @@
 package com.AchadosPerdidos.API.Domain.Entity;
 
-import java.util.Date;
+import jakarta.persistence.*;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
-public class Estado {
+@Entity
+@Table(name = "estados", schema = "ap_achados_perdidos")
+public class Estado implements Serializable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     private String nome;
+
     private String uf;
-    private Date dtaCriacao;
-    private Boolean flgInativo;
-    private Date dtaRemocao;
 
-    public Estado() {}
+    private LocalDateTime Dta_Criacao;
 
-    public Estado(Integer id, String nome, String uf, Date dtaCriacao, Boolean flgInativo, Date dtaRemocao) {
-        this.id = id;
-        this.nome = nome;
-        this.uf = uf;
-        this.dtaCriacao = dtaCriacao;
-        this.flgInativo = flgInativo;
-        this.dtaRemocao = dtaRemocao;
-    }
+    private Boolean Flg_Inativo;
+
+    private LocalDateTime Dta_Remocao;
 
     public Integer getId() {
         return id;
@@ -45,29 +46,29 @@ public class Estado {
         this.uf = uf;
     }
 
-    public Date getDtaCriacao() {
-        return dtaCriacao;
+    public LocalDateTime getDtaCriacao() {
+        return Dta_Criacao;
     }
 
-    public void setDtaCriacao(Date dtaCriacao) {
-        this.dtaCriacao = dtaCriacao;
+    public void setDtaCriacao(LocalDateTime Dta_Criacao) {
+        this.Dta_Criacao = Dta_Criacao;
     }
 
     public Boolean getFlgInativo() {
-        return flgInativo;
+        return Flg_Inativo;
     }
 
-    public void setFlgInativo(Boolean flgInativo) {
-        this.flgInativo = flgInativo;
+    public void setFlgInativo(Boolean Flg_Inativo) {
+        this.Flg_Inativo = Flg_Inativo;
     }
 
-    public Date getDtaRemocao() {
-        return dtaRemocao;
+    public LocalDateTime getDtaRemocao() {
+        return Dta_Remocao;
     }
 
-    public void setDtaRemocao(Date dtaRemocao) {
-        this.dtaRemocao = dtaRemocao;
+    public void setDtaRemocao(LocalDateTime Dta_Remocao) {
+        this.Dta_Remocao = Dta_Remocao;
     }
-
 }
+
 

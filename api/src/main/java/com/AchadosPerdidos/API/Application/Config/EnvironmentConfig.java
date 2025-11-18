@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-
 @Component
 public class EnvironmentConfig implements ApplicationListener<ApplicationEnvironmentPreparedEvent> {
     
@@ -101,7 +100,8 @@ public class EnvironmentConfig implements ApplicationListener<ApplicationEnviron
         "GOOGLE", "google.auth",
         "POSTGRES", "spring.datasource",
         "MONGODB", "spring.data.mongodb",
-        "AWS", "aws.s3"
+        "AWS", "aws.s3",
+        "ONESIGNAL", "onesignal"
     );
     
     private void mapEnvToSpringProperties(Map<String, Object> envProperties) {
@@ -126,6 +126,18 @@ public class EnvironmentConfig implements ApplicationListener<ApplicationEnviron
     }
     
     private String convertToSpringProperty(String envKey) {
+        // Mapeamento específico para variáveis OneSignal
+        if (envKey.equals("ONESIGNAL_APP_ID")) {
+            return "onesignal.app.id";
+        } else if (envKey.equals("ONESIGNAL_REST_API_KEY")) {
+            return "onesignal.rest.api.key";
+        } else if (envKey.equals("ONESIGNAL_API_URL")) {
+            return "onesignal.api.url";
+        } else if (envKey.equals("ONESIGNAL_ENABLED")) {
+            return "onesignal.enabled";
+        }
+        
+        // Mapeamento genérico para outras variáveis
         for (Map.Entry<String, String> prefix : PREFIX_MAPPINGS.entrySet()) {
             if (envKey.startsWith(prefix.getKey() + "_")) {
                 String suffix = envKey.substring(prefix.getKey().length() + 1);

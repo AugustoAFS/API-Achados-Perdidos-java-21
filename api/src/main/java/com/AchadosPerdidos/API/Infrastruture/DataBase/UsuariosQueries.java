@@ -1,11 +1,14 @@
 package com.AchadosPerdidos.API.Infrastruture.DataBase;
 
-import com.AchadosPerdidos.API.Domain.Entity.Usuarios;
+import com.AchadosPerdidos.API.Domain.Entity.Usuario;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.Interfaces.IUsuariosQueries;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -17,110 +20,107 @@ public class UsuariosQueries implements IUsuariosQueries {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    private final RowMapper<Usuarios> rowMapper = (rs, rowNum) -> {
-        Usuarios usuarios = new Usuarios();
-        usuarios.setId(rs.getInt("id"));
-        usuarios.setNomeCompleto(rs.getString("nome_completo"));
-        usuarios.setCpf(rs.getString("cpf"));
-        usuarios.setEmail(rs.getString("email"));
-        usuarios.setHashSenha(rs.getString("hash_senha"));
-        usuarios.setMatricula(rs.getString("matricula"));
-        usuarios.setNumeroTelefone(rs.getString("numero_telefone"));
-        
-        Integer empresaId = rs.getObject("empresa_id", Integer.class);
-        usuarios.setEmpresaId(empresaId);
+    @NonNull
+    private final RowMapper<Usuario> rowMapper = (rs, rowNum) -> {
+        Usuario usuario = new Usuario();
+        usuario.setId(rs.getInt("id"));
+        usuario.setNomeCompleto(rs.getString("nome_completo"));
+        usuario.setCpf(rs.getString("cpf"));
+        usuario.setEmail(rs.getString("email"));
+        usuario.setHash_senha(rs.getString("hash_senha"));
+        usuario.setMatricula(rs.getString("matricula"));
+        usuario.setNumero_telefone(rs.getString("numero_telefone"));
         
         Integer enderecoId = rs.getObject("endereco_id", Integer.class);
-        usuarios.setEnderecoId(enderecoId);
+        usuario.setEndereco_id(enderecoId);
         
-        usuarios.setDtaCriacao(rs.getTimestamp("Dta_Criacao"));
-        usuarios.setFlgInativo(rs.getBoolean("Flg_Inativo"));
-        usuarios.setDtaRemocao(rs.getTimestamp("Dta_Remocao"));
-        return usuarios;
+        Timestamp dtaCriacao = rs.getTimestamp("Dta_Criacao");
+        if (dtaCriacao != null) {
+            usuario.setDta_Criacao(dtaCriacao.toLocalDateTime());
+        }
+        
+        usuario.setFlg_Inativo(rs.getBoolean("Flg_Inativo"));
+        
+        Timestamp dtaRemocao = rs.getTimestamp("Dta_Remocao");
+        if (dtaRemocao != null) {
+            usuario.setDta_Remocao(dtaRemocao.toLocalDateTime());
+        }
+        
+        return usuario;
     };
 
     @Override
-    public List<Usuarios> findAll() {
+    public List<Usuario> findAll() {
         String sql = "SELECT * FROM ap_achados_perdidos.usuarios ORDER BY nome_completo";
         return jdbcTemplate.query(sql, rowMapper);
     }
 
     @Override
-    public Usuarios findById(int id) {
+    public Usuario findById(int id) {
         String sql = "SELECT * FROM ap_achados_perdidos.usuarios WHERE id = ?";
-        List<Usuarios> usuarios = jdbcTemplate.query(sql, rowMapper, id);
+        List<Usuario> usuarios = jdbcTemplate.query(sql, rowMapper, id);
         return usuarios.isEmpty() ? null : usuarios.get(0);
     }
 
     @Override
-    public Usuarios findByEmail(String email) {
+    public Usuario findByEmail(String email) {
         String sql = "SELECT * FROM ap_achados_perdidos.usuarios WHERE email = ?";
-        List<Usuarios> usuarios = jdbcTemplate.query(sql, rowMapper, email);
+        List<Usuario> usuarios = jdbcTemplate.query(sql, rowMapper, email);
         return usuarios.isEmpty() ? null : usuarios.get(0);
     }
 
-    @Deprecated
     @Override
-    public Usuarios findByEmailAndPassword(String email, String senha) {
-        throw new UnsupportedOperationException(
-            "Este método não deve ser usado. Use UsuariosService.validateLogin() ao invés disso."
-        );
-    }
-
-    @Override
-    public Usuarios findByCpf(String cpf) {
+    public Usuario findByCpf(String cpf) {
         String sql = "SELECT * FROM ap_achados_perdidos.usuarios WHERE cpf = ?";
-        List<Usuarios> usuarios = jdbcTemplate.query(sql, rowMapper, cpf);
+        List<Usuario> usuarios = jdbcTemplate.query(sql, rowMapper, cpf);
         return usuarios.isEmpty() ? null : usuarios.get(0);
     }
 
     @Override
-    public Usuarios findByMatricula(String matricula) {
+    public Usuario findByMatricula(String matricula) {
         String sql = "SELECT * FROM ap_achados_perdidos.usuarios WHERE matricula = ?";
-        List<Usuarios> usuarios = jdbcTemplate.query(sql, rowMapper, matricula);
+        List<Usuario> usuarios = jdbcTemplate.query(sql, rowMapper, matricula);
         return usuarios.isEmpty() ? null : usuarios.get(0);
     }
 
     @Override
-    public Usuarios insert(Usuarios usuarios) {
-        String sql = "INSERT INTO ap_achados_perdidos.usuarios (nome_completo, cpf, email, hash_senha, matricula, numero_telefone, empresa_id, endereco_id, Dta_Criacao, Flg_Inativo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public Usuario insert(Usuario usuario) {
+        String sql = "INSERT INTO ap_achados_perdidos.usuarios (nome_completo, cpf, email, hash_senha, matricula, numero_telefone, endereco_id, Dta_Criacao, Flg_Inativo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql, 
-            usuarios.getNomeCompleto(),
-            usuarios.getCpf(),
-            usuarios.getEmail(),
-            usuarios.getHashSenha(),
-            usuarios.getMatricula(),
-            usuarios.getNumeroTelefone(),
-            usuarios.getEmpresaId(),
-            usuarios.getEnderecoId(),
-            usuarios.getDtaCriacao(),
-            usuarios.getFlgInativo());
+            usuario.getNomeCompleto(),
+            usuario.getCpf(),
+            usuario.getEmail(),
+            usuario.getHash_senha(),
+            usuario.getMatricula(),
+            usuario.getNumero_telefone(),
+            usuario.getEndereco_id(),
+            usuario.getDta_Criacao() != null ? Timestamp.valueOf(usuario.getDta_Criacao()) : Timestamp.valueOf(LocalDateTime.now()),
+            usuario.getFlg_Inativo() != null ? usuario.getFlg_Inativo() : false);
         
         String selectSql = "SELECT * FROM ap_achados_perdidos.usuarios WHERE email = ? AND Dta_Criacao = ? ORDER BY id DESC LIMIT 1";
-        List<Usuarios> inserted = jdbcTemplate.query(selectSql, rowMapper, 
-            usuarios.getEmail(), 
-            usuarios.getDtaCriacao());
+        List<Usuario> inserted = jdbcTemplate.query(selectSql, rowMapper, 
+            usuario.getEmail(), 
+            usuario.getDta_Criacao() != null ? Timestamp.valueOf(usuario.getDta_Criacao()) : Timestamp.valueOf(LocalDateTime.now()));
         
         return inserted.isEmpty() ? null : inserted.get(0);
     }
 
     @Override
-    public Usuarios update(Usuarios usuarios) {
-        String sql = "UPDATE ap_achados_perdidos.usuarios SET nome_completo = ?, cpf = ?, email = ?, hash_senha = ?, matricula = ?, numero_telefone = ?, empresa_id = ?, endereco_id = ?, Flg_Inativo = ?, Dta_Remocao = ? WHERE id = ?";
+    public Usuario update(Usuario usuario) {
+        String sql = "UPDATE ap_achados_perdidos.usuarios SET nome_completo = ?, cpf = ?, email = ?, hash_senha = ?, matricula = ?, numero_telefone = ?, endereco_id = ?, Flg_Inativo = ?, Dta_Remocao = ? WHERE id = ?";
         jdbcTemplate.update(sql, 
-            usuarios.getNomeCompleto(),
-            usuarios.getCpf(),
-            usuarios.getEmail(),
-            usuarios.getHashSenha(),
-            usuarios.getMatricula(),
-            usuarios.getNumeroTelefone(),
-            usuarios.getEmpresaId(),
-            usuarios.getEnderecoId(),
-            usuarios.getFlgInativo(),
-            usuarios.getDtaRemocao(),
-            usuarios.getId());
+            usuario.getNomeCompleto(),
+            usuario.getCpf(),
+            usuario.getEmail(),
+            usuario.getHash_senha(),
+            usuario.getMatricula(),
+            usuario.getNumero_telefone(),
+            usuario.getEndereco_id(),
+            usuario.getFlg_Inativo(),
+            usuario.getDta_Remocao() != null ? Timestamp.valueOf(usuario.getDta_Remocao()) : null,
+            usuario.getId());
         
-        return findById(usuarios.getId());
+        return findById(usuario.getId());
     }
 
     @Override
@@ -131,13 +131,13 @@ public class UsuariosQueries implements IUsuariosQueries {
     }
 
     @Override
-    public List<Usuarios> findActive() {
+    public List<Usuario> findActive() {
         String sql = "SELECT * FROM ap_achados_perdidos.usuarios WHERE Flg_Inativo = false ORDER BY nome_completo";
         return jdbcTemplate.query(sql, rowMapper);
     }
 
     @Override
-    public List<Usuarios> findByRole(int tipoRoleId) {
+    public List<Usuario> findByRole(int tipoRoleId) {
         String sql = "SELECT u.* FROM ap_achados_perdidos.usuarios u " +
                      "INNER JOIN ap_achados_perdidos.usuario_roles ur ON u.id = ur.usuario_id " +
                      "WHERE ur.role_id = ? AND ur.Flg_Inativo = false ORDER BY u.nome_completo";
@@ -145,7 +145,7 @@ public class UsuariosQueries implements IUsuariosQueries {
     }
 
     @Override
-    public List<Usuarios> findByInstitution(int instituicaoId) {
+    public List<Usuario> findByInstitution(int instituicaoId) {
         String sql = "SELECT u.* FROM ap_achados_perdidos.usuarios u " +
                      "INNER JOIN ap_achados_perdidos.usuario_campus uc ON u.id = uc.usuario_id " +
                      "INNER JOIN ap_achados_perdidos.campus c ON uc.campus_id = c.id " +
@@ -154,7 +154,7 @@ public class UsuariosQueries implements IUsuariosQueries {
     }
 
     @Override
-    public List<Usuarios> findByCampus(int campusId) {
+    public List<Usuario> findByCampus(int campusId) {
         String sql = "SELECT u.* FROM ap_achados_perdidos.usuarios u " +
                      "INNER JOIN ap_achados_perdidos.usuario_campus uc ON u.id = uc.usuario_id " +
                      "WHERE uc.campus_id = ? AND uc.Flg_Inativo = false ORDER BY u.nome_completo";
@@ -174,17 +174,16 @@ public class UsuariosQueries implements IUsuariosQueries {
             }, usuarioId);
             return resultados.isEmpty() ? "" : resultados.get(0);
         } catch (Exception e) {
-            // Se houver erro na query, retorna string vazia
             return "";
         }
     }
 
     @Override
     public boolean associarUsuarioCampus(int usuarioId, int campusId) {
-        String sql = "INSERT INTO ap_achados_perdidos.usuario_campus (usuario_id, campus_id, Flg_Inativo) " +
-                     "VALUES (?, ?, false) " +
+        String sql = "INSERT INTO ap_achados_perdidos.usuario_campus (usuario_id, campus_id, Dta_Criacao, Flg_Inativo) " +
+                     "VALUES (?, ?, ?, false) " +
                      "ON CONFLICT (usuario_id, campus_id) DO UPDATE SET Flg_Inativo = false, Dta_Remocao = NULL";
-        int rowsAffected = jdbcTemplate.update(sql, usuarioId, campusId);
+        int rowsAffected = jdbcTemplate.update(sql, usuarioId, campusId, Timestamp.valueOf(LocalDateTime.now()));
         return rowsAffected > 0;
     }
 }

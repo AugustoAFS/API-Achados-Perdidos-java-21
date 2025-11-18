@@ -7,6 +7,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -24,9 +26,19 @@ public class CidadeQueries implements ICidadeQueries {
         cidade.setId(rs.getInt("id"));
         cidade.setNome(rs.getString("nome"));
         cidade.setEstadoId(rs.getInt("estado_id"));
-        cidade.setDtaCriacao(rs.getTimestamp("Dta_Criacao"));
+        
+        Timestamp dtaCriacao = rs.getTimestamp("Dta_Criacao");
+        if (dtaCriacao != null) {
+            cidade.setDtaCriacao(dtaCriacao.toLocalDateTime());
+        }
+        
         cidade.setFlgInativo(rs.getBoolean("Flg_Inativo"));
-        cidade.setDtaRemocao(rs.getTimestamp("Dta_Remocao"));
+        
+        Timestamp dtaRemocao = rs.getTimestamp("Dta_Remocao");
+        if (dtaRemocao != null) {
+            cidade.setDtaRemocao(dtaRemocao.toLocalDateTime());
+        }
+        
         return cidade;
     };
 
@@ -49,14 +61,14 @@ public class CidadeQueries implements ICidadeQueries {
         jdbcTemplate.update(sql,
             cidade.getNome(),
             cidade.getEstadoId(),
-            cidade.getDtaCriacao(),
-            cidade.getFlgInativo());
+            cidade.getDtaCriacao() != null ? Timestamp.valueOf(cidade.getDtaCriacao()) : Timestamp.valueOf(LocalDateTime.now()),
+            cidade.getFlgInativo() != null ? cidade.getFlgInativo() : false);
 
         String selectSql = "SELECT * FROM ap_achados_perdidos.cidades WHERE nome = ? AND estado_id = ? AND Dta_Criacao = ? ORDER BY id DESC LIMIT 1";
         List<Cidade> inserted = jdbcTemplate.query(selectSql, rowMapper,
             cidade.getNome(),
             cidade.getEstadoId(),
-            cidade.getDtaCriacao());
+            cidade.getDtaCriacao() != null ? Timestamp.valueOf(cidade.getDtaCriacao()) : Timestamp.valueOf(LocalDateTime.now()));
 
         return inserted.isEmpty() ? null : inserted.get(0);
     }
@@ -68,7 +80,7 @@ public class CidadeQueries implements ICidadeQueries {
             cidade.getNome(),
             cidade.getEstadoId(),
             cidade.getFlgInativo(),
-            cidade.getDtaRemocao(),
+            cidade.getDtaRemocao() != null ? Timestamp.valueOf(cidade.getDtaRemocao()) : null,
             cidade.getId());
 
         return findById(cidade.getId());

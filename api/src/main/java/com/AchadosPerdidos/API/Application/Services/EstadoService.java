@@ -15,7 +15,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -97,7 +97,7 @@ public class EstadoService implements IEstadoService {
         Estado estado = new Estado();
         estado.setNome(createDTO.getNome());
         estado.setUf(createDTO.getUf().toUpperCase());
-        estado.setDtaCriacao(new Date());
+        estado.setDtaCriacao(LocalDateTime.now());
         estado.setFlgInativo(false);
         
         Estado savedEstado = estadoRepository.save(estado);
@@ -170,7 +170,7 @@ public class EstadoService implements IEstadoService {
         }
         
         estado.setFlgInativo(true);
-        estado.setDtaRemocao(new Date());
+        estado.setDtaRemocao(LocalDateTime.now());
         
         Estado updatedEstado = estadoRepository.save(estado);
         return estadoModelMapper.toDTO(updatedEstado);

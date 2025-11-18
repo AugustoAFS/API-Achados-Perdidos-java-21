@@ -4,134 +4,134 @@ import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosUpdateDTO;
-import com.AchadosPerdidos.API.Domain.Entity.Usuarios;
+import com.AchadosPerdidos.API.Domain.Entity.Usuario;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
 public class UsuariosModelMapper {
 
-    public UsuariosDTO toDTO(Usuarios usuarios) {
-        if (usuarios == null) {
+    public UsuariosDTO toDTO(Usuario usuario) {
+        if (usuario == null) {
             return null;
         }
         
         return new UsuariosDTO(
-            usuarios.getId(),
-            usuarios.getNomeCompleto(),
-            usuarios.getCpf(),
-            usuarios.getEmail(),
-            usuarios.getMatricula(),
-            usuarios.getEmpresaId(),
-            usuarios.getEnderecoId(),
-            usuarios.getDtaCriacao(),
-            usuarios.getFlgInativo(),
-            usuarios.getDtaRemocao()
+            usuario.getId(),
+            usuario.getNomeCompleto(),
+            usuario.getCpf(),
+            usuario.getEmail(),
+            usuario.getMatricula(),
+            usuario.getEndereco_id(),
+            usuario.getDta_Criacao() != null ? Date.from(usuario.getDta_Criacao().atZone(ZoneId.systemDefault()).toInstant()) : null,
+            usuario.getFlg_Inativo(),
+            usuario.getDta_Remocao() != null ? Date.from(usuario.getDta_Remocao().atZone(ZoneId.systemDefault()).toInstant()) : null
         );
     }
 
-    public Usuarios toEntity(UsuariosDTO dto) {
+    public Usuario toEntity(UsuariosDTO dto) {
         if (dto == null) {
             return null;
         }
         
-    Usuarios usuarios = new Usuarios();
-    usuarios.setId(dto.getId());
-    usuarios.setNomeCompleto(dto.getNomeCompleto());
-    usuarios.setCpf(dto.getCpf());
-    usuarios.setEmail(dto.getEmail());
-    usuarios.setMatricula(dto.getMatricula());
-    usuarios.setEmpresaId(dto.getEmpresaId());
-    usuarios.setEnderecoId(dto.getEnderecoId());
-    usuarios.setDtaCriacao(dto.getDtaCriacao());
-    usuarios.setFlgInativo(dto.getFlgInativo());
-    usuarios.setDtaRemocao(dto.getDtaRemocao());
+        Usuario usuario = new Usuario();
+        usuario.setId(dto.getId());
+        usuario.setNomeCompleto(dto.getNomeCompleto());
+        usuario.setCpf(dto.getCpf());
+        usuario.setEmail(dto.getEmail());
+        usuario.setMatricula(dto.getMatricula());
+        usuario.setEndereco_id(dto.getEnderecoId());
+        if (dto.getDtaCriacao() != null) {
+            usuario.setDta_Criacao(dto.getDtaCriacao().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
+        usuario.setFlg_Inativo(dto.getFlgInativo());
+        if (dto.getDtaRemocao() != null) {
+            usuario.setDta_Remocao(dto.getDtaRemocao().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
         
-        return usuarios;
+        return usuario;
     }
 
-    public Usuarios toEntity(UsuariosCreateDTO dto) {
+    public Usuario fromCreateDTO(UsuariosCreateDTO dto) {
         if (dto == null) {
             return null;
         }
         
-        Usuarios usuarios = new Usuarios();
-        usuarios.setNomeCompleto(dto.getNomeCompleto());
-        usuarios.setCpf(dto.getCpf());
-        usuarios.setEmail(dto.getEmail());
+        Usuario usuario = new Usuario();
+        usuario.setNomeCompleto(dto.getNomeCompleto());
+        usuario.setCpf(dto.getCpf());
+        usuario.setEmail(dto.getEmail());
         // Nota: O hash da senha é feito no serviço, não no mapper
-        usuarios.setMatricula(dto.getMatricula());
-        usuarios.setNumeroTelefone(dto.getNumeroTelefone());
-        usuarios.setEnderecoId(dto.getEnderecoId());
+        usuario.setMatricula(dto.getMatricula());
+        usuario.setNumero_telefone(dto.getNumeroTelefone());
+        usuario.setEndereco_id(dto.getEnderecoId());
         
-        return usuarios;
+        return usuario;
     }
 
-    public void updateEntityFromUpdateDTO(Usuarios usuarios, UsuariosUpdateDTO dto) {
-        if (usuarios == null || dto == null) {
+    public void updateFromDTO(Usuario usuario, UsuariosUpdateDTO dto) {
+        if (usuario == null || dto == null) {
             return;
         }
         
         if (dto.getNomeCompleto() != null) {
-            usuarios.setNomeCompleto(dto.getNomeCompleto());
+            usuario.setNomeCompleto(dto.getNomeCompleto());
         }
         if (dto.getCpf() != null) {
-            usuarios.setCpf(dto.getCpf());
+            usuario.setCpf(dto.getCpf());
         }
         if (dto.getEmail() != null) {
-            usuarios.setEmail(dto.getEmail());
+            usuario.setEmail(dto.getEmail());
         }
         if (dto.getMatricula() != null) {
-            usuarios.setMatricula(dto.getMatricula());
-        }
-        if (dto.getEmpresaId() != null) {
-            usuarios.setEmpresaId(dto.getEmpresaId());
+            usuario.setMatricula(dto.getMatricula());
         }
         if (dto.getEnderecoId() != null) {
-            usuarios.setEnderecoId(dto.getEnderecoId());
+            usuario.setEndereco_id(dto.getEnderecoId());
         }
         if (dto.getFlgInativo() != null) {
-            usuarios.setFlgInativo(dto.getFlgInativo());
+            usuario.setFlg_Inativo(dto.getFlgInativo());
         }
     }
 
-    public UsuariosCreateDTO toCreateDTO(Usuarios usuarios) {
-        if (usuarios == null) {
+    public UsuariosCreateDTO toCreateDTO(Usuario usuario) {
+        if (usuario == null) {
             return null;
         }
         
         return new UsuariosCreateDTO(
-            usuarios.getNomeCompleto(),
-            usuarios.getCpf(),
-            usuarios.getEmail(),
+            usuario.getNomeCompleto(),
+            usuario.getCpf(),
+            usuario.getEmail(),
             null, // senha não é retornada
-            usuarios.getMatricula(),
-            usuarios.getNumeroTelefone(),
-            usuarios.getEnderecoId(),
-            null // campusId não está na entidade Usuarios, está na tabela usuario_campus
+            usuario.getMatricula(),
+            usuario.getNumero_telefone(),
+            usuario.getEndereco_id(),
+            null // campusId não está na entidade Usuario, está na tabela usuario_campus
         );
     }
 
-    public UsuariosUpdateDTO toUpdateDTO(Usuarios usuarios) {
-        if (usuarios == null) {
+    public UsuariosUpdateDTO toUpdateDTO(Usuario usuario) {
+        if (usuario == null) {
             return null;
         }
         
         return new UsuariosUpdateDTO(
-            usuarios.getNomeCompleto(),
-            usuarios.getCpf(),
-            usuarios.getEmail(),
-            usuarios.getMatricula(),
-            usuarios.getEmpresaId(),
-            usuarios.getEnderecoId(),
-            usuarios.getFlgInativo()
+            usuario.getNomeCompleto(),
+            usuario.getCpf(),
+            usuario.getEmail(),
+            usuario.getMatricula(),
+            usuario.getEndereco_id(),
+            usuario.getFlg_Inativo()
         );
     }
 
-    public UsuariosListDTO toListDTO(List<Usuarios> usuarios) {
+    public UsuariosListDTO toListDTO(List<Usuario> usuarios) {
         if (usuarios == null) {
             return null;
         }
@@ -143,7 +143,7 @@ public class UsuariosModelMapper {
         return new UsuariosListDTO(dtoList, dtoList.size());
     }
 
-    public UsuariosListDTO toListDTO(Usuarios usuario) {
+    public UsuariosListDTO toListDTO(Usuario usuario) {
         if (usuario == null) {
             return null;
         }

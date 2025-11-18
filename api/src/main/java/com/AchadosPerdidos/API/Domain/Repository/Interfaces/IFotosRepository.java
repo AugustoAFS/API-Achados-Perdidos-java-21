@@ -1,18 +1,18 @@
 package com.AchadosPerdidos.API.Domain.Repository.Interfaces;
 
-import com.AchadosPerdidos.API.Domain.Entity.Fotos;
+import com.AchadosPerdidos.API.Domain.Entity.Foto;
 import java.util.List;
 
 public interface IFotosRepository {
-    List<Fotos> findAll();
-    Fotos findById(int id);
-    Fotos save(Fotos fotos);
+    List<Foto> findAll();
+    Foto findById(int id);
+    Foto save(Foto foto);
     boolean deleteById(int id);
-    List<Fotos> findActive();
-    List<Fotos> findByUser(int userId);
-    List<Fotos> findByItem(int itemId);
-    List<Fotos> findProfilePhotos(int userId);
-    List<Fotos> findItemPhotos(int itemId);
-    Fotos findMainItemPhoto(int itemId);
-    Fotos findProfilePhoto(int userId);
+    List<Foto> findActive();
+    List<Foto> findByUser(int userId);
+    List<Foto> findByItem(int itemId);
+    List<Foto> findProfilePhotos(int userId);
+    List<Foto> findItemPhotos(int itemId);
+    Foto findMainItemPhoto(int itemId);
+    Foto findProfilePhoto(int userId);
 }

@@ -4,15 +4,14 @@ import com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosListDTO;
 import com.AchadosPerdidos.API.Application.Mapper.FotosModelMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotosService;
-import com.AchadosPerdidos.API.Domain.Entity.Fotos;
-import com.AchadosPerdidos.API.Domain.Enum.Provedor_Armazenamento;
+import com.AchadosPerdidos.API.Domain.Entity.Foto;
 import com.AchadosPerdidos.API.Domain.Repository.FotosRepository;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -29,59 +28,59 @@ public class FotosService implements IFotosService {
 
     @Override
     public FotosListDTO getAllFotos() {
-        List<Fotos> fotos = fotosRepository.findAll();
+        List<Foto> fotos = fotosRepository.findAll();
         return fotosModelMapper.toListDTO(fotos);
     }
 
     @Override
     public FotosDTO getFotoById(int id) {
-        Fotos fotos = fotosRepository.findById(id);
-        return fotosModelMapper.toDTO(fotos);
+        Foto foto = fotosRepository.findById(id);
+        return fotosModelMapper.toDTO(foto);
     }
 
     @Override
     public FotosDTO createFoto(FotosDTO fotosDTO) {
-        Fotos fotos = fotosModelMapper.toEntity(fotosDTO);
-        fotos.setDtaCriacao(new Date());
-        fotos.setFlgInativo(false);
+        Foto foto = fotosModelMapper.toEntity(fotosDTO);
+        foto.setDtaCriacao(LocalDateTime.now());
+        foto.setFlgInativo(false);
         
-        Fotos savedFotos = fotosRepository.save(fotos);
-        return fotosModelMapper.toDTO(savedFotos);
+        Foto savedFoto = fotosRepository.save(foto);
+        return fotosModelMapper.toDTO(savedFoto);
     }
 
     @Override
     public FotosDTO updateFoto(int id, FotosDTO fotosDTO) {
-        Fotos existingFotos = fotosRepository.findById(id);
-        if (existingFotos == null) {
+        Foto existingFoto = fotosRepository.findById(id);
+        if (existingFoto == null) {
             return null;
         }
         
-        // Mapeamento correto dos campos do FotosDTO para a entidade Fotos
+        // Mapeamento correto dos campos do FotosDTO para a entidade Foto
         if (fotosDTO.getUrl() != null) {
-            existingFotos.setUrl(fotosDTO.getUrl());
+            existingFoto.setUrl(fotosDTO.getUrl());
         }
         if (fotosDTO.getProvedorArmazenamento() != null) {
-            existingFotos.setProvedorArmazenamento(Provedor_Armazenamento.valueOf(fotosDTO.getProvedorArmazenamento()));
+            existingFoto.setProvedorArmazenamento(fotosDTO.getProvedorArmazenamento());
         }
         if (fotosDTO.getChaveArmazenamento() != null) {
-            existingFotos.setChaveArmazenamento(fotosDTO.getChaveArmazenamento());
+            existingFoto.setChaveArmazenamento(fotosDTO.getChaveArmazenamento());
         }
         if (fotosDTO.getNomeArquivoOriginal() != null) {
-            existingFotos.setNomeArquivoOriginal(fotosDTO.getNomeArquivoOriginal());
+            existingFoto.setNomeArquivoOriginal(fotosDTO.getNomeArquivoOriginal());
         }
         if (fotosDTO.getTamanhoArquivoBytes() != null) {
-            existingFotos.setTamanhoArquivoBytes(fotosDTO.getTamanhoArquivoBytes());
+            existingFoto.setTamanhoArquivoBytes(fotosDTO.getTamanhoArquivoBytes());
         }
-        existingFotos.setDtaCriacao(new Date());
+        existingFoto.setDtaCriacao(LocalDateTime.now());
         
-        Fotos updatedFotos = fotosRepository.save(existingFotos);
-        return fotosModelMapper.toDTO(updatedFotos);
+        Foto updatedFoto = fotosRepository.save(existingFoto);
+        return fotosModelMapper.toDTO(updatedFoto);
     }
 
     @Override
     public boolean deleteFoto(int id) {
-        Fotos fotos = fotosRepository.findById(id);
-        if (fotos == null) {
+        Foto foto = fotosRepository.findById(id);
+        if (foto == null) {
             return false;
         }
         
@@ -90,44 +89,44 @@ public class FotosService implements IFotosService {
 
     @Override
     public FotosListDTO getActiveFotos() {
-        List<Fotos> activeFotos = fotosRepository.findActive();
+        List<Foto> activeFotos = fotosRepository.findActive();
         return fotosModelMapper.toListDTO(activeFotos);
     }
 
     @Override
     public FotosListDTO getFotosByUser(int userId) {
-        List<Fotos> fotos = fotosRepository.findByUser(userId);
+        List<Foto> fotos = fotosRepository.findByUser(userId);
         return fotosModelMapper.toListDTO(fotos);
     }
 
     @Override
     public FotosListDTO getFotosByItem(int itemId) {
-        List<Fotos> fotos = fotosRepository.findByItem(itemId);
+        List<Foto> fotos = fotosRepository.findByItem(itemId);
         return fotosModelMapper.toListDTO(fotos);
     }
 
     @Override
     public FotosListDTO getProfilePhotos(int userId) {
-        List<Fotos> fotos = fotosRepository.findProfilePhotos(userId);
+        List<Foto> fotos = fotosRepository.findProfilePhotos(userId);
         return fotosModelMapper.toListDTO(fotos);
     }
 
     @Override
     public FotosListDTO getItemPhotos(int itemId) {
-        List<Fotos> fotos = fotosRepository.findItemPhotos(itemId);
+        List<Foto> fotos = fotosRepository.findItemPhotos(itemId);
         return fotosModelMapper.toListDTO(fotos);
     }
 
     @Override
     public FotosDTO getMainItemPhoto(int itemId) {
-        Fotos fotos = fotosRepository.findMainItemPhoto(itemId);
-        return fotosModelMapper.toDTO(fotos);
+        Foto foto = fotosRepository.findMainItemPhoto(itemId);
+        return fotosModelMapper.toDTO(foto);
     }
 
     @Override
     public FotosDTO getProfilePhoto(int userId) {
-        Fotos fotos = fotosRepository.findProfilePhoto(userId);
-        return fotosModelMapper.toDTO(fotos);
+        Foto foto = fotosRepository.findProfilePhoto(userId);
+        return fotosModelMapper.toDTO(foto);
     }
 
     /**
@@ -168,19 +167,19 @@ public class FotosService implements IFotosService {
                 isProfilePhoto
             );
 
-            // Criar entidade Fotos
-            Fotos fotos = new Fotos();
-            fotos.setProvedorArmazenamento(Provedor_Armazenamento.s3);
-            fotos.setChaveArmazenamento(uploadResult.getS3Key());
-            fotos.setUrl(uploadResult.getFileUrl());
-            fotos.setNomeArquivoOriginal(uploadResult.getOriginalName());
-            fotos.setTamanhoArquivoBytes((long) fileBytes.length);
-            fotos.setFlgInativo(false);
-            fotos.setDtaCriacao(new Date());
+            // Criar entidade Foto
+            Foto foto = new Foto();
+            foto.setProvedorArmazenamento("s3");
+            foto.setChaveArmazenamento(uploadResult.getS3Key());
+            foto.setUrl(uploadResult.getFileUrl());
+            foto.setNomeArquivoOriginal(uploadResult.getOriginalName());
+            foto.setTamanhoArquivoBytes((long) fileBytes.length);
+            foto.setFlgInativo(false);
+            foto.setDtaCriacao(LocalDateTime.now());
 
             // Salvar no banco de dados
-            Fotos savedFotos = fotosRepository.save(fotos);
-            return fotosModelMapper.toDTO(savedFotos);
+            Foto savedFoto = fotosRepository.save(foto);
+            return fotosModelMapper.toDTO(savedFoto);
 
         } catch (RuntimeException e) {
             throw new RuntimeException("Erro ao fazer upload da foto: " + e.getMessage(), e);
@@ -193,16 +192,16 @@ public class FotosService implements IFotosService {
      * @return Conteúdo da foto em bytes
      */
     public byte[] downloadPhoto(int fotoId) {
-        Fotos fotos = fotosRepository.findById(fotoId);
-        if (fotos == null) {
+        Foto foto = fotosRepository.findById(fotoId);
+        if (foto == null) {
             throw new IllegalArgumentException("Foto não encontrada");
         }
 
-        if (fotos.getProvedorArmazenamento() != Provedor_Armazenamento.s3) {
+        if (!"s3".equals(foto.getProvedorArmazenamento())) {
             throw new IllegalArgumentException("Foto não está armazenada no S3");
         }
 
-        return s3Service.downloadFile(fotos.getChaveArmazenamento());
+        return s3Service.downloadFile(foto.getChaveArmazenamento());
     }
 
     /**
@@ -211,15 +210,15 @@ public class FotosService implements IFotosService {
      * @return true se deletada com sucesso
      */
     public boolean deletePhoto(int fotoId) {
-        Fotos fotos = fotosRepository.findById(fotoId);
-        if (fotos == null) {
+        Foto foto = fotosRepository.findById(fotoId);
+        if (foto == null) {
             return false;
         }
 
         try {
             // Deletar do S3 se for S3
-            if (fotos.getProvedorArmazenamento() == Provedor_Armazenamento.s3) {
-                s3Service.deleteFile(fotos.getChaveArmazenamento());
+            if ("s3".equals(foto.getProvedorArmazenamento())) {
+                s3Service.deleteFile(foto.getChaveArmazenamento());
             }
 
             // Deletar do banco de dados

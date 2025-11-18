@@ -7,6 +7,7 @@ import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -65,6 +66,7 @@ public class JWTService implements IJWTService {
     }
 
     @Override
+    @Cacheable(value = "jwtTokens", key = "#token", unless = "#result == false")
     public boolean validateToken(String token) {
         try {
             getClaims(token);
@@ -98,6 +100,7 @@ public class JWTService implements IJWTService {
     }
 
     @Override
+    @Cacheable(value = "jwtUserIds", key = "#token", unless = "#result == null")
     public String getUserIdFromToken(String token) {
         try {
             Claims claims = getClaims(token);

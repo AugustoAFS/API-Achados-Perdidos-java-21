@@ -1,27 +1,28 @@
 package com.AchadosPerdidos.API.Domain.Entity;
 
-import java.util.Date;
+import jakarta.persistence.*;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
-public class Local {
+@Entity
+@Table(name = "locais", schema = "ap_achados_perdidos")
+public class Local implements Serializable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     private String nome;
+
     private String descricao;
-    private Integer campusId;
-    private Date dtaCriacao;
-    private Boolean flgInativo;
-    private Date dtaRemocao;
 
-    public Local() {}
+    private Integer campus_id;
 
-    public Local(Integer id, String nome, String descricao, Integer campusId, Date dtaCriacao, Boolean flgInativo, Date dtaRemocao) {
-        this.id = id;
-        this.nome = nome;
-        this.descricao = descricao;
-        this.campusId = campusId;
-        this.dtaCriacao = dtaCriacao;
-        this.flgInativo = flgInativo;
-        this.dtaRemocao = dtaRemocao;
-    }
+    private LocalDateTime Dta_Criacao;
+
+    private Boolean Flg_Inativo;
+
+    private LocalDateTime Dta_Remocao;
 
     public Integer getId() {
         return id;
@@ -47,37 +48,35 @@ public class Local {
         this.descricao = descricao;
     }
 
-    public Integer getCampusId() {
-        return campusId;
+    public Integer getCampus_id() {
+        return campus_id;
     }
 
-    public void setCampusId(Integer campusId) {
-        this.campusId = campusId;
+    public void setCampus_id(Integer campus_id) {
+        this.campus_id = campus_id;
     }
 
-    public Date getDtaCriacao() {
-        return dtaCriacao;
+    public LocalDateTime getDtaCriacao() {
+        return Dta_Criacao;
     }
 
-    public void setDtaCriacao(Date dtaCriacao) {
-        this.dtaCriacao = dtaCriacao;
+    public void setDtaCriacao(LocalDateTime Dta_Criacao) {
+        this.Dta_Criacao = Dta_Criacao;
     }
 
     public Boolean getFlgInativo() {
-        return flgInativo;
+        return Flg_Inativo;
     }
 
-    public void setFlgInativo(Boolean flgInativo) {
-        this.flgInativo = flgInativo;
+    public void setFlgInativo(Boolean Flg_Inativo) {
+        this.Flg_Inativo = Flg_Inativo;
     }
 
-    public Date getDtaRemocao() {
-        return dtaRemocao;
+    public LocalDateTime getDtaRemocao() {
+        return Dta_Remocao;
     }
 
-    public void setDtaRemocao(Date dtaRemocao) {
-        this.dtaRemocao = dtaRemocao;
+    public void setDtaRemocao(LocalDateTime Dta_Remocao) {
+        this.Dta_Remocao = Dta_Remocao;
     }
-
 }
-

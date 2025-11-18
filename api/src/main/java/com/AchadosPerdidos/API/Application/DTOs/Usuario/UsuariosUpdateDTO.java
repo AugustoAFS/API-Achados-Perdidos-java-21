@@ -16,9 +16,6 @@ public class UsuariosUpdateDTO {
     @Schema(description = "Matricula", example = "2024001")
     private String matricula;
 
-    @Schema(description = "Empresa ID", example = "10")
-    private Integer empresaId;
-
     @Schema(description = "Endereco ID", example = "5")
     private Integer enderecoId;
 
@@ -29,12 +26,11 @@ public class UsuariosUpdateDTO {
         // Construtor padrao para frameworks de serializacao
     }
 
-    public UsuariosUpdateDTO(String nomeCompleto, String cpf, String email, String matricula, Integer empresaId, Integer enderecoId, Boolean flgInativo) {
+    public UsuariosUpdateDTO(String nomeCompleto, String cpf, String email, String matricula, Integer enderecoId, Boolean flgInativo) {
         this.nomeCompleto = nomeCompleto;
         this.cpf = cpf;
         this.email = email;
         this.matricula = matricula;
-        this.empresaId = empresaId;
         this.enderecoId = enderecoId;
         this.flgInativo = flgInativo;
     }
@@ -69,14 +65,6 @@ public class UsuariosUpdateDTO {
 
     public void setMatricula(String matricula) {
         this.matricula = matricula;
-    }
-
-    public Integer getEmpresaId() {
-        return empresaId;
-    }
-
-    public void setEmpresaId(Integer empresaId) {
-        this.empresaId = empresaId;
     }
 
     public Integer getEnderecoId() {

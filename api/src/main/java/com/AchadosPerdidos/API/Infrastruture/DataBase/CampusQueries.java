@@ -7,6 +7,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -24,9 +26,19 @@ public class CampusQueries implements ICampusQueries {
         campus.setNome(rs.getString("nome"));
         campus.setInstituicaoId(rs.getInt("instituicao_id"));
         campus.setEnderecoId(rs.getInt("endereco_id"));
-        campus.setDtaCriacao(rs.getTimestamp("Dta_Criacao"));
+        
+        Timestamp dtaCriacao = rs.getTimestamp("Dta_Criacao");
+        if (dtaCriacao != null) {
+            campus.setDtaCriacao(dtaCriacao.toLocalDateTime());
+        }
+        
         campus.setFlgInativo(rs.getBoolean("Flg_Inativo"));
-        campus.setDtaRemocao(rs.getTimestamp("Dta_Remocao"));
+        
+        Timestamp dtaRemocao = rs.getTimestamp("Dta_Remocao");
+        if (dtaRemocao != null) {
+            campus.setDtaRemocao(dtaRemocao.toLocalDateTime());
+        }
+        
         return campus;
     };
 
@@ -50,14 +62,14 @@ public class CampusQueries implements ICampusQueries {
             campus.getNome(),
             campus.getInstituicaoId(),
             campus.getEnderecoId(),
-            campus.getDtaCriacao(),
-            campus.getFlgInativo());
+            campus.getDtaCriacao() != null ? Timestamp.valueOf(campus.getDtaCriacao()) : Timestamp.valueOf(LocalDateTime.now()),
+            campus.getFlgInativo() != null ? campus.getFlgInativo() : false);
         
         // Buscar o registro inserido para retornar com o ID
         String selectSql = "SELECT * FROM ap_achados_perdidos.campus WHERE nome = ? AND Dta_Criacao = ? ORDER BY id DESC LIMIT 1";
         List<Campus> inserted = jdbcTemplate.query(selectSql, rowMapper, 
             campus.getNome(), 
-            campus.getDtaCriacao());
+            campus.getDtaCriacao() != null ? Timestamp.valueOf(campus.getDtaCriacao()) : Timestamp.valueOf(LocalDateTime.now()));
         
         return inserted.isEmpty() ? null : inserted.get(0);
     }
@@ -70,7 +82,7 @@ public class CampusQueries implements ICampusQueries {
             campus.getInstituicaoId(),
             campus.getEnderecoId(),
             campus.getFlgInativo(),
-            campus.getDtaRemocao(),
+            campus.getDtaRemocao() != null ? Timestamp.valueOf(campus.getDtaRemocao()) : null,
             campus.getId());
         
         return findById(campus.getId());

@@ -6,6 +6,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -22,10 +24,20 @@ public class LocalQueries implements ILocalQueries {
         local.setId(rs.getInt("id"));
         local.setNome(rs.getString("nome"));
         local.setDescricao(rs.getString("descricao"));
-        local.setCampusId(rs.getInt("campus_id"));
-        local.setDtaCriacao(rs.getTimestamp("Dta_Criacao"));
+        local.setCampus_id(rs.getInt("campus_id"));
+        
+        Timestamp dtaCriacao = rs.getTimestamp("Dta_Criacao");
+        if (dtaCriacao != null) {
+            local.setDtaCriacao(dtaCriacao.toLocalDateTime());
+        }
+        
         local.setFlgInativo(rs.getBoolean("Flg_Inativo"));
-        local.setDtaRemocao(rs.getTimestamp("Dta_Remocao"));
+        
+        Timestamp dtaRemocao = rs.getTimestamp("Dta_Remocao");
+        if (dtaRemocao != null) {
+            local.setDtaRemocao(dtaRemocao.toLocalDateTime());
+        }
+        
         return local;
     };
 
@@ -48,14 +60,14 @@ public class LocalQueries implements ILocalQueries {
         jdbcTemplate.update(sql,
             local.getNome(),
             local.getDescricao(),
-            local.getCampusId(),
-            local.getDtaCriacao(),
-            local.getFlgInativo());
+            local.getCampus_id(),
+            local.getDtaCriacao() != null ? Timestamp.valueOf(local.getDtaCriacao()) : Timestamp.valueOf(LocalDateTime.now()),
+            local.getFlgInativo() != null ? local.getFlgInativo() : false);
 
         String selectSql = "SELECT * FROM ap_achados_perdidos.locais WHERE nome = ? AND Dta_Criacao = ? ORDER BY id DESC LIMIT 1";
         List<Local> inserted = jdbcTemplate.query(selectSql, rowMapper,
             local.getNome(),
-            local.getDtaCriacao());
+            local.getDtaCriacao() != null ? Timestamp.valueOf(local.getDtaCriacao()) : Timestamp.valueOf(LocalDateTime.now()));
 
         return inserted.isEmpty() ? null : inserted.get(0);
     }
@@ -66,9 +78,9 @@ public class LocalQueries implements ILocalQueries {
         jdbcTemplate.update(sql,
             local.getNome(),
             local.getDescricao(),
-            local.getCampusId(),
+            local.getCampus_id(),
             local.getFlgInativo(),
-            local.getDtaRemocao(),
+            local.getDtaRemocao() != null ? Timestamp.valueOf(local.getDtaRemocao()) : null,
             local.getId());
 
         return findById(local.getId());

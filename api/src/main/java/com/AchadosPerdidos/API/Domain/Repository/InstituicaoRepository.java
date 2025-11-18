@@ -1,6 +1,6 @@
 package com.AchadosPerdidos.API.Domain.Repository;
 
-import com.AchadosPerdidos.API.Domain.Entity.Instituicao;
+import com.AchadosPerdidos.API.Domain.Entity.Instituicoes;
 import com.AchadosPerdidos.API.Domain.Repository.Interfaces.IInstituicaoRepository;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.InstituicaoQueries;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,17 +15,17 @@ public class InstituicaoRepository implements IInstituicaoRepository {
     private InstituicaoQueries instituicaoQueries;
 
     @Override
-    public List<Instituicao> findAll() {
+    public List<Instituicoes> findAll() {
         return instituicaoQueries.findAll();
     }
 
     @Override
-    public Instituicao findById(int id) {
+    public Instituicoes findById(int id) {
         return instituicaoQueries.findById(id);
     }
 
     @Override
-    public Instituicao save(Instituicao instituicao) {
+    public Instituicoes save(Instituicoes instituicao) {
         if (instituicao.getId() == null || instituicao.getId() == 0) {
             return instituicaoQueries.insert(instituicao);
         } else {
@@ -39,12 +39,12 @@ public class InstituicaoRepository implements IInstituicaoRepository {
     }
 
     @Override
-    public List<Instituicao> findActive() {
+    public List<Instituicoes> findActive() {
         return instituicaoQueries.findActive();
     }
 
     @Override
-    public List<Instituicao> findByType(String tipoInstituicao) {
+    public List<Instituicoes> findByType(String tipoInstituicao) {
         return instituicaoQueries.findByType(tipoInstituicao);
     }
 }

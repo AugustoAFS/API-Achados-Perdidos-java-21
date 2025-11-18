@@ -4,6 +4,9 @@ import com.AchadosPerdidos.API.Application.DTOs.Endereco.EnderecoDTO;
 import com.AchadosPerdidos.API.Domain.Entity.Endereco;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneId;
+import java.util.Date;
+
 @Component
 public class EnderecoModelMapper {
 
@@ -17,9 +20,9 @@ public class EnderecoModelMapper {
             endereco.getBairro(),
             endereco.getCep(),
             endereco.getCidadeId(),
-            endereco.getDtaCriacao(),
+            endereco.getDtaCriacao() != null ? Date.from(endereco.getDtaCriacao().atZone(ZoneId.systemDefault()).toInstant()) : null,
             endereco.getFlgInativo(),
-            endereco.getDtaRemocao()
+            endereco.getDtaRemocao() != null ? Date.from(endereco.getDtaRemocao().atZone(ZoneId.systemDefault()).toInstant()) : null
         );
     }
 
@@ -33,9 +36,11 @@ public class EnderecoModelMapper {
         entity.setBairro(dto.getBairro());
         entity.setCep(dto.getCep());
         entity.setCidadeId(dto.getCidadeId());
-        entity.setDtaCriacao(dto.getDtaCriacao());
+        if (dto.getDtaCriacao() != null) {
+            entity.setDtaCriacao(dto.getDtaCriacao().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
         entity.setFlgInativo(dto.getFlgInativo());
-        entity.setDtaRemocao(dto.getDtaRemocao());
+        // Endereco não tem setDtaRemocao na entidade, apenas getter
         return entity;
     }
 }

@@ -15,7 +15,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -69,8 +69,8 @@ public class LocalService implements ILocalService {
         Local local = new Local();
         local.setNome(createDTO.getNome());
         local.setDescricao(createDTO.getDescricao());
-        local.setCampusId(createDTO.getCampusId());
-        local.setDtaCriacao(new Date());
+        local.setCampus_id(createDTO.getCampusId());
+        local.setDtaCriacao(LocalDateTime.now());
         local.setFlgInativo(false);
         
         Local savedLocal = localRepository.save(local);
@@ -106,7 +106,7 @@ public class LocalService implements ILocalService {
             if (updateDTO.getCampusId() <= 0) {
                 throw new BusinessException("Local", "atualizar", "ID do campus deve ser válido");
             }
-            existingLocal.setCampusId(updateDTO.getCampusId());
+            existingLocal.setCampus_id(updateDTO.getCampusId());
         }
         if (updateDTO.getFlgInativo() != null) {
             existingLocal.setFlgInativo(updateDTO.getFlgInativo());
@@ -134,7 +134,7 @@ public class LocalService implements ILocalService {
         }
         
         local.setFlgInativo(true);
-        local.setDtaRemocao(new Date());
+        local.setDtaRemocao(LocalDateTime.now());
         
         Local updatedLocal = localRepository.save(local);
         return localModelMapper.toDTO(updatedLocal);

@@ -1,25 +1,26 @@
 package com.AchadosPerdidos.API.Domain.Entity;
 
-import java.util.Date;
+import jakarta.persistence.*;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
-public class Role {
+@Entity
+@Table(name = "roles", schema = "ap_achados_perdidos")
+public class Role implements Serializable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     private String nome;
+
     private String descricao;
-    private Date dtaCriacao;
-    private Boolean flgInativo;
-    private Date dtaRemocao;
 
-    public Role() {}
+    private LocalDateTime Dta_Criacao;
 
-    public Role(Integer id, String nome, String descricao, Date dtaCriacao, Boolean flgInativo, Date dtaRemocao) {
-        this.id = id;
-        this.nome = nome;
-        this.descricao = descricao;
-        this.dtaCriacao = dtaCriacao;
-        this.flgInativo = flgInativo;
-        this.dtaRemocao = dtaRemocao;
-    }
+    private Boolean Flg_Inativo;
+
+    private LocalDateTime Dta_Remocao;
 
     public Integer getId() {
         return id;
@@ -31,7 +32,7 @@ public class Role {
 
     public String getNome() {
         return nome;
-    }
+    }   
 
     public void setNome(String nome) {
         this.nome = nome;
@@ -45,29 +46,27 @@ public class Role {
         this.descricao = descricao;
     }
 
-    public Date getDtaCriacao() {
-        return dtaCriacao;
+    public LocalDateTime getDtaCriacao() {
+        return Dta_Criacao;
     }
 
-    public void setDtaCriacao(Date dtaCriacao) {
-        this.dtaCriacao = dtaCriacao;
+    public void setDtaCriacao(LocalDateTime Dta_Criacao) {
+        this.Dta_Criacao = Dta_Criacao;
     }
-
+    
     public Boolean getFlgInativo() {
-        return flgInativo;
+        return Flg_Inativo;
     }
 
-    public void setFlgInativo(Boolean flgInativo) {
-        this.flgInativo = flgInativo;
+    public void setFlgInativo(Boolean Flg_Inativo) {
+        this.Flg_Inativo = Flg_Inativo;
+    }
+    
+    public LocalDateTime getDtaRemocao() {
+        return Dta_Remocao;
     }
 
-    public Date getDtaRemocao() {
-        return dtaRemocao;
+    public void setDtaRemocao(LocalDateTime Dta_Remocao) {
+        this.Dta_Remocao = Dta_Remocao;
     }
-
-    public void setDtaRemocao(Date dtaRemocao) {
-        this.dtaRemocao = dtaRemocao;
-    }
-
 }
-

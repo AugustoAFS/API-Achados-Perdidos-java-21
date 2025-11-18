@@ -1,6 +1,6 @@
 package com.AchadosPerdidos.API.Domain.Repository;
 
-import com.AchadosPerdidos.API.Domain.Entity.Fotos;
+import com.AchadosPerdidos.API.Domain.Entity.Foto;
 import com.AchadosPerdidos.API.Domain.Repository.Interfaces.IFotosRepository;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.FotosQueries;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,21 +15,21 @@ public class FotosRepository implements IFotosRepository {
     private FotosQueries fotosQueries;
 
     @Override
-    public List<Fotos> findAll() {
+    public List<Foto> findAll() {
         return fotosQueries.findAll();
     }
 
     @Override
-    public Fotos findById(int id) {
+    public Foto findById(int id) {
         return fotosQueries.findById(id);
     }
 
     @Override
-    public Fotos save(Fotos fotos) {
-        if (fotos.getId() == null || fotos.getId() == 0) {
-            return fotosQueries.insert(fotos);
+    public Foto save(Foto foto) {
+        if (foto.getId() == null || foto.getId() == 0) {
+            return fotosQueries.insert(foto);
         } else {
-            return fotosQueries.update(fotos);
+            return fotosQueries.update(foto);
         }
     }
 
@@ -39,37 +39,37 @@ public class FotosRepository implements IFotosRepository {
     }
 
     @Override
-    public List<Fotos> findActive() {
+    public List<Foto> findActive() {
         return fotosQueries.findActive();
     }
 
     @Override
-    public List<Fotos> findByUser(int userId) {
+    public List<Foto> findByUser(int userId) {
         return fotosQueries.findByUser(userId);
     }
 
     @Override
-    public List<Fotos> findByItem(int itemId) {
+    public List<Foto> findByItem(int itemId) {
         return fotosQueries.findByItem(itemId);
     }
 
     @Override
-    public List<Fotos> findProfilePhotos(int userId) {
+    public List<Foto> findProfilePhotos(int userId) {
         return fotosQueries.findProfilePhotos(userId);
     }
 
     @Override
-    public List<Fotos> findItemPhotos(int itemId) {
+    public List<Foto> findItemPhotos(int itemId) {
         return fotosQueries.findItemPhotos(itemId);
     }
 
     @Override
-    public Fotos findMainItemPhoto(int itemId) {
+    public Foto findMainItemPhoto(int itemId) {
         return fotosQueries.findMainItemPhoto(itemId);
     }
 
     @Override
-    public Fotos findProfilePhoto(int userId) {
+    public Foto findProfilePhoto(int userId) {
         return fotosQueries.findProfilePhoto(userId);
     }
 }

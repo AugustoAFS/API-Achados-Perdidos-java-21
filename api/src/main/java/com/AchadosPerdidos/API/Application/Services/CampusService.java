@@ -18,7 +18,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -67,7 +67,7 @@ public class CampusService implements ICampusService {
         validarCampusParaCriacao(campusDTO.getNome(), campusDTO.getInstituicaoId(), campusDTO.getEnderecoId());
         
         Campus campus = campusModelMapper.toEntity(campusDTO);
-        campus.setDtaCriacao(new Date());
+        campus.setDtaCriacao(LocalDateTime.now());
         campus.setFlgInativo(false);
         
         Campus savedCampus = campusRepository.save(campus);
@@ -87,7 +87,7 @@ public class CampusService implements ICampusService {
         campus.setNome(createDTO.getNome());
         campus.setInstituicaoId(createDTO.getInstituicaoId());
         campus.setEnderecoId(createDTO.getEnderecoId());
-        campus.setDtaCriacao(new Date());
+        campus.setDtaCriacao(LocalDateTime.now());
         campus.setFlgInativo(false);
         
         Campus savedCampus = campusRepository.save(campus);
@@ -120,7 +120,11 @@ public class CampusService implements ICampusService {
         existingCampus.setInstituicaoId(campusDTO.getInstituicaoId());
         existingCampus.setEnderecoId(campusDTO.getEnderecoId());
         existingCampus.setFlgInativo(campusDTO.getFlgInativo());
-        existingCampus.setDtaRemocao(campusDTO.getDtaRemocao());
+        if (campusDTO.getDtaRemocao() != null) {
+            existingCampus.setDtaRemocao(campusDTO.getDtaRemocao().toInstant()
+                .atZone(java.time.ZoneId.systemDefault())
+                .toLocalDateTime());
+        }
         
         Campus updatedCampus = campusRepository.save(existingCampus);
         return campusModelMapper.toDTO(updatedCampus);
@@ -191,7 +195,7 @@ public class CampusService implements ICampusService {
         }
         
         campus.setFlgInativo(true);
-        campus.setDtaRemocao(new Date());
+        campus.setDtaRemocao(LocalDateTime.now());
         campusRepository.save(campus);
         
         return true;
