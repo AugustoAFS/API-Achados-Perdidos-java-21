@@ -1,30 +1,20 @@
 package com.AchadosPerdidos.API.Application.Services.Interfaces;
 
-import com.AchadosPerdidos.API.Application.DTOs.Itens.ItensDTO;
-import com.AchadosPerdidos.API.Application.DTOs.Itens.ItensListDTO;
-import com.AchadosPerdidos.API.Application.DTOs.Itens.ItensCreateDTO;
-import com.AchadosPerdidos.API.Application.DTOs.Itens.ItensUpdateDTO;
-import java.util.List;
+import com.AchadosPerdidos.API.Application.DTOs.Item.ItemDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Item.ItemListDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Item.ItemCreateDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Item.ItemUpdateDTO;
 
 public interface IItensService {
-    ItensListDTO getAllItens();
-    ItensDTO getItemById(int id);
-    ItensDTO createItem(ItensDTO itensDTO);
-    ItensDTO updateItem(int id, ItensDTO itensDTO);
+    ItemListDTO getAllItens();
+    ItemDTO getItemById(int id);
+    ItemDTO createItem(ItemCreateDTO createDTO);
+    ItemDTO updateItem(int id, ItemUpdateDTO updateDTO);
     boolean deleteItem(int id);
-    ItensListDTO getActiveItens();
-    ItensListDTO getItensByStatus(int statusId);
-    ItensListDTO getItensByUser(int userId);
-    ItensListDTO getItensByCampus(int campusId);
-    ItensListDTO getItensByLocal(int localId);
-    ItensListDTO getItensByEmpresa(int empresaId);
-    ItensListDTO searchItens(String searchTerm);
-    ItensDTO createItemFromDTO(ItensCreateDTO createDTO);
-    ItensDTO updateItemFromDTO(int id, ItensUpdateDTO updateDTO);
-    
-    // Métodos para sistema de notificações e controle de prazos
-    List<com.AchadosPerdidos.API.Domain.Entity.Itens> getItemsNearDonationDeadline(int daysFromNow);
-    List<com.AchadosPerdidos.API.Domain.Entity.Itens> getExpiredItems(int daysExpired);
-    boolean markItemAsDonated(int itemId);
-    com.AchadosPerdidos.API.Domain.Entity.Itens getItemEntityById(int id);
+    ItemListDTO getActiveItens();
+    ItemListDTO getItensByUser(int userId);
+    ItemListDTO getItensByCampus(int campusId);
+    ItemListDTO getItensByLocal(int localId);
+    ItemListDTO searchItens(String searchTerm);
+    ItemListDTO getItensByTipo(String tipo);
 }

@@ -16,7 +16,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -92,7 +92,7 @@ public class EnderecoService implements IEnderecoService {
         endereco.setBairro(createDTO.getBairro());
         endereco.setCep(createDTO.getCep());
         endereco.setCidadeId(createDTO.getCidadeId());
-        endereco.setDtaCriacao(new Date());
+        endereco.setDtaCriacao(LocalDateTime.now());
         endereco.setFlgInativo(false);
         
         Endereco savedEndereco = enderecoRepository.save(endereco);
@@ -176,7 +176,7 @@ public class EnderecoService implements IEnderecoService {
         }
         
         endereco.setFlgInativo(true);
-        endereco.setDtaRemocao(new Date());
+        // Endereco entity não possui setDtaRemocao, apenas getter
         
         Endereco updatedEndereco = enderecoRepository.save(endereco);
         return enderecoModelMapper.toDTO(updatedEndereco);

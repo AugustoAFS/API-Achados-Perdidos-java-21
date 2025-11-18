@@ -1,6 +1,6 @@
 package com.AchadosPerdidos.API.Domain.Repository;
 
-import com.AchadosPerdidos.API.Domain.Entity.Usuarios;
+import com.AchadosPerdidos.API.Domain.Entity.Usuario;
 import com.AchadosPerdidos.API.Domain.Repository.Interfaces.IUsuariosRepository;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.UsuariosQueries;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,41 +15,36 @@ public class UsuariosRepository implements IUsuariosRepository {
     private UsuariosQueries usuariosQueries;
 
     @Override
-    public List<Usuarios> findAll() {
+    public List<Usuario> findAll() {
         return usuariosQueries.findAll();
     }
 
     @Override
-    public Usuarios findById(int id) {
+    public Usuario findById(int id) {
         return usuariosQueries.findById(id);
     }
 
     @Override
-    public Usuarios findByEmail(String email) {
+    public Usuario findByEmail(String email) {
         return usuariosQueries.findByEmail(email);
     }
 
     @Override
-    public Usuarios findByEmailAndPassword(String email, String senha) {
-        return usuariosQueries.findByEmailAndPassword(email, senha);
-    }
-
-    @Override
-    public Usuarios findByCpf(String cpf) {
+    public Usuario findByCpf(String cpf) {
         return usuariosQueries.findByCpf(cpf);
     }
 
     @Override
-    public Usuarios findByMatricula(String matricula) {
+    public Usuario findByMatricula(String matricula) {
         return usuariosQueries.findByMatricula(matricula);
     }
 
     @Override
-    public Usuarios save(Usuarios usuarios) {
-        if (usuarios.getId() == null || usuarios.getId() == 0) {
-            return usuariosQueries.insert(usuarios);
+    public Usuario save(Usuario usuario) {
+        if (usuario.getId() == null || usuario.getId() == 0) {
+            return usuariosQueries.insert(usuario);
         } else {
-            return usuariosQueries.update(usuarios);
+            return usuariosQueries.update(usuario);
         }
     }
 
@@ -59,22 +54,22 @@ public class UsuariosRepository implements IUsuariosRepository {
     }
 
     @Override
-    public List<Usuarios> findActive() {
+    public List<Usuario> findActive() {
         return usuariosQueries.findActive();
     }
 
     @Override
-    public List<Usuarios> findByRole(int tipoRoleId) {
+    public List<Usuario> findByRole(int tipoRoleId) {
         return usuariosQueries.findByRole(tipoRoleId);
     }
 
     @Override
-    public List<Usuarios> findByInstitution(int instituicaoId) {
+    public List<Usuario> findByInstitution(int instituicaoId) {
         return usuariosQueries.findByInstitution(instituicaoId);
     }
 
     @Override
-    public List<Usuarios> findByCampus(int campusId) {
+    public List<Usuario> findByCampus(int campusId) {
         return usuariosQueries.findByCampus(campusId);
     }
 

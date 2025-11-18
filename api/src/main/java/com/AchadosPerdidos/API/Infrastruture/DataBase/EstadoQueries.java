@@ -7,6 +7,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -23,9 +25,19 @@ public class EstadoQueries implements IEstadoQueries {
         estado.setId(rs.getInt("id"));
         estado.setNome(rs.getString("nome"));
         estado.setUf(rs.getString("uf"));
-        estado.setDtaCriacao(rs.getTimestamp("Dta_Criacao"));
+        
+        Timestamp dtaCriacao = rs.getTimestamp("Dta_Criacao");
+        if (dtaCriacao != null) {
+            estado.setDtaCriacao(dtaCriacao.toLocalDateTime());
+        }
+        
         estado.setFlgInativo(rs.getBoolean("Flg_Inativo"));
-        estado.setDtaRemocao(rs.getTimestamp("Dta_Remocao"));
+        
+        Timestamp dtaRemocao = rs.getTimestamp("Dta_Remocao");
+        if (dtaRemocao != null) {
+            estado.setDtaRemocao(dtaRemocao.toLocalDateTime());
+        }
+        
         return estado;
     };
 
@@ -55,13 +67,13 @@ public class EstadoQueries implements IEstadoQueries {
         jdbcTemplate.update(sql,
             estado.getNome(),
             estado.getUf(),
-            estado.getDtaCriacao(),
-            estado.getFlgInativo());
+            estado.getDtaCriacao() != null ? Timestamp.valueOf(estado.getDtaCriacao()) : Timestamp.valueOf(LocalDateTime.now()),
+            estado.getFlgInativo() != null ? estado.getFlgInativo() : false);
 
         String selectSql = "SELECT * FROM ap_achados_perdidos.estados WHERE uf = ? AND Dta_Criacao = ? ORDER BY id DESC LIMIT 1";
         List<Estado> inserted = jdbcTemplate.query(selectSql, rowMapper,
             estado.getUf(),
-            estado.getDtaCriacao());
+            estado.getDtaCriacao() != null ? Timestamp.valueOf(estado.getDtaCriacao()) : Timestamp.valueOf(LocalDateTime.now()));
 
         return inserted.isEmpty() ? null : inserted.get(0);
     }
@@ -73,7 +85,7 @@ public class EstadoQueries implements IEstadoQueries {
             estado.getNome(),
             estado.getUf(),
             estado.getFlgInativo(),
-            estado.getDtaRemocao(),
+            estado.getDtaRemocao() != null ? Timestamp.valueOf(estado.getDtaRemocao()) : null,
             estado.getId());
 
         return findById(estado.getId());

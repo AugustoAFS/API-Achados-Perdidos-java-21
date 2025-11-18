@@ -10,14 +10,9 @@ public interface IItensQueries {
     Itens update(Itens itens);
     boolean deleteById(int id);
     List<Itens> findActive();
-    List<Itens> findByStatus(int statusId);
     List<Itens> findByUser(int userId);
     List<Itens> findByCampus(int campusId);
     List<Itens> findByLocal(int localId);
-    List<Itens> findByEmpresa(int empresaId);
     List<Itens> searchByTerm(String searchTerm);
-    
-    // Métodos para sistema de notificações e controle de prazos
-    List<Itens> findItemsNearDonationDeadline(int daysFromNow);
-    List<Itens> findExpiredItems(int daysExpired);
+    List<Itens> findByTipo(String tipo);
 }

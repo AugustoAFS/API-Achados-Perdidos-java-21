@@ -16,7 +16,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -79,7 +79,7 @@ public class CidadeService implements ICidadeService {
         Cidade cidade = new Cidade();
         cidade.setNome(createDTO.getNome());
         cidade.setEstadoId(createDTO.getEstadoId());
-        cidade.setDtaCriacao(new Date());
+        cidade.setDtaCriacao(LocalDateTime.now());
         cidade.setFlgInativo(false);
         
         Cidade savedCidade = cidadeRepository.save(cidade);
@@ -145,7 +145,7 @@ public class CidadeService implements ICidadeService {
         }
         
         cidade.setFlgInativo(true);
-        cidade.setDtaRemocao(new Date());
+        cidade.setDtaRemocao(LocalDateTime.now());
         
         Cidade updatedCidade = cidadeRepository.save(cidade);
         return cidadeModelMapper.toDTO(updatedCidade);

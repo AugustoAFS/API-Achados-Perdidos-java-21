@@ -25,14 +25,24 @@ public class CacheConfig {
     
     private static final List<String> CACHE_NAMES = List.of(
         "itens",
+        "itensAchados",
+        "itensPerdidos",
+        "itensDoados",
+        "itensDevolvidos",
         "usuarios", 
         "campus",
-        "statusItems",
-        "localItems",
         "cidades",
         "estados",
         "enderecos",
-        "roles"
+        "roles",
+        "fotos",
+        "fotosUsuario",
+        "fotosItem",
+        "usuarioRoles",
+        "usuarioCampus",
+        "deviceTokens",
+        "jwtTokens",
+        "jwtUserIds"
     );
 
     @Value("${cache.enabled:true}")

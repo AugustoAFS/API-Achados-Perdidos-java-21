@@ -1,14 +1,14 @@
 package com.AchadosPerdidos.API.Infrastruture.DataBase.Interfaces;
 
-import com.AchadosPerdidos.API.Domain.Entity.Instituicao;
+import com.AchadosPerdidos.API.Domain.Entity.Instituicoes;
 import java.util.List;
 
 public interface IInstituicaoQueries {
-    List<Instituicao> findAll();
-    Instituicao findById(int id);
-    Instituicao insert(Instituicao instituicao);
-    Instituicao update(Instituicao instituicao);
+    List<Instituicoes> findAll();
+    Instituicoes findById(int id);
+    Instituicoes insert(Instituicoes instituicao);
+    Instituicoes update(Instituicoes instituicao);
     boolean deleteById(int id);
-    List<Instituicao> findActive();
-    List<Instituicao> findByType(String tipoInstituicao);
+    List<Instituicoes> findActive();
+    List<Instituicoes> findByType(String tipoInstituicao);
 }

@@ -1,19 +1,20 @@
 package com.AchadosPerdidos.API.Presentation.Controller;
 
-import com.AchadosPerdidos.API.Application.DTOs.Itens.ItensListDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Item.ItemListDTO;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IItensService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.INotificationService;
-import com.AchadosPerdidos.API.Domain.Entity.Itens;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 /**
  * Controlador para gerenciamento de prazos e doações
  * Implementa o sistema de controle de prazos mencionado no TCC
+ * 
+ * NOTA: Algumas funcionalidades foram temporariamente desabilitadas devido à remoção da tabela status_item.
+ * A lógica de prazos precisa ser repensada com base no novo schema que usa tipo_item.
  */
 @RestController
 @RequestMapping("/api/deadline")
@@ -27,50 +28,12 @@ public class DeadlineController {
     private INotificationService notificationService;
 
     /**
-     * Busca itens próximos do prazo de doação
-     * @param daysFromNow dias a partir de hoje (padrão: 25)
-     * @return Lista de itens próximos do prazo
-     */
-    @GetMapping("/near-deadline")
-    public ResponseEntity<List<Itens>> getItemsNearDeadline(
-            @RequestParam(defaultValue = "25") int daysFromNow) {
-        List<Itens> items = itensService.getItemsNearDonationDeadline(daysFromNow);
-        return ResponseEntity.ok(items);
-    }
-
-    /**
-     * Busca itens expirados (sem reivindicação por X dias)
-     * @param daysExpired dias de expiração (padrão: 30)
-     * @return Lista de itens expirados
-     */
-    @GetMapping("/expired")
-    public ResponseEntity<List<Itens>> getExpiredItems(
-            @RequestParam(defaultValue = "30") int daysExpired) {
-        List<Itens> items = itensService.getExpiredItems(daysExpired);
-        return ResponseEntity.ok(items);
-    }
-
-    /**
-     * Marca um item específico como doado
-     * @param itemId ID do item
-     * @return Resultado da operação
-     */
-    @PostMapping("/mark-donated/{itemId}")
-    public ResponseEntity<String> markItemAsDonated(@PathVariable int itemId) {
-        boolean success = itensService.markItemAsDonated(itemId);
-        if (success) {
-            return ResponseEntity.ok("Item marcado como doado com sucesso");
-        } else {
-            return ResponseEntity.badRequest().body("Erro ao marcar item como doado");
-        }
-    }
-
-    /**
      * Força a execução do processo de notificação de prazos
      * (Normalmente executado automaticamente via scheduler)
      * @return Resultado da operação
      */
     @PostMapping("/notify-deadlines")
+    @Operation(summary = "Notificar prazos", description = "Força a execução do processo de notificação de prazos")
     public ResponseEntity<String> notifyDeadlines() {
         try {
             notificationService.notifyItemsNearDonationDeadline();
@@ -86,6 +49,7 @@ public class DeadlineController {
      * @return Resultado da operação
      */
     @PostMapping("/mark-expired-donated")
+    @Operation(summary = "Marcar itens expirados como doados", description = "Força a execução do processo de marcação de itens como doados")
     public ResponseEntity<String> markExpiredAsDonated() {
         try {
             notificationService.markItemsAsDonated();
@@ -100,17 +64,22 @@ public class DeadlineController {
      * @return Estatísticas do sistema
      */
     @GetMapping("/stats")
+    @Operation(summary = "Estatísticas de prazos", description = "Retorna estatísticas sobre prazos e doações")
     public ResponseEntity<DeadlineStats> getDeadlineStats() {
         try {
-            List<Itens> nearDeadline = itensService.getItemsNearDonationDeadline(25);
-            List<Itens> expired = itensService.getExpiredItems(30);
-            ItensListDTO donated = itensService.getItensByStatus(3); // Status "Doado"
+            ItemListDTO perdidos = itensService.getItensByTipo("PERDIDO");
+            ItemListDTO achados = itensService.getItensByTipo("ACHADO");
+            ItemListDTO doados = itensService.getItensByTipo("DOADO");
             
             DeadlineStats stats = new DeadlineStats();
-            stats.setItemsNearDeadline(nearDeadline.size());
-            stats.setExpiredItems(expired.size());
-            stats.setDonatedItems(donated.getItens() != null ? donated.getItens().size() : 0);
-            stats.setTotalProcessed(nearDeadline.size() + expired.size() + (donated.getItens() != null ? donated.getItens().size() : 0));
+            stats.setItemsPerdidos(perdidos != null && perdidos.getItens() != null ? perdidos.getItens().size() : 0);
+            stats.setItemsAchados(achados != null && achados.getItens() != null ? achados.getItens().size() : 0);
+            stats.setItemsDoados(doados != null && doados.getItens() != null ? doados.getItens().size() : 0);
+            stats.setTotalProcessed(
+                (perdidos != null && perdidos.getItens() != null ? perdidos.getItens().size() : 0) +
+                (achados != null && achados.getItens() != null ? achados.getItens().size() : 0) +
+                (doados != null && doados.getItens() != null ? doados.getItens().size() : 0)
+            );
             
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
@@ -122,20 +91,20 @@ public class DeadlineController {
      * Classe para estatísticas de prazos
      */
     public static class DeadlineStats {
-        private int itemsNearDeadline;
-        private int expiredItems;
-        private int donatedItems;
+        private int itemsPerdidos;
+        private int itemsAchados;
+        private int itemsDoados;
         private int totalProcessed;
 
         // Getters e Setters
-        public int getItemsNearDeadline() { return itemsNearDeadline; }
-        public void setItemsNearDeadline(int itemsNearDeadline) { this.itemsNearDeadline = itemsNearDeadline; }
+        public int getItemsPerdidos() { return itemsPerdidos; }
+        public void setItemsPerdidos(int itemsPerdidos) { this.itemsPerdidos = itemsPerdidos; }
         
-        public int getExpiredItems() { return expiredItems; }
-        public void setExpiredItems(int expiredItems) { this.expiredItems = expiredItems; }
+        public int getItemsAchados() { return itemsAchados; }
+        public void setItemsAchados(int itemsAchados) { this.itemsAchados = itemsAchados; }
         
-        public int getDonatedItems() { return donatedItems; }
-        public void setDonatedItems(int donatedItems) { this.donatedItems = donatedItems; }
+        public int getItemsDoados() { return itemsDoados; }
+        public void setItemsDoados(int itemsDoados) { this.itemsDoados = itemsDoados; }
         
         public int getTotalProcessed() { return totalProcessed; }
         public void setTotalProcessed(int totalProcessed) { this.totalProcessed = totalProcessed; }

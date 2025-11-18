@@ -4,6 +4,9 @@ import com.AchadosPerdidos.API.Application.DTOs.Estado.EstadoDTO;
 import com.AchadosPerdidos.API.Domain.Entity.Estado;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneId;
+import java.util.Date;
+
 @Component
 public class EstadoModelMapper {
 
@@ -13,9 +16,9 @@ public class EstadoModelMapper {
             estado.getId(),
             estado.getNome(),
             estado.getUf(),
-            estado.getDtaCriacao(),
+            estado.getDtaCriacao() != null ? Date.from(estado.getDtaCriacao().atZone(ZoneId.systemDefault()).toInstant()) : null,
             estado.getFlgInativo(),
-            estado.getDtaRemocao()
+            estado.getDtaRemocao() != null ? Date.from(estado.getDtaRemocao().atZone(ZoneId.systemDefault()).toInstant()) : null
         );
     }
 
@@ -25,9 +28,13 @@ public class EstadoModelMapper {
         entity.setId(dto.getId());
         entity.setNome(dto.getNome());
         entity.setUf(dto.getUf());
-        entity.setDtaCriacao(dto.getDtaCriacao());
+        if (dto.getDtaCriacao() != null) {
+            entity.setDtaCriacao(dto.getDtaCriacao().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
         entity.setFlgInativo(dto.getFlgInativo());
-        entity.setDtaRemocao(dto.getDtaRemocao());
+        if (dto.getDtaRemocao() != null) {
+            entity.setDtaRemocao(dto.getDtaRemocao().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
         return entity;
     }
 }

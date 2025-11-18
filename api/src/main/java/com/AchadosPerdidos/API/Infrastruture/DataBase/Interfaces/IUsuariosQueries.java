@@ -1,22 +1,21 @@
 package com.AchadosPerdidos.API.Infrastruture.DataBase.Interfaces;
 
-import com.AchadosPerdidos.API.Domain.Entity.Usuarios;
+import com.AchadosPerdidos.API.Domain.Entity.Usuario;
 import java.util.List;
 
 public interface IUsuariosQueries {
-    List<Usuarios> findAll();
-    Usuarios findById(int id);
-    Usuarios findByEmail(String email);
-    Usuarios findByEmailAndPassword(String email, String senha);
-    Usuarios findByCpf(String cpf);
-    Usuarios findByMatricula(String matricula);
-    Usuarios insert(Usuarios usuarios);
-    Usuarios update(Usuarios usuarios);
+    List<Usuario> findAll();
+    Usuario findById(int id);
+    Usuario findByEmail(String email);
+    Usuario findByCpf(String cpf);
+    Usuario findByMatricula(String matricula);
+    Usuario insert(Usuario usuario);
+    Usuario update(Usuario usuario);
     boolean deleteById(int id);
-    List<Usuarios> findActive();
-    List<Usuarios> findByRole(int tipoRoleId);
-    List<Usuarios> findByInstitution(int instituicaoId);
-    List<Usuarios> findByCampus(int campusId);
+    List<Usuario> findActive();
+    List<Usuario> findByRole(int tipoRoleId);
+    List<Usuario> findByInstitution(int instituicaoId);
+    List<Usuario> findByCampus(int campusId);
     String getCampusNomeAtivoByUsuarioId(int usuarioId);
     boolean associarUsuarioCampus(int usuarioId, int campusId);
 }

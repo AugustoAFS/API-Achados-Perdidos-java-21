@@ -4,6 +4,9 @@ import com.AchadosPerdidos.API.Application.DTOs.Local.LocalDTO;
 import com.AchadosPerdidos.API.Domain.Entity.Local;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneId;
+import java.util.Date;
+
 @Component
 public class LocalModelMapper {
 
@@ -13,10 +16,10 @@ public class LocalModelMapper {
             local.getId(),
             local.getNome(),
             local.getDescricao(),
-            local.getCampusId(),
-            local.getDtaCriacao(),
+            local.getCampus_id(),
+            local.getDtaCriacao() != null ? Date.from(local.getDtaCriacao().atZone(ZoneId.systemDefault()).toInstant()) : null,
             local.getFlgInativo(),
-            local.getDtaRemocao()
+            local.getDtaRemocao() != null ? Date.from(local.getDtaRemocao().atZone(ZoneId.systemDefault()).toInstant()) : null
         );
     }
 
@@ -26,10 +29,14 @@ public class LocalModelMapper {
         entity.setId(dto.getId());
         entity.setNome(dto.getNome());
         entity.setDescricao(dto.getDescricao());
-        entity.setCampusId(dto.getCampusId());
-        entity.setDtaCriacao(dto.getDtaCriacao());
+        entity.setCampus_id(dto.getCampusId());
+        if (dto.getDtaCriacao() != null) {
+            entity.setDtaCriacao(dto.getDtaCriacao().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
         entity.setFlgInativo(dto.getFlgInativo());
-        entity.setDtaRemocao(dto.getDtaRemocao());
+        if (dto.getDtaRemocao() != null) {
+            entity.setDtaRemocao(dto.getDtaRemocao().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
         return entity;
     }
 }

@@ -6,6 +6,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -22,9 +24,19 @@ public class RoleQueries implements IRoleQueries {
         role.setId(rs.getInt("id"));
         role.setNome(rs.getString("nome"));
         role.setDescricao(rs.getString("descricao"));
-        role.setDtaCriacao(rs.getTimestamp("Dta_Criacao"));
+        
+        Timestamp dtaCriacao = rs.getTimestamp("Dta_Criacao");
+        if (dtaCriacao != null) {
+            role.setDtaCriacao(dtaCriacao.toLocalDateTime());
+        }
+        
         role.setFlgInativo(rs.getBoolean("Flg_Inativo"));
-        role.setDtaRemocao(rs.getTimestamp("Dta_Remocao"));
+        
+        Timestamp dtaRemocao = rs.getTimestamp("Dta_Remocao");
+        if (dtaRemocao != null) {
+            role.setDtaRemocao(dtaRemocao.toLocalDateTime());
+        }
+        
         return role;
     };
 

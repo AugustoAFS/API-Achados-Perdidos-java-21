@@ -44,11 +44,6 @@ public class ItensRepository implements IItensRepository {
     }
 
     @Override
-    public List<Itens> findByStatus(int statusId) {
-        return itensQueries.findByStatus(statusId);
-    }
-
-    @Override
     public List<Itens> findByUser(int userId) {
         return itensQueries.findByUser(userId);
     }
@@ -64,22 +59,12 @@ public class ItensRepository implements IItensRepository {
     }
 
     @Override
-    public List<Itens> findByEmpresa(int empresaId) {
-        return itensQueries.findByEmpresa(empresaId);
-    }
-
-    @Override
     public List<Itens> searchByTerm(String searchTerm) {
         return itensQueries.searchByTerm(searchTerm);
     }
 
     @Override
-    public List<Itens> findItemsNearDonationDeadline(int daysFromNow) {
-        return itensQueries.findItemsNearDonationDeadline(daysFromNow);
-    }
-
-    @Override
-    public List<Itens> findExpiredItems(int daysExpired) {
-        return itensQueries.findExpiredItems(daysExpired);
+    public List<Itens> findByTipo(String tipo) {
+        return itensQueries.findByTipo(tipo);
     }
 }
