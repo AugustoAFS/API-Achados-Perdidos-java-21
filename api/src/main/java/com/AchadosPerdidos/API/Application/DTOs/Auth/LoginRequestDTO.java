@@ -1,5 +1,6 @@
 package com.AchadosPerdidos.API.Application.DTOs.Auth;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,9 +9,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginRequestDTO {
+    @JsonProperty("Email_Usuario")
     private String Email_Usuario;
+    
+    @JsonProperty("Senha_Hash")
     private String Senha_Hash;
+    
+    @JsonProperty("Device_Token")
     private String Device_Token;
+    
+    @JsonProperty("Plataforma")
     private String Plataforma;
 
 }
