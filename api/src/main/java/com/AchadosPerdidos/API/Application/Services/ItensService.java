@@ -8,6 +8,7 @@ import com.AchadosPerdidos.API.Application.Mapper.ItensMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IItensService;
 import com.AchadosPerdidos.API.Domain.Entity.Itens;
 import com.AchadosPerdidos.API.Domain.Enum.Tipo_Item;
+import com.AchadosPerdidos.API.Domain.Enum.Status_Item;
 import com.AchadosPerdidos.API.Domain.Repository.ItensRepository;
 import com.AchadosPerdidos.API.Domain.Repository.LocalRepository;
 import com.AchadosPerdidos.API.Domain.Repository.UsuariosRepository;
@@ -70,6 +71,7 @@ public class ItensService implements IItensService {
         Itens itens = itensMapper.fromCreateDTO(createDTO);
         itens.setDtaCriacao(LocalDateTime.now());
         itens.setFlgInativo(false);
+        itens.setStatus_item(Status_Item.ATIVO); // Status padrão: item recém-criado está ativo
         
         Itens savedItens = itensRepository.save(itens);
         return itensMapper.toDTO(savedItens);
