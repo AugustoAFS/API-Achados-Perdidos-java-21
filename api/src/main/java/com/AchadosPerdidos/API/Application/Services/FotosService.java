@@ -9,6 +9,7 @@ import com.AchadosPerdidos.API.Application.Mapper.FotosMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotosService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotoUsuarioService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotoItemService;
+import com.AchadosPerdidos.API.Exeptions.BusinessException;
 import com.AchadosPerdidos.API.Domain.Entity.Foto;
 import com.AchadosPerdidos.API.Domain.Repository.FotosRepository;
 import org.springframework.web.multipart.MultipartFile;
@@ -216,19 +217,8 @@ public class FotosService implements IFotosService {
             
             FotosDTO fotoDTO = fotosMapper.toDTO(savedFoto);
             
-            // Se for foto de item (não é foto de perfil e tem itemId), criar associação automaticamente
-            if (!isProfilePhoto && itemId != null && itemId > 0 && fotoDTO != null && fotoDTO.getId() != null) {
-                try {
-                    var createDTO = new FotoItemCreateDTO();
-                    createDTO.setItemId(itemId);
-                    createDTO.setFotoId(fotoDTO.getId());
-                    fotoItemService.createFotoItem(createDTO);
-                    logger.info("Associação criada entre item ID: {} e foto ID: {}", itemId, fotoDTO.getId());
-                } catch (Exception e) {
-                    logger.error("Erro ao criar associação foto-item após upload: {}", e.getMessage(), e);
-                    // Não falha o upload se a associação falhar, mas loga o erro
-                }
-            }
+            // A associação foto-item será criada pelo método uploadItemPhoto se necessário
+            // Não criar aqui para evitar duplicação - uploadItemPhoto é responsável por isso
             
             return fotoDTO;
 
@@ -338,28 +328,57 @@ public class FotosService implements IFotosService {
     }
 
     /**
-     * Faz upload de foto de item
+     * Faz upload de foto de item e cria associação na tabela foto_item
+     * A associação só é criada se a foto for salva no banco com sucesso
      * @param file Arquivo da foto
      * @param userId ID do usuário
      * @param itemId ID do item
      * @return DTO da foto salva
      */
     public FotosDTO uploadItemPhoto(MultipartFile file, Integer userId, Integer itemId) {
+        if (itemId == null || itemId <= 0) {
+            throw new IllegalArgumentException("ID do item é obrigatório para upload de foto de item");
+        }
+        
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Arquivo de foto não pode ser nulo ou vazio");
+        }
+        
+        // 1. Fazer upload da foto e salvar no banco
         FotosDTO foto = uploadPhoto(file, userId, itemId, false);
         
-        // Criar associação automaticamente na tabela fotos_item
+        // 2. Verificar se a foto foi criada com sucesso no banco antes de criar associação
+        if (foto == null || foto.getId() == null) {
+            logger.error("❌ Foto não foi salva no banco, não é possível criar associação. ItemId: {}", itemId);
+            throw new RuntimeException("Erro: Foto não foi salva no banco de dados");
+        }
+        
+        // 3. Verificar se a foto realmente existe no banco antes de associar
         try {
-            if (foto != null && foto.getId() != null && itemId != null && itemId > 0) {
-                // Criar nova associação
-                var createDTO = new FotoItemCreateDTO();
-                createDTO.setItemId(itemId);
-                createDTO.setFotoId(foto.getId());
-                fotoItemService.createFotoItem(createDTO);
-                logger.info("Associação criada entre item ID: {} e foto ID: {}", itemId, foto.getId());
+            Foto fotoVerificada = fotosRepository.findById(foto.getId());
+            if (fotoVerificada == null) {
+                logger.error("❌ Foto ID {} não encontrada no banco após upload. ItemId: {}", foto.getId(), itemId);
+                throw new RuntimeException("Erro: Foto não encontrada no banco após upload");
+            }
+            
+            // 4. Criar associação na tabela foto_item APENAS se a foto foi salva com sucesso
+            var createDTO = new FotoItemCreateDTO();
+            createDTO.setItemId(itemId);
+            createDTO.setFotoId(foto.getId());
+            fotoItemService.createFotoItem(createDTO);
+            logger.info("✅ Associação criada com sucesso entre item ID: {} e foto ID: {} (foto salva no banco)", itemId, foto.getId());
+            
+        } catch (BusinessException e) {
+            // Se já existe associação ativa, apenas loga (não é erro crítico)
+            if (e.getMessage() != null && e.getMessage().contains("Já existe uma associação ativa")) {
+                logger.warn("⚠️ Associação já existe entre item ID: {} e foto ID: {}", itemId, foto.getId());
+            } else {
+                logger.error("❌ Erro de negócio ao criar associação foto-item: {}", e.getMessage());
+                throw e; // Re-lança exceções de negócio
             }
         } catch (Exception e) {
-            logger.error("Erro ao criar associação foto-item após upload: {}", e.getMessage(), e);
-            // Não falha o upload se a associação falhar, mas loga o erro
+            logger.error("❌ Erro ao criar associação foto-item após upload bem-sucedido: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao criar associação foto-item: " + e.getMessage(), e);
         }
         
         return foto;
