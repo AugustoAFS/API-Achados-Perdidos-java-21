@@ -65,6 +65,9 @@ public class LocalController {
     @GetMapping("/campus/{campusId}")
     @Operation(summary = "Listar locais por campus")
     public ResponseEntity<List<LocalDTO>> getLocaisByCampus(@PathVariable Integer campusId) {
+        if (campusId == null || campusId <= 0) {
+            return ResponseEntity.badRequest().build();
+        }
         List<LocalDTO> locais = localService.getLocaisByCampus(campusId);
         return ResponseEntity.ok(locais);
     }

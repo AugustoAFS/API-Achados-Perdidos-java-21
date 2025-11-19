@@ -10,6 +10,10 @@ import com.AchadosPerdidos.API.Application.Mapper.UsuariosMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IJWTService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuariosService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IDeviceTokenService;
+import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuarioCampusService;
+import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotoUsuarioService;
+import com.AchadosPerdidos.API.Application.DTOs.UsuarioCampus.UsuarioCampusCreateDTO;
+import com.AchadosPerdidos.API.Application.DTOs.FotoUsuario.FotoUsuarioCreateDTO;
 import com.AchadosPerdidos.API.Exeptions.BusinessException;
 import com.AchadosPerdidos.API.Exeptions.ResourceNotFoundException;
 import com.AchadosPerdidos.API.Exeptions.ValidationException;
@@ -56,6 +60,12 @@ public class UsuariosService implements IUsuariosService {
 
     @Autowired
     private IDeviceTokenService deviceTokenService;
+
+    @Autowired
+    private IUsuarioCampusService usuarioCampusService;
+
+    @Autowired
+    private IFotoUsuarioService fotoUsuarioService;
 
     @Autowired
     private RoleRepository roleRepository;
@@ -157,12 +167,17 @@ public class UsuariosService implements IUsuariosService {
 
         // Associar ao campus se fornecido
         if (usuariosCreateDTO.getCampusId() != null && usuariosCreateDTO.getCampusId() > 0) {
-            boolean associado = usuariosRepository.associarUsuarioCampus(
-                savedUsuario.getId(),
-                usuariosCreateDTO.getCampusId()
-            );
-            if (associado) {
+            try {
+                UsuarioCampusCreateDTO usuarioCampusCreateDTO = new UsuarioCampusCreateDTO();
+                usuarioCampusCreateDTO.setUsuarioId(savedUsuario.getId());
+                usuarioCampusCreateDTO.setCampusId(usuariosCreateDTO.getCampusId());
+                
+                usuarioCampusService.createUsuarioCampus(usuarioCampusCreateDTO);
                 logger.info("Usuário associado ao campus ID: {}", usuariosCreateDTO.getCampusId());
+            } catch (Exception e) {
+                logger.error("Erro ao associar usuário ao campus: {}", e.getMessage(), e);
+                // Não falha a criação do usuário se a associação falhar, mas loga o erro
+                // Pode ser ajustado para lançar exceção se necessário
             }
         }
         
@@ -276,6 +291,96 @@ public class UsuariosService implements IUsuariosService {
         
         Usuario updatedUsuario = usuariosRepository.save(existingUsuario);
         logger.info("Usuário atualizado com sucesso - ID: {}, Email: {}", updatedUsuario.getId(), updatedUsuario.getEmail());
+
+        // Atualizar campus se fornecido
+        if (usuariosUpdateDTO.getCampusId() != null && usuariosUpdateDTO.getCampusId() > 0) {
+            try {
+                // Buscar associações ativas do usuário com outros campus
+                var usuarioCampusList = usuarioCampusService.findByUsuarioId(updatedUsuario.getId());
+                if (usuarioCampusList != null && usuarioCampusList.getUsuarioCampus() != null) {
+                    // Desativar associações ativas existentes
+                    for (var uc : usuarioCampusList.getUsuarioCampus()) {
+                        if (uc.getCampusId() != null && !uc.getCampusId().equals(usuariosUpdateDTO.getCampusId()) && 
+                            (uc.getFlgInativo() == null || !uc.getFlgInativo())) {
+                            // Desativar a associação antiga
+                            var updateDTO = new com.AchadosPerdidos.API.Application.DTOs.UsuarioCampus.UsuarioCampusUpdateDTO();
+                            updateDTO.setFlgInativo(true);
+                            usuarioCampusService.updateUsuarioCampus(updatedUsuario.getId(), uc.getCampusId(), updateDTO);
+                            logger.info("Associação com campus ID {} desativada para usuário ID {}", uc.getCampusId(), updatedUsuario.getId());
+                        }
+                    }
+                }
+                
+                // Verificar se já existe associação ativa com o novo campus
+                boolean jaExiste = false;
+                if (usuarioCampusList != null && usuarioCampusList.getUsuarioCampus() != null) {
+                    for (var uc : usuarioCampusList.getUsuarioCampus()) {
+                        if (uc.getCampusId() != null && uc.getCampusId().equals(usuariosUpdateDTO.getCampusId()) && 
+                            (uc.getFlgInativo() == null || !uc.getFlgInativo())) {
+                            jaExiste = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // Criar nova associação se não existir
+                if (!jaExiste) {
+                    UsuarioCampusCreateDTO usuarioCampusCreateDTO = new UsuarioCampusCreateDTO();
+                    usuarioCampusCreateDTO.setUsuarioId(updatedUsuario.getId());
+                    usuarioCampusCreateDTO.setCampusId(usuariosUpdateDTO.getCampusId());
+                    usuarioCampusService.createUsuarioCampus(usuarioCampusCreateDTO);
+                    logger.info("Usuário associado ao campus ID: {}", usuariosUpdateDTO.getCampusId());
+                }
+            } catch (Exception e) {
+                logger.error("Erro ao atualizar campus do usuário: {}", e.getMessage(), e);
+                // Não falha a atualização do usuário se a associação falhar
+            }
+        }
+
+        // Atualizar foto se fornecido
+        if (usuariosUpdateDTO.getFotoId() != null && usuariosUpdateDTO.getFotoId() > 0) {
+            try {
+                // Buscar fotos ativas do usuário
+                var fotosUsuarioList = fotoUsuarioService.findByUsuarioId(updatedUsuario.getId());
+                if (fotosUsuarioList != null && fotosUsuarioList.getFotoUsuarios() != null) {
+                    // Desativar fotos ativas existentes
+                    for (var fu : fotosUsuarioList.getFotoUsuarios()) {
+                        if (fu.getFotoId() != null && !fu.getFotoId().equals(usuariosUpdateDTO.getFotoId()) && 
+                            (fu.getFlgInativo() == null || !fu.getFlgInativo())) {
+                            // Desativar a associação antiga
+                            var updateDTO = new com.AchadosPerdidos.API.Application.DTOs.FotoUsuario.FotoUsuarioUpdateDTO();
+                            updateDTO.setFlgInativo(true);
+                            fotoUsuarioService.updateFotoUsuario(updatedUsuario.getId(), fu.getFotoId(), updateDTO);
+                            logger.info("Associação com foto ID {} desativada para usuário ID {}", fu.getFotoId(), updatedUsuario.getId());
+                        }
+                    }
+                }
+                
+                // Verificar se já existe associação ativa com a nova foto
+                boolean jaExiste = false;
+                if (fotosUsuarioList != null && fotosUsuarioList.getFotoUsuarios() != null) {
+                    for (var fu : fotosUsuarioList.getFotoUsuarios()) {
+                        if (fu.getFotoId() != null && fu.getFotoId().equals(usuariosUpdateDTO.getFotoId()) && 
+                            (fu.getFlgInativo() == null || !fu.getFlgInativo())) {
+                            jaExiste = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // Criar nova associação se não existir
+                if (!jaExiste) {
+                    FotoUsuarioCreateDTO fotoUsuarioCreateDTO = new FotoUsuarioCreateDTO();
+                    fotoUsuarioCreateDTO.setUsuarioId(updatedUsuario.getId());
+                    fotoUsuarioCreateDTO.setFotoId(usuariosUpdateDTO.getFotoId());
+                    fotoUsuarioService.createFotoUsuario(fotoUsuarioCreateDTO);
+                    logger.info("Usuário associado à foto ID: {}", usuariosUpdateDTO.getFotoId());
+                }
+            } catch (Exception e) {
+                logger.error("Erro ao atualizar foto do usuário: {}", e.getMessage(), e);
+                // Não falha a atualização do usuário se a associação falhar
+            }
+        }
 
         return usuariosMapper.toUpdateDTO(updatedUsuario);
     }

@@ -13,5 +13,7 @@ public class UsuariosUpdateDTO {
     private String email;
     private String matricula;
     private Integer enderecoId;
+    private Integer campusId;
+    private Integer fotoId;
     private Boolean flgInativo;
 }
