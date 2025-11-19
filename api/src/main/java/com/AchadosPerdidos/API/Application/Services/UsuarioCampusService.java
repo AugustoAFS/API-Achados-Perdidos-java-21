@@ -4,7 +4,7 @@ import com.AchadosPerdidos.API.Application.DTOs.UsuarioCampus.UsuarioCampusCreat
 import com.AchadosPerdidos.API.Application.DTOs.UsuarioCampus.UsuarioCampusDTO;
 import com.AchadosPerdidos.API.Application.DTOs.UsuarioCampus.UsuarioCampusListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.UsuarioCampus.UsuarioCampusUpdateDTO;
-import com.AchadosPerdidos.API.Application.Mapper.UsuarioCampusModelMapper;
+import com.AchadosPerdidos.API.Application.Mapper.UsuarioCampusMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuarioCampusService;
 import com.AchadosPerdidos.API.Domain.Entity.UsuarioCampus;
 import com.AchadosPerdidos.API.Domain.Repository.UsuarioCampusRepository;
@@ -26,7 +26,7 @@ public class UsuarioCampusService implements IUsuarioCampusService {
     private UsuarioCampusRepository usuarioCampusRepository;
 
     @Autowired
-    private UsuarioCampusModelMapper usuarioCampusModelMapper;
+    private UsuarioCampusMapper usuarioCampusMapper;
 
     @Autowired
     private UsuariosRepository usuariosRepository;
@@ -37,7 +37,7 @@ public class UsuarioCampusService implements IUsuarioCampusService {
     @Override
     @Cacheable(value = "usuarioCampus", key = "'all'")
     public UsuarioCampusListDTO getAllUsuarioCampus() {
-        return usuarioCampusModelMapper.toListDTO(usuarioCampusRepository.findAll());
+        return usuarioCampusMapper.toListDTO(usuarioCampusRepository.findAll());
     }
 
     @Override
@@ -54,7 +54,7 @@ public class UsuarioCampusService implements IUsuarioCampusService {
         if (usuarioCampus == null) {
             throw new ResourceNotFoundException("Campus de usuário não encontrado para usuário ID: " + usuarioId + " e campus ID: " + campusId);
         }
-        return usuarioCampusModelMapper.toDTO(usuarioCampus);
+        return usuarioCampusMapper.toDTO(usuarioCampus);
     }
 
     @Override
@@ -78,9 +78,8 @@ public class UsuarioCampusService implements IUsuarioCampusService {
         }
 
         // Verificar se o campus existe
-        if (campusRepository.findById(createDTO.getCampusId()) == null) {
-            throw new ResourceNotFoundException("Campus", "ID", createDTO.getCampusId());
-        }
+        campusRepository.findById(createDTO.getCampusId())
+                .orElseThrow(() -> new ResourceNotFoundException("Campus", "ID", createDTO.getCampusId()));
 
         // Verificar se já existe a associação
         UsuarioCampus existing = usuarioCampusRepository.findByUsuarioIdAndCampusId(createDTO.getUsuarioId(), createDTO.getCampusId());
@@ -88,12 +87,12 @@ public class UsuarioCampusService implements IUsuarioCampusService {
             throw new BusinessException("UsuarioCampus", "criar", "Já existe uma associação ativa entre este usuário e este campus");
         }
 
-        UsuarioCampus usuarioCampus = usuarioCampusModelMapper.fromCreateDTO(createDTO);
+        UsuarioCampus usuarioCampus = usuarioCampusMapper.fromCreateDTO(createDTO);
         usuarioCampus.setDta_Criacao(LocalDateTime.now());
         usuarioCampus.setFlg_Inativo(false);
 
         UsuarioCampus savedUsuarioCampus = usuarioCampusRepository.save(usuarioCampus);
-        return usuarioCampusModelMapper.toDTO(savedUsuarioCampus);
+        return usuarioCampusMapper.toDTO(savedUsuarioCampus);
     }
 
     @Override
@@ -114,11 +113,11 @@ public class UsuarioCampusService implements IUsuarioCampusService {
             throw new ResourceNotFoundException("Campus de usuário não encontrado para usuário ID: " + usuarioId + " e campus ID: " + campusId);
         }
 
-        usuarioCampusModelMapper.updateFromDTO(existingUsuarioCampus, updateDTO);
+        usuarioCampusMapper.updateFromDTO(existingUsuarioCampus, updateDTO);
         existingUsuarioCampus.setDtaRemocao(updateDTO.getFlgInativo() != null && updateDTO.getFlgInativo() ? LocalDateTime.now() : null);
 
         UsuarioCampus updatedUsuarioCampus = usuarioCampusRepository.save(existingUsuarioCampus);
-        return usuarioCampusModelMapper.toDTO(updatedUsuarioCampus);
+        return usuarioCampusMapper.toDTO(updatedUsuarioCampus);
     }
 
     @Override
@@ -142,7 +141,7 @@ public class UsuarioCampusService implements IUsuarioCampusService {
     @Override
     @Cacheable(value = "usuarioCampus", key = "'active'")
     public UsuarioCampusListDTO getActiveUsuarioCampus() {
-        return usuarioCampusModelMapper.toListDTO(usuarioCampusRepository.findActive());
+        return usuarioCampusMapper.toListDTO(usuarioCampusRepository.findActive());
     }
 
     @Override
@@ -151,7 +150,7 @@ public class UsuarioCampusService implements IUsuarioCampusService {
         if (usuarioId == null || usuarioId <= 0) {
             throw new IllegalArgumentException("ID do usuário deve ser válido");
         }
-        return usuarioCampusModelMapper.toListDTO(usuarioCampusRepository.findByUsuarioId(usuarioId));
+        return usuarioCampusMapper.toListDTO(usuarioCampusRepository.findByUsuarioId(usuarioId));
     }
 
     @Override
@@ -160,7 +159,7 @@ public class UsuarioCampusService implements IUsuarioCampusService {
         if (campusId == null || campusId <= 0) {
             throw new IllegalArgumentException("ID do campus deve ser válido");
         }
-        return usuarioCampusModelMapper.toListDTO(usuarioCampusRepository.findByCampusId(campusId));
+        return usuarioCampusMapper.toListDTO(usuarioCampusRepository.findByCampusId(campusId));
     }
 }
 

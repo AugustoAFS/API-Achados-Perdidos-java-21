@@ -45,19 +45,19 @@ public class CacheConfig {
         "jwtUserIds"
     );
 
-    @Value("${cache.enabled:true}")
+    @Value("${CACHE_ENABLED:true}")
     private boolean cacheEnabled;
 
-    @Value("${cache.max-size:500}")
+    @Value("${CACHE_MAX_SIZE:500}")
     private int maxCacheSize;
 
-    @Value("${cache.initial-capacity:128}")
+    @Value("${CACHE_INITIAL_CAPACITY:128}")
     private int initialCapacity;
 
-    @Value("${cache.expire-minutes:15}")
+    @Value("${CACHE_EXPIRE_MINUTES:15}")
     private int expireMinutes;
 
-    @Value("${cache.expire-after-access-minutes:5}")
+    @Value("${CACHE_EXPIRE_AFTER_ACCESS_MINUTES:5}")
     private int expireAfterAccessMinutes;
 
     @Bean
@@ -77,7 +77,7 @@ public class CacheConfig {
         );
 
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
-    cacheManager.setCaffeine(Objects.requireNonNull(createCaffeineBuilder()));
+        cacheManager.setCaffeine(Objects.requireNonNull(createCaffeineBuilder()));
         cacheManager.setCacheNames(CACHE_NAMES);
         cacheManager.setAllowNullValues(false);
         

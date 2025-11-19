@@ -10,52 +10,61 @@ public class DeviceToken implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "Id")
+    private Integer Id;
 
-    private Integer usuario_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "Usuario_id", nullable = false, foreignKey = @ForeignKey(name = "fk_device_tokens_usuario"))
+    private Usuario Usuario_id;
 
-    private String token;
+    @Column(name = "Token", length = 255, nullable = false)
+    private String Token;
 
-    private String plataforma;
+    @Column(name = "Plataforma", length = 20, nullable = false)
+    private String Plataforma;
 
+    @Column(name = "Dta_Criacao", nullable = false, updatable = false)
     private LocalDateTime Dta_Criacao;
 
+    @Column(name = "Dta_Atualizacao")
     private LocalDateTime Dta_Atualizacao;
 
+    @Column(name = "Flg_Inativo", nullable = false)
     private Boolean Flg_Inativo;
 
+    @Column(name = "Dta_Remocao")
     private LocalDateTime Dta_Remocao;
 
     public Integer getId() {
-        return id;
+        return Id;
     }
 
     public void setId(Integer id) {
-        this.id = id;
+        this.Id = id;
     }
 
-    public Integer getUsuario_id() {
-        return usuario_id;
+    public Usuario getUsuario_id() {
+        return Usuario_id;
     }
 
-    public void setUsuario_id(Integer usuario_id) {
-        this.usuario_id = usuario_id;
+    public void setUsuario_id(Usuario usuario_id) {
+        this.Usuario_id = usuario_id;
     }
 
     public String getToken() {
-        return token;
+        return Token;
     }
 
     public void setToken(String token) {
-        this.token = token;
+        this.Token = token;
     }
 
     public String getPlataforma() {
-        return plataforma;
+        return Plataforma;
     }
 
     public void setPlataforma(String plataforma) {
-        this.plataforma = plataforma;
+        this.Plataforma = plataforma;
     }
 
     public LocalDateTime getDta_Criacao() {

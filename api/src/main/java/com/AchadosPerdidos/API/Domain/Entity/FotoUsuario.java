@@ -10,32 +10,40 @@ public class FotoUsuario implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "Id")
+    private Integer Id;
 
-    private Integer usuario_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "Usuario_id", nullable = false, foreignKey = @ForeignKey(name = "fk_fotos_usuario_usuario"))
+    private Usuario Usuario_id;
 
-    private Integer foto_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "Foto_id", nullable = false, foreignKey = @ForeignKey(name = "fk_fotos_usuario_foto"))
+    private Foto Foto_id;
 
+    @Column(name = "Dta_Criacao", nullable = false, updatable = false)
     private LocalDateTime Dta_Criacao;
 
+    @Column(name = "Flg_Inativo", nullable = false)
     private Boolean Flg_Inativo;
-    
+
+    @Column(name = "Dta_Remocao")
     private LocalDateTime Dta_Remocao;
 
-    public Integer getUsuarioId() {
-        return usuario_id;
+    public Usuario getUsuarioId() {
+        return Usuario_id;
     }
 
-    public void setUsuarioId(Integer usuario_id) {
-        this.usuario_id = usuario_id;
+    public void setUsuarioId(Usuario usuario_id) {
+        this.Usuario_id = usuario_id;
     }
     
-    public Integer getFotoId() {
-        return foto_id;
+    public Foto getFotoId() {
+        return Foto_id;
     }
 
-    public void setFotoId(Integer foto_id) {
-        this.foto_id = foto_id;
+    public void setFotoId(Foto foto_id) {
+        this.Foto_id = foto_id;
     }
 
     public LocalDateTime getDtaCriacao() {
@@ -63,10 +71,10 @@ public class FotoUsuario implements Serializable {
     }
 
     public Integer getId() {
-        return id;
+        return Id;
     }
 
     public void setId(Integer id) {
-        this.id = id;
+        this.Id = id;
     }
 }

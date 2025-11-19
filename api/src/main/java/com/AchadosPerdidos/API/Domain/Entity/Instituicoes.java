@@ -10,60 +10,68 @@ public class Instituicoes implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "Id")
+    private Integer Id;
 
-    private String nome;
+    @Column(name = "Nome", length = 255, nullable = false)
+    private String Nome;
 
-    private String codigo;
+    @Column(name = "Codigo", length = 100, nullable = false)
+    private String Codigo;
 
-    private String tipo;
+    @Column(name = "Tipo", length = 50, nullable = false)
+    private String Tipo;
 
-    private String cnpj;
+    @Column(name = "CNPJ", length = 14, unique = true)
+    private String CNPJ;
 
+    @Column(name = "Dta_Criacao", nullable = false, updatable = false)
     private LocalDateTime Dta_Criacao;
 
+    @Column(name = "Flg_Inativo", nullable = false)
     private Boolean Flg_Inativo;
 
+    @Column(name = "Dta_Remocao")
     private LocalDateTime Dta_Remocao;
 
     public Integer getId() {
-        return id;
+        return Id;
     }
 
     public void setId(Integer id) {
-        this.id = id;
+        this.Id = id;
     }
 
     public String getNome() {
-        return nome;
+        return Nome;
     }
 
     public void setNome(String nome) {
-        this.nome = nome;
+        this.Nome = nome;
     }
 
     public String getCodigo() {
-        return codigo;
+        return Codigo;
     }
 
     public void setCodigo(String codigo) {
-        this.codigo = codigo;
+        this.Codigo = codigo;
     }
 
     public String getTipo() {
-        return tipo;
+        return Tipo;
     }
 
     public void setTipo(String tipo) {
-        this.tipo = tipo;
+        this.Tipo = tipo;
     }
 
     public String getCnpj() {
-        return cnpj;
+        return CNPJ;
     }
 
     public void setCnpj(String cnpj) {
-        this.cnpj = cnpj;
+        this.CNPJ = cnpj;
     }
 
     public LocalDateTime getDtaCriacao() {

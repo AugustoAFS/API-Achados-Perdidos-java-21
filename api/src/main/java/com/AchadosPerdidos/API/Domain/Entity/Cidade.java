@@ -10,40 +10,48 @@ public class Cidade implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "Id")
+    private Integer Id;
 
-    private String nome;
+    @Column(name = "Nome", length = 255, nullable = false)
+    private String Nome;
 
-    private Integer estado_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "Estado_id", nullable = false, foreignKey = @ForeignKey(name = "fk_cidades_estado"))
+    private Estado Estado_id;
 
+    @Column(name = "Dta_Criacao", nullable = false, updatable = false)
     private LocalDateTime Dta_Criacao;
 
+    @Column(name = "Flg_Inativo", nullable = false)
     private Boolean Flg_Inativo;
 
+    @Column(name = "Dta_Remocao")
     private LocalDateTime Dta_Remocao;
 
+
     public Integer getId() {
-        return id;
+        return Id;
     }
 
     public void setId(Integer id) {
-        this.id = id;
+        this.Id = id;
     }
 
     public String getNome() {
-        return nome;
+        return Nome;
     }
 
     public void setNome(String nome) {
-        this.nome = nome;
+        this.Nome = nome;
     }
 
-    public Integer getEstadoId() {
-        return estado_id;
+    public Estado getEstadoId() {
+        return Estado_id;
     }
 
-    public void setEstadoId(Integer estado_id) {
-        this.estado_id = estado_id;
+    public void setEstadoId(Estado estado_id) {
+        this.Estado_id = estado_id;
     }
 
     public LocalDateTime getDtaCriacao() {
@@ -70,5 +78,3 @@ public class Cidade implements Serializable {
         this.Dta_Remocao = Dta_Remocao;
     }
 }
-
-

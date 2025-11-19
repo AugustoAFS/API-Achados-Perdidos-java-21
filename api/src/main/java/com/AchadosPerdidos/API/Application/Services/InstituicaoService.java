@@ -4,7 +4,7 @@ import com.AchadosPerdidos.API.Application.DTOs.Instituicao.InstituicaoDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Instituicao.InstituicaoListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Instituicao.InstituicaoCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Instituicao.InstituicaoUpdateDTO;
-import com.AchadosPerdidos.API.Application.Mapper.InstituicaoModelMapper;
+import com.AchadosPerdidos.API.Application.Mapper.InstituicaoMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IInstituicaoService;
 import com.AchadosPerdidos.API.Domain.Entity.Instituicoes;
 import com.AchadosPerdidos.API.Domain.Repository.InstituicaoRepository;
@@ -27,13 +27,13 @@ public class InstituicaoService implements IInstituicaoService {
     private InstituicaoRepository instituicaoRepository;
 
     @Autowired
-    private InstituicaoModelMapper instituicaoModelMapper;
+    private InstituicaoMapper instituicaoMapper;
 
     @Override
     @Cacheable(value = "instituicoes", key = "'all'")
     public InstituicaoListDTO getAllInstituicoes() {
         List<Instituicoes> instituicoes = instituicaoRepository.findAll();
-        return instituicaoModelMapper.toListDTO(instituicoes);
+        return instituicaoMapper.toListDTO(instituicoes);
     }
 
     @Override
@@ -43,11 +43,8 @@ public class InstituicaoService implements IInstituicaoService {
             throw new IllegalArgumentException("ID da instituição deve ser válido");
         }
         
-        Instituicoes instituicao = instituicaoRepository.findById(id);
-        if (instituicao == null) {
-            throw new ResourceNotFoundException("Instituição não encontrada com ID: " + id);
-        }
-        return instituicaoModelMapper.toDTO(instituicao);
+        Instituicoes instituicao = getInstituicaoOrThrow(id);
+        return instituicaoMapper.toDTO(instituicao);
     }
 
     @Override
@@ -64,12 +61,12 @@ public class InstituicaoService implements IInstituicaoService {
             instituicaoDTO.getCnpj()
         );
         
-        Instituicoes instituicao = instituicaoModelMapper.toEntity(instituicaoDTO);
+        Instituicoes instituicao = instituicaoMapper.toEntity(instituicaoDTO);
         instituicao.setDtaCriacao(LocalDateTime.now());
         instituicao.setFlgInativo(false);
         
         Instituicoes savedInstituicao = instituicaoRepository.save(instituicao);
-        return instituicaoModelMapper.toDTO(savedInstituicao);
+        return instituicaoMapper.toDTO(savedInstituicao);
     }
 
     @Override
@@ -95,7 +92,7 @@ public class InstituicaoService implements IInstituicaoService {
         instituicao.setFlgInativo(false);
         
         Instituicoes savedInstituicao = instituicaoRepository.save(instituicao);
-        return instituicaoModelMapper.toDTO(savedInstituicao);
+        return instituicaoMapper.toDTO(savedInstituicao);
     }
 
     @Override
@@ -109,10 +106,7 @@ public class InstituicaoService implements IInstituicaoService {
             throw new IllegalArgumentException("Dados de atualização não podem ser nulos");
         }
         
-        Instituicoes existingInstituicao = instituicaoRepository.findById(id);
-        if (existingInstituicao == null) {
-            throw new ResourceNotFoundException("Instituição não encontrada com ID: " + id);
-        }
+        Instituicoes existingInstituicao = getInstituicaoOrThrow(id);
         
         if (existingInstituicao.getDtaRemocao() != null) {
             throw new BusinessException("Não é possível atualizar uma instituição que já foi removida");
@@ -134,13 +128,11 @@ public class InstituicaoService implements IInstituicaoService {
         existingInstituicao.setCnpj(instituicaoDTO.getCnpj());
         existingInstituicao.setFlgInativo(instituicaoDTO.getFlgInativo());
         if (instituicaoDTO.getDtaRemocao() != null) {
-            existingInstituicao.setDtaRemocao(instituicaoDTO.getDtaRemocao().toInstant()
-                .atZone(java.time.ZoneId.systemDefault())
-                .toLocalDateTime());
+            existingInstituicao.setDtaRemocao(instituicaoDTO.getDtaRemocao());
         }
         
         Instituicoes updatedInstituicao = instituicaoRepository.save(existingInstituicao);
-        return instituicaoModelMapper.toDTO(updatedInstituicao);
+        return instituicaoMapper.toDTO(updatedInstituicao);
     }
 
     @Override
@@ -154,10 +146,7 @@ public class InstituicaoService implements IInstituicaoService {
             throw new IllegalArgumentException("Dados de atualização não podem ser nulos");
         }
         
-        Instituicoes existingInstituicao = instituicaoRepository.findById(id);
-        if (existingInstituicao == null) {
-            throw new ResourceNotFoundException("Instituição não encontrada com ID: " + id);
-        }
+        Instituicoes existingInstituicao = getInstituicaoOrThrow(id);
         
         if (existingInstituicao.getDtaRemocao() != null) {
             throw new BusinessException("Não é possível atualizar uma instituição que já foi removida");
@@ -209,7 +198,7 @@ public class InstituicaoService implements IInstituicaoService {
         }
         
         Instituicoes updatedInstituicao = instituicaoRepository.save(existingInstituicao);
-        return instituicaoModelMapper.toDTO(updatedInstituicao);
+        return instituicaoMapper.toDTO(updatedInstituicao);
     }
 
     @Override
@@ -219,10 +208,7 @@ public class InstituicaoService implements IInstituicaoService {
             throw new IllegalArgumentException("ID da instituição deve ser válido");
         }
         
-        Instituicoes instituicao = instituicaoRepository.findById(id);
-        if (instituicao == null) {
-            throw new ResourceNotFoundException("Instituição não encontrada com ID: " + id);
-        }
+        Instituicoes instituicao = getInstituicaoOrThrow(id);
         
         if (Boolean.TRUE.equals(instituicao.getFlgInativo())) {
             throw new BusinessException("A instituição já está inativa");
@@ -239,7 +225,7 @@ public class InstituicaoService implements IInstituicaoService {
     @Cacheable(value = "instituicoes", key = "'active'")
     public InstituicaoListDTO getActiveInstituicoes() {
         List<Instituicoes> activeInstituicoes = instituicaoRepository.findActive();
-        return instituicaoModelMapper.toListDTO(activeInstituicoes);
+        return instituicaoMapper.toListDTO(activeInstituicoes);
     }
 
     @Override
@@ -250,7 +236,7 @@ public class InstituicaoService implements IInstituicaoService {
         }
         
         List<Instituicoes> instituicoes = instituicaoRepository.findByType(tipoInstituicao);
-        return instituicaoModelMapper.toListDTO(instituicoes);
+        return instituicaoMapper.toListDTO(instituicoes);
     }
     
     private void validarInstituicaoParaCriacao(String nome, String codigo, String tipo, String cnpj) {
@@ -315,5 +301,10 @@ public class InstituicaoService implements IInstituicaoService {
         if (!instituicoesComMesmoCnpj.isEmpty()) {
             throw new BusinessException("Já existe uma instituição cadastrada com o CNPJ informado");
         }
+    }
+
+    private Instituicoes getInstituicaoOrThrow(int id) {
+        return instituicaoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Instituição não encontrada com ID: " + id));
     }
 }

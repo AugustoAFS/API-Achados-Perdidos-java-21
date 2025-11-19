@@ -13,6 +13,7 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Component
@@ -95,14 +96,15 @@ public class EnvironmentConfig implements ApplicationListener<ApplicationEnviron
         System.out.println("═══════════════════════════════════════════════════════════");
     }
     
-    private static final Map<String, String> PREFIX_MAPPINGS = Map.of(
-        "JWT", "jwt",
-        "GOOGLE", "google.auth",
-        "POSTGRES", "spring.datasource",
-        "MONGODB", "spring.data.mongodb",
-        "AWS", "aws.s3",
-        "ONESIGNAL", "onesignal"
-    );
+    private static final Map<String, String> PREFIX_MAPPINGS = new LinkedHashMap<>();
+    static {
+        PREFIX_MAPPINGS.put("GOOGLE_AUTH", "google.auth");
+        PREFIX_MAPPINGS.put("JWT", "jwt");
+        PREFIX_MAPPINGS.put("POSTGRES", "spring.datasource");
+        PREFIX_MAPPINGS.put("MONGODB", "spring.data.mongodb");
+        PREFIX_MAPPINGS.put("AWS_S3", "aws.s3");
+        PREFIX_MAPPINGS.put("ONESIGNAL", "onesignal");
+    }
     
     private void mapEnvToSpringProperties(Map<String, Object> envProperties) {
         Map<String, String> propertiesToAdd = new HashMap<>();

@@ -10,40 +10,46 @@ public class Estado implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "Id")
+    private Integer Id;
 
-    private String nome;
+    @Column(name = "Nome", length = 100, nullable = false)
+    private String Nome;
 
-    private String uf;
+    @Column(name = "UF", length = 2, nullable = false, unique = true)
+    private String UF;
 
+    @Column(name = "Dta_Criacao", nullable = false, updatable = false)
     private LocalDateTime Dta_Criacao;
 
+    @Column(name = "Flg_Inativo", nullable = false)
     private Boolean Flg_Inativo;
 
+    @Column(name = "Dta_Remocao")
     private LocalDateTime Dta_Remocao;
 
     public Integer getId() {
-        return id;
+        return Id;
     }
 
     public void setId(Integer id) {
-        this.id = id;
+        this.Id = id;
     }
 
     public String getNome() {
-        return nome;
+        return Nome;
     }
 
     public void setNome(String nome) {
-        this.nome = nome;
+        this.Nome = nome;
     }
 
     public String getUf() {
-        return uf;
+        return UF;
     }
 
     public void setUf(String uf) {
-        this.uf = uf;
+        this.UF = uf;
     }
 
     public LocalDateTime getDtaCriacao() {
@@ -70,5 +76,3 @@ public class Estado implements Serializable {
         this.Dta_Remocao = Dta_Remocao;
     }
 }
-
-

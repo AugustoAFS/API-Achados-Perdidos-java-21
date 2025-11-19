@@ -10,90 +10,116 @@ public class Usuario implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "Id")
+    private Integer Id;
 
-    private String nome_completo;
+    @Column(name = "Nome_completo", length = 255, nullable = false)
+    private String Nome_completo;
 
-    private String cpf;
+    @Column(name = "CPF", length = 11, unique = true)
+    private String CPF;
 
-    private String email;
+    @Column(name = "Email", length = 255, nullable = false, unique = true)
+    private String Email;
 
-    private String hash_senha;
+    @Column(name = "Hash_senha", length = 255, nullable = false)
+    private String Hash_senha;
 
-    private String matricula;
+    @Column(name = "Matricula", length = 50, unique = true)
+    private String Matricula;
 
-    private String numero_telefone;
+    @Column(name = "Numero_telefone", length = 20)
+    private String Numero_telefone;
 
-    private Integer endereco_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "Endereco_id", foreignKey = @ForeignKey(name = "fk_usuarios_endereco"))
+    private Endereco Endereco_id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "Role_id", nullable = false, foreignKey = @ForeignKey(name = "fk_usuarios_role"))
+    private Role Role_id;
+
+    @Column(name = "Dta_Criacao", nullable = false, updatable = false)
     private LocalDateTime Dta_Criacao;
 
+    @Column(name = "Flg_Inativo", nullable = false)
     private Boolean Flg_Inativo;
 
+    @Column(name = "Dta_Remocao")
     private LocalDateTime Dta_Remocao;
 
+
+
     public Integer getId() {
-        return id;
+        return Id;
     }
 
     public void setId(Integer id) {
-        this.id = id;
+        this.Id = id;
     }
 
     public String getNomeCompleto() {
-        return nome_completo;
+        return Nome_completo;
     }
 
     public void setNomeCompleto(String nome_completo) {
-        this.nome_completo = nome_completo;
+        this.Nome_completo = nome_completo;
     }
     
     public String getCpf() {
-        return cpf;
+        return CPF;
     }
 
     public void setCpf(String cpf) {
-        this.cpf = cpf;
+        this.CPF = cpf;
     }
 
     public String getEmail() {
-        return email;
+        return Email;
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.Email = email;
     }
 
     public String getHash_senha() {
-        return hash_senha;
+        return Hash_senha;
     }
 
     public void setHash_senha(String hash_senha) {
-        this.hash_senha = hash_senha;
+        this.Hash_senha = hash_senha;
     }
 
     public String getMatricula() {
-        return matricula;
+        return Matricula;
     }
 
     public void setMatricula(String matricula) {
-        this.matricula = matricula;
+        this.Matricula = matricula;
     }
 
     public String getNumero_telefone() {
-        return numero_telefone;
+        return Numero_telefone;
     }
 
     public void setNumero_telefone(String numero_telefone) {
-        this.numero_telefone = numero_telefone;
+        this.Numero_telefone = numero_telefone;
     }
 
-    public Integer getEndereco_id() {
-        return endereco_id;
+    public Endereco getEndereco_id() {
+        return Endereco_id;
     }
 
-    public void setEndereco_id(Integer endereco_id) {
-        this.endereco_id = endereco_id;
+    public void setEndereco_id(Endereco endereco_id) {
+        this.Endereco_id = endereco_id;
+    }
+
+    public Role getRole_id() {
+        return Role_id;
+    }
+
+    public void setRole_id(Role role_id) {
+        Role_id = role_id;
     }
 
     public LocalDateTime getDta_Criacao() {
@@ -120,5 +146,3 @@ public class Usuario implements Serializable {
         this.Dta_Remocao = Dta_Remocao;
     }
 }
-
-

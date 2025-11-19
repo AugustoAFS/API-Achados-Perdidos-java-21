@@ -1,7 +1,8 @@
 package com.AchadosPerdidos.API.Infrastruture.DataBase;
 
 import com.AchadosPerdidos.API.Domain.Entity.Itens;
-import com.AchadosPerdidos.API.Domain.Enum.Tipo_ItemEnum;
+import com.AchadosPerdidos.API.Domain.Enum.Tipo_Item;
+import com.AchadosPerdidos.API.Domain.Enum.Status_Item;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.Interfaces.IItensQueries;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -28,19 +29,53 @@ public class ItensQueries implements IItensQueries {
         itens.setNome(rs.getString("nome"));
         itens.setDescricao(rs.getString("descricao"));
         
-        // Mapear tipo_item (VARCHAR no banco, Enum no código)
+        // Mapear tipo_item
         String tipoItemStr = rs.getString("tipo_item");
         if (tipoItemStr != null) {
             try {
-                itens.setTipoItem(Tipo_ItemEnum.valueOf(tipoItemStr.toUpperCase()));
+                itens.setTipoItem(Tipo_Item.valueOf(tipoItemStr.toUpperCase()));
             } catch (IllegalArgumentException e) {
                 itens.setTipoItem(null);
             }
         }
         
-        itens.setLocal_id(rs.getInt("local_id"));
-        itens.setUsuario_relator_id(rs.getInt("usuario_relator_id"));
+        // Mapear status_item
+        String statusItemStr = rs.getString("status_item");
+        if (statusItemStr != null) {
+            try {
+                itens.setStatus_item(Status_Item.valueOf(statusItemStr.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                itens.setStatus_item(Status_Item.ATIVO);
+            }
+        }
+
+        // Mapear relacionamentos - criar objetos mínimos com apenas ID
+        Integer localId = rs.getObject("local_id", Integer.class);
+        if (localId != null) {
+            com.AchadosPerdidos.API.Domain.Entity.Local local = new com.AchadosPerdidos.API.Domain.Entity.Local();
+            local.setId(localId);
+            itens.setLocal_id(local);
+        }
         
+        Integer usuarioRelatorId = rs.getObject("usuario_relator_id", Integer.class);
+        if (usuarioRelatorId != null) {
+            com.AchadosPerdidos.API.Domain.Entity.Usuario usuario = new com.AchadosPerdidos.API.Domain.Entity.Usuario();
+            usuario.setId(usuarioRelatorId);
+            itens.setUsuario_relator_id(usuario);
+        }
+        
+        Integer usuarioReivindicadorId = rs.getObject("usuario_reivindicador_id", Integer.class);
+        if (usuarioReivindicadorId != null) {
+            com.AchadosPerdidos.API.Domain.Entity.Usuario usuario = new com.AchadosPerdidos.API.Domain.Entity.Usuario();
+            usuario.setId(usuarioReivindicadorId);
+            itens.setUsuario_reivindicador_id(usuario);
+        }
+
+        Timestamp dtaReivindicacao = rs.getTimestamp("dta_reivindicacao");
+        if (dtaReivindicacao != null) {
+            itens.setDta_Reivindicacao(dtaReivindicacao.toLocalDateTime());
+        }
+
         Timestamp dtaCriacao = rs.getTimestamp("Dta_Criacao");
         if (dtaCriacao != null) {
             itens.setDtaCriacao(dtaCriacao.toLocalDateTime());
@@ -56,76 +91,10 @@ public class ItensQueries implements IItensQueries {
         return itens;
     };
 
-    @Override
-    public List<Itens> findAll() {
-        String sql = "SELECT * FROM ap_achados_perdidos.itens ORDER BY Dta_Criacao DESC";
-        return jdbcTemplate.query(sql, rowMapper);
-    }
-
-    @Override
-    public Itens findById(int id) {
-        String sql = "SELECT * FROM ap_achados_perdidos.itens WHERE id = ?";
-        List<Itens> itens = jdbcTemplate.query(sql, rowMapper, id);
-        return itens.isEmpty() ? null : itens.get(0);
-    }
-
-    @Override
-    public Itens insert(Itens itens) {
-        String sql = "INSERT INTO ap_achados_perdidos.itens (nome, descricao, tipo_item, local_id, usuario_relator_id, Dta_Criacao, Flg_Inativo) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sql, 
-            itens.getNome(),
-            itens.getDescricao(),
-            itens.getTipoItem() != null ? itens.getTipoItem().name() : null,
-            itens.getLocal_id(),
-            itens.getUsuario_relator_id(),
-            itens.getDtaCriacao() != null ? Timestamp.valueOf(itens.getDtaCriacao()) : Timestamp.valueOf(LocalDateTime.now()),
-            itens.getFlgInativo() != null ? itens.getFlgInativo() : false);
-        
-        // Buscar o registro inserido para retornar com o ID
-        String selectSql = "SELECT * FROM ap_achados_perdidos.itens WHERE nome = ? AND usuario_relator_id = ? AND Dta_Criacao = ? ORDER BY id DESC LIMIT 1";
-        List<Itens> inserted = jdbcTemplate.query(selectSql, rowMapper, 
-            itens.getNome(), 
-            itens.getUsuario_relator_id(),
-            itens.getDtaCriacao() != null ? Timestamp.valueOf(itens.getDtaCriacao()) : Timestamp.valueOf(LocalDateTime.now()));
-        
-        return inserted.isEmpty() ? null : inserted.get(0);
-    }
-
-    @Override
-    public Itens update(Itens itens) {
-        String sql = "UPDATE ap_achados_perdidos.itens SET nome = ?, descricao = ?, tipo_item = ?, local_id = ?, usuario_relator_id = ?, Flg_Inativo = ?, Dta_Remocao = ? WHERE id = ?";
-        jdbcTemplate.update(sql, 
-            itens.getNome(),
-            itens.getDescricao(),
-            itens.getTipoItem() != null ? itens.getTipoItem().name() : null,
-            itens.getLocal_id(),
-            itens.getUsuario_relator_id(),
-            itens.getFlgInativo(),
-            itens.getDtaRemocao() != null ? Timestamp.valueOf(itens.getDtaRemocao()) : null,
-            itens.getId());
-        
-        return findById(itens.getId());
-    }
-
-    @Override
-    public boolean deleteById(int id) {
-        String sql = "DELETE FROM ap_achados_perdidos.itens WHERE id = ?";
-        int rowsAffected = jdbcTemplate.update(sql, id);
-        return rowsAffected > 0;
-    }
-
-    @Override
-    public List<Itens> findActive() {
-        String sql = "SELECT * FROM ap_achados_perdidos.itens WHERE Flg_Inativo = false ORDER BY Dta_Criacao DESC";
-        return jdbcTemplate.query(sql, rowMapper);
-    }
-
-    @Override
-    public List<Itens> findByUser(int userId) {
-        String sql = "SELECT * FROM ap_achados_perdidos.itens WHERE usuario_relator_id = ? ORDER BY Dta_Criacao DESC";
-        return jdbcTemplate.query(sql, rowMapper, userId);
-    }
-
+    /**
+     * Busca itens por campus usando JOIN com locais
+     * Esta operação requer JOIN, por isso fica nas Queries
+     */
     @Override
     public List<Itens> findByCampus(int campusId) {
         String sql = "SELECT i.* FROM ap_achados_perdidos.itens i " +
@@ -134,22 +103,23 @@ public class ItensQueries implements IItensQueries {
         return jdbcTemplate.query(sql, rowMapper, campusId);
     }
 
+    /**
+     * Marca item ACHADO como devolvido (regra de negócio complexa)
+     */
     @Override
-    public List<Itens> findByLocal(int localId) {
-        String sql = "SELECT * FROM ap_achados_perdidos.itens WHERE local_id = ? AND Flg_Inativo = false ORDER BY Dta_Criacao DESC";
-        return jdbcTemplate.query(sql, rowMapper, localId);
+    public boolean marcarComoDevolvido(int itemId, int usuarioReivindicadorId) {
+        String sql = "UPDATE ap_achados_perdidos.itens SET status_item = 'DEVOLVIDO', usuario_reivindicador_id = ?, dta_reivindicacao = ? WHERE id = ? AND tipo_item = 'ACHADO' AND status_item = 'ATIVO'";
+        int rowsAffected = jdbcTemplate.update(sql, usuarioReivindicadorId, Timestamp.valueOf(LocalDateTime.now()), itemId);
+        return rowsAffected > 0;
     }
 
+    /**
+     * Marca item PERDIDO como resgatado (regra de negócio complexa)
+     */
     @Override
-    public List<Itens> searchByTerm(String searchTerm) {
-        String sql = "SELECT * FROM ap_achados_perdidos.itens WHERE (nome LIKE ? OR descricao LIKE ?) AND Flg_Inativo = false ORDER BY Dta_Criacao DESC";
-        String searchPattern = "%" + searchTerm + "%";
-        return jdbcTemplate.query(sql, rowMapper, searchPattern, searchPattern);
-    }
-
-    @Override
-    public List<Itens> findByTipo(String tipo) {
-        String sql = "SELECT * FROM ap_achados_perdidos.itens WHERE UPPER(tipo_item) = UPPER(?) AND Flg_Inativo = false ORDER BY Dta_Criacao DESC";
-        return jdbcTemplate.query(sql, rowMapper, tipo);
+    public boolean marcarComoResgatado(int itemId, int usuarioReivindicadorId) {
+        String sql = "UPDATE ap_achados_perdidos.itens SET status_item = 'RESGATADO', usuario_reivindicador_id = ?, dta_reivindicacao = ? WHERE id = ? AND tipo_item = 'PERDIDO' AND status_item = 'ATIVO'";
+        int rowsAffected = jdbcTemplate.update(sql, usuarioReivindicadorId, Timestamp.valueOf(LocalDateTime.now()), itemId);
+        return rowsAffected > 0;
     }
 }

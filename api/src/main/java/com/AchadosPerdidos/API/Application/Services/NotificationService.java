@@ -2,19 +2,17 @@ package com.AchadosPerdidos.API.Application.Services;
 
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Item.ItemDTO;
-import com.AchadosPerdidos.API.Application.DTOs.ItemDoado.ItemDoadoCreateDTO;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.INotificationService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuariosService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IItensService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IChatService;
-import com.AchadosPerdidos.API.Application.Services.Interfaces.IItemDoadoService;
 import com.AchadosPerdidos.API.Application.Config.OneSignalConfig;
 import com.AchadosPerdidos.API.Domain.Entity.Chat.ChatMessage;
 import com.AchadosPerdidos.API.Domain.Enum.Tipo_Menssagem;
 import com.AchadosPerdidos.API.Domain.Enum.Status_Menssagem;
+import com.AchadosPerdidos.API.Domain.Enum.Status_Item;
 import com.AchadosPerdidos.API.Domain.Repository.UsuariosRepository;
 import com.AchadosPerdidos.API.Domain.Repository.ItensRepository;
-import com.AchadosPerdidos.API.Domain.Repository.ItemDoadoRepository;
 import com.AchadosPerdidos.API.Domain.Repository.DeviceTokenRepository;
 import com.AchadosPerdidos.API.Domain.Entity.DeviceToken;
 
@@ -49,13 +47,7 @@ public class NotificationService implements INotificationService {
     private UsuariosRepository usuariosRepository;
 
     @Autowired
-    private IItemDoadoService itemDoadoService;
-
-    @Autowired
     private ItensRepository itensRepository;
-
-    @Autowired
-    private ItemDoadoRepository itemDoadoRepository;
 
     @Autowired
     private DeviceTokenRepository deviceTokenRepository;
@@ -201,10 +193,6 @@ public class NotificationService implements INotificationService {
             // Filtra itens criados há 25+ dias e que ainda não foram doados
             List<com.AchadosPerdidos.API.Domain.Entity.Itens> itemsNearDeadline = allActiveItems.stream()
                 .filter(item -> item.getDtaCriacao() != null && item.getDtaCriacao().isBefore(deadlineDate))
-                .filter(item -> {
-                    // Verifica se o item já não está na tabela itens_doados
-                    return itemDoadoRepository.findByItemId(item.getId()) == null;
-                })
                 .collect(Collectors.toList());
             
             for (com.AchadosPerdidos.API.Domain.Entity.Itens item : itemsNearDeadline) {
@@ -214,7 +202,10 @@ public class NotificationService implements INotificationService {
                     item.getNome()
                 );
                 
-                sendNotificationToUser(item.getUsuario_relator_id(), message, "PRAZO_DOACAO");
+                Integer reporterId = item.getUsuario_relator_id() != null ? item.getUsuario_relator_id().getId() : null;
+                if (reporterId != null) {
+                    sendNotificationToUser(reporterId, message, "PRAZO_DOACAO");
+                }
                 
                 System.out.println("Notificação de prazo enviada para item: " + item.getNome());
             }
@@ -238,20 +229,17 @@ public class NotificationService implements INotificationService {
             // Filtra itens criados há 30+ dias e que ainda não foram doados
             List<com.AchadosPerdidos.API.Domain.Entity.Itens> expiredItems = allActiveItems.stream()
                 .filter(item -> item.getDtaCriacao() != null && item.getDtaCriacao().isBefore(expiredDate))
-                .filter(item -> {
-                    // Verifica se o item já não está na tabela itens_doados
-                    return itemDoadoRepository.findByItemId(item.getId()) == null;
-                })
                 .collect(Collectors.toList());
             
             for (com.AchadosPerdidos.API.Domain.Entity.Itens item : expiredItems) {
-                // Cria registro na tabela itens_doados
                 try {
-                    ItemDoadoCreateDTO itemDoadoCreateDTO = new ItemDoadoCreateDTO(item.getId(), java.time.LocalDateTime.now());
-                    itemDoadoService.createItemDoado(itemDoadoCreateDTO);
+                    item.setFlgInativo(true);
+                    item.setDtaRemocao(LocalDateTime.now());
+                    item.setStatus_item(Status_Item.CANCELADO);
+                    itensRepository.save(item);
                 } catch (Exception e) {
-                    // Se já existe um registro, ignora o erro e continua
-                    System.err.println("Item já está marcado como doado ou erro ao criar: " + e.getMessage());
+                    System.err.println("Erro ao atualizar item como doado: " + e.getMessage());
+                    continue;
                 }
                 
                 // Notifica o usuário que encontrou
@@ -261,7 +249,10 @@ public class NotificationService implements INotificationService {
                     item.getNome()
                 );
                 
-                sendNotificationToUser(item.getUsuario_relator_id(), message, "ITEM_DOADO");
+                Integer reporterId = item.getUsuario_relator_id() != null ? item.getUsuario_relator_id().getId() : null;
+                if (reporterId != null) {
+                    sendNotificationToUser(reporterId, message, "ITEM_DOADO");
+                }
                 
                 System.out.println("Item marcado como doado: " + item.getNome());
             }
@@ -277,12 +268,12 @@ public class NotificationService implements INotificationService {
         try {
             // Cria mensagem de chat para notificação
             ChatMessage notification = new ChatMessage(
-                "system", // Chat ID do sistema
-                String.valueOf(userId), // Destinatário
-                "system", // Remetente (sistema)
+                "system",
+                String.valueOf(userId),
+                "system",
                 message,
                 Tipo_Menssagem.SYSTEM,
-                Status_Menssagem.SENT
+                Status_Menssagem.ENVIADA
             );
             
             // Salva no MongoDB

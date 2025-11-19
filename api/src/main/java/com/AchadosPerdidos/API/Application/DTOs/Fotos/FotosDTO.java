@@ -1,6 +1,7 @@
 package com.AchadosPerdidos.API.Application.DTOs.Fotos;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.LocalDateTime;
 
 @Schema(description = "DTO completo de foto")
 public class FotosDTO {
@@ -23,19 +24,19 @@ public class FotosDTO {
     private Long tamanhoArquivoBytes;
 
     @Schema(description = "Data de criacao", example = "2024-01-01T00:00:00")
-    private java.util.Date dtaCriacao;
+    private LocalDateTime dtaCriacao;
 
     @Schema(description = "Flag de inativacao", example = "false")
     private Boolean flgInativo;
 
     @Schema(description = "Data de remocao logica", example = "2024-02-01T00:00:00")
-    private java.util.Date dtaRemocao;
+    private LocalDateTime dtaRemocao;
 
     public FotosDTO() {
         // Construtor padrao para frameworks de serializacao
     }
 
-    public FotosDTO(Integer id, String url, String provedorArmazenamento, String chaveArmazenamento, String nomeArquivoOriginal, Long tamanhoArquivoBytes, java.util.Date dtaCriacao, Boolean flgInativo, java.util.Date dtaRemocao) {
+    public FotosDTO(Integer id, String url, String provedorArmazenamento, String chaveArmazenamento, String nomeArquivoOriginal, Long tamanhoArquivoBytes, LocalDateTime dtaCriacao, Boolean flgInativo, LocalDateTime dtaRemocao) {
         this.id = id;
         this.url = url;
         this.provedorArmazenamento = provedorArmazenamento;
@@ -95,11 +96,11 @@ public class FotosDTO {
         this.tamanhoArquivoBytes = tamanhoArquivoBytes;
     }
 
-    public java.util.Date getDtaCriacao() {
+    public LocalDateTime getDtaCriacao() {
         return dtaCriacao;
     }
 
-    public void setDtaCriacao(java.util.Date dtaCriacao) {
+    public void setDtaCriacao(LocalDateTime dtaCriacao) {
         this.dtaCriacao = dtaCriacao;
     }
 
@@ -111,11 +112,11 @@ public class FotosDTO {
         this.flgInativo = flgInativo;
     }
 
-    public java.util.Date getDtaRemocao() {
+    public LocalDateTime getDtaRemocao() {
         return dtaRemocao;
     }
 
-    public void setDtaRemocao(java.util.Date dtaRemocao) {
+    public void setDtaRemocao(LocalDateTime dtaRemocao) {
         this.dtaRemocao = dtaRemocao;
     }
 }

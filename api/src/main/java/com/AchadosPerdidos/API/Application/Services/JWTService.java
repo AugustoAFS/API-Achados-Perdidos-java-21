@@ -1,17 +1,15 @@
 package com.AchadosPerdidos.API.Application.Services;
 
+import com.AchadosPerdidos.API.Application.Config.JwtConfig;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IJWTService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,23 +19,17 @@ public class JWTService implements IJWTService {
     
     private static final Logger _log = LoggerFactory.getLogger(JWTService.class);
     
-    @Value("${jwt.secret-key}")
-    private String secretKey;
-    
-    @Value("${jwt.issuer}")
-    private String issuer;
-    
-    @Value("${jwt.audience}")
-    private String audience;
-    
-    @Value("${jwt.expiry-in-minutes:60}")
-    private int expiryInMinutes;
+    private final SecretKey secretKey;
+    private final JwtConfig jwtConfig;
+
+    public JWTService(SecretKey secretKey, JwtConfig jwtConfig) {
+        this.secretKey = secretKey;
+        this.jwtConfig = jwtConfig;
+    }
     
     @Override
     public String generateToken(String email, String name, String role, String userId) {
         try {
-            SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-            
             Map<String, Object> claims = new HashMap<>();
             claims.put("sub", userId);
             claims.put("email", email);
@@ -46,14 +38,14 @@ public class JWTService implements IJWTService {
             claims.put("jti", java.util.UUID.randomUUID().toString());
             
             Date now = new Date();
-            Date expiry = new Date(now.getTime() + (expiryInMinutes * 60 * 1000));
+            Date expiry = new Date(now.getTime() + (jwtConfig.getExpiryInMinutes() * 60L * 1000));
             
             String token = Jwts.builder()
                 .claims(claims)
-                .issuer(issuer)
+                .issuer(jwtConfig.getIssuer())
                 .issuedAt(now)
                 .expiration(expiry)
-                .signWith(key)
+                .signWith(secretKey)
                 .compact();
 
             _log.info("Token JWT gerado com sucesso para o usuário: {}", email);
@@ -123,9 +115,8 @@ public class JWTService implements IJWTService {
     }
 
     private Claims getClaims(String token) {
-        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
         return Jwts.parser()
-            .verifyWith(key)
+            .verifyWith(secretKey)
             .build()
             .parseSignedClaims(token)
             .getPayload();

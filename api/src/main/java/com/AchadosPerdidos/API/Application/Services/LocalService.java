@@ -3,8 +3,9 @@ package com.AchadosPerdidos.API.Application.Services;
 import com.AchadosPerdidos.API.Application.DTOs.Local.LocalDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Local.LocalCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Local.LocalUpdateDTO;
-import com.AchadosPerdidos.API.Application.Mapper.LocalModelMapper;
+import com.AchadosPerdidos.API.Application.Mapper.LocalMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.ILocalService;
+import com.AchadosPerdidos.API.Domain.Entity.Campus;
 import com.AchadosPerdidos.API.Domain.Entity.Local;
 import com.AchadosPerdidos.API.Domain.Repository.LocalRepository;
 import com.AchadosPerdidos.API.Exeptions.BusinessException;
@@ -26,14 +27,14 @@ public class LocalService implements ILocalService {
     private LocalRepository localRepository;
 
     @Autowired
-    private LocalModelMapper localModelMapper;
+    private LocalMapper localMapper;
 
     @Override
     @Cacheable(value = "localItems", key = "'all'")
     public List<LocalDTO> getAllLocais() {
         List<Local> locais = localRepository.findAll();
         return locais.stream()
-                .map(localModelMapper::toDTO)
+                .map(localMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -44,11 +45,8 @@ public class LocalService implements ILocalService {
             throw new IllegalArgumentException("ID do local deve ser válido");
         }
         
-        Local local = localRepository.findById(id);
-        if (local == null) {
-            throw new ResourceNotFoundException("Local", "ID", id);
-        }
-        return localModelMapper.toDTO(local);
+        Local local = getLocalOrThrow(id);
+        return localMapper.toDTO(local);
     }
 
     @Override
@@ -69,12 +67,12 @@ public class LocalService implements ILocalService {
         Local local = new Local();
         local.setNome(createDTO.getNome());
         local.setDescricao(createDTO.getDescricao());
-        local.setCampus_id(createDTO.getCampusId());
+        local.setCampus_id(buildCampusReference(createDTO.getCampusId()));
         local.setDtaCriacao(LocalDateTime.now());
         local.setFlgInativo(false);
         
         Local savedLocal = localRepository.save(local);
-        return localModelMapper.toDTO(savedLocal);
+        return localMapper.toDTO(savedLocal);
     }
 
     @Override
@@ -88,10 +86,7 @@ public class LocalService implements ILocalService {
             throw new IllegalArgumentException("Dados de atualização não podem ser nulos");
         }
         
-        Local existingLocal = localRepository.findById(id);
-        if (existingLocal == null) {
-            throw new ResourceNotFoundException("Local", "ID", id);
-        }
+        Local existingLocal = getLocalOrThrow(id);
         
         if (updateDTO.getNome() != null) {
             if (!StringUtils.hasText(updateDTO.getNome())) {
@@ -106,14 +101,14 @@ public class LocalService implements ILocalService {
             if (updateDTO.getCampusId() <= 0) {
                 throw new BusinessException("Local", "atualizar", "ID do campus deve ser válido");
             }
-            existingLocal.setCampus_id(updateDTO.getCampusId());
+            existingLocal.setCampus_id(buildCampusReference(updateDTO.getCampusId()));
         }
         if (updateDTO.getFlgInativo() != null) {
             existingLocal.setFlgInativo(updateDTO.getFlgInativo());
         }
         
         Local updatedLocal = localRepository.save(existingLocal);
-        return localModelMapper.toDTO(updatedLocal);
+        return localMapper.toDTO(updatedLocal);
     }
 
     @Override
@@ -123,10 +118,7 @@ public class LocalService implements ILocalService {
             throw new IllegalArgumentException("ID do local deve ser válido");
         }
         
-        Local local = localRepository.findById(id);
-        if (local == null) {
-            throw new ResourceNotFoundException("Local", "ID", id);
-        }
+        Local local = getLocalOrThrow(id);
         
         // Soft delete: Marcar como inativo ao invés de deletar fisicamente
         if (Boolean.TRUE.equals(local.getFlgInativo())) {
@@ -137,7 +129,7 @@ public class LocalService implements ILocalService {
         local.setDtaRemocao(LocalDateTime.now());
         
         Local updatedLocal = localRepository.save(local);
-        return localModelMapper.toDTO(updatedLocal);
+        return localMapper.toDTO(updatedLocal);
     }
 
     @Override
@@ -149,7 +141,7 @@ public class LocalService implements ILocalService {
         
         List<Local> locais = localRepository.findByCampus(campusId);
         return locais.stream()
-                .map(localModelMapper::toDTO)
+                .map(localMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -158,8 +150,22 @@ public class LocalService implements ILocalService {
     public List<LocalDTO> getActiveLocais() {
         List<Local> activeLocais = localRepository.findActive();
         return activeLocais.stream()
-                .map(localModelMapper::toDTO)
+                .map(localMapper::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    private Local getLocalOrThrow(Integer id) {
+        return localRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Local", "ID", id));
+    }
+
+    private Campus buildCampusReference(Integer campusId) {
+        if (campusId == null) {
+            return null;
+        }
+        Campus campus = new Campus();
+        campus.setId(campusId);
+        return campus;
     }
 }
 

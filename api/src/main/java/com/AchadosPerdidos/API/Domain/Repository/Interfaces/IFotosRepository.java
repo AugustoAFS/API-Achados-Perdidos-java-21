@@ -3,6 +3,11 @@ package com.AchadosPerdidos.API.Domain.Repository.Interfaces;
 import com.AchadosPerdidos.API.Domain.Entity.Foto;
 import java.util.List;
 
+/**
+ * Interface do Repository para Fotos
+ * Define operações de persistência para entidade Foto
+ * Gerencia upload/download de imagens (AWS S3)
+ */
 public interface IFotosRepository {
     List<Foto> findAll();
     Foto findById(int id);

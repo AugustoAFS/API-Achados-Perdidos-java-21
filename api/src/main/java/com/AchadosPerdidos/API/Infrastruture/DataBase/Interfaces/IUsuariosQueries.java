@@ -3,19 +3,13 @@ package com.AchadosPerdidos.API.Infrastruture.DataBase.Interfaces;
 import com.AchadosPerdidos.API.Domain.Entity.Usuario;
 import java.util.List;
 
+/**
+ * Interface para operações complexas de Usuarios que requerem JOINs
+ * CRUD básico é feito via JPA no UsuariosRepository
+ */
 public interface IUsuariosQueries {
-    List<Usuario> findAll();
-    Usuario findById(int id);
-    Usuario findByEmail(String email);
-    Usuario findByCpf(String cpf);
-    Usuario findByMatricula(String matricula);
-    Usuario insert(Usuario usuario);
-    Usuario update(Usuario usuario);
-    boolean deleteById(int id);
-    List<Usuario> findActive();
-    List<Usuario> findByRole(int tipoRoleId);
+    // Operações com JOINs
     List<Usuario> findByInstitution(int instituicaoId);
     List<Usuario> findByCampus(int campusId);
     String getCampusNomeAtivoByUsuarioId(int usuarioId);
-    boolean associarUsuarioCampus(int usuarioId, int campusId);
 }

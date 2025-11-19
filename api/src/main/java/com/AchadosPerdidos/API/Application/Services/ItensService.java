@@ -4,10 +4,10 @@ import com.AchadosPerdidos.API.Application.DTOs.Item.ItemDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Item.ItemListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Item.ItemCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Item.ItemUpdateDTO;
-import com.AchadosPerdidos.API.Application.Mapper.ItensModelMapper;
+import com.AchadosPerdidos.API.Application.Mapper.ItensMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IItensService;
 import com.AchadosPerdidos.API.Domain.Entity.Itens;
-import com.AchadosPerdidos.API.Domain.Enum.Tipo_ItemEnum;
+import com.AchadosPerdidos.API.Domain.Enum.Tipo_Item;
 import com.AchadosPerdidos.API.Domain.Repository.ItensRepository;
 import com.AchadosPerdidos.API.Domain.Repository.LocalRepository;
 import com.AchadosPerdidos.API.Domain.Repository.UsuariosRepository;
@@ -29,7 +29,7 @@ public class ItensService implements IItensService {
     private ItensRepository itensRepository;
 
     @Autowired
-    private ItensModelMapper itensModelMapper;
+    private ItensMapper itensMapper;
     
     @Autowired
     private LocalRepository localRepository;
@@ -41,7 +41,7 @@ public class ItensService implements IItensService {
     @Cacheable(value = "itens", key = "'all'")
     public ItemListDTO getAllItens() {
         List<Itens> itens = itensRepository.findAll();
-        return itensModelMapper.toListDTO(itens);
+        return itensMapper.toListDTO(itens);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class ItensService implements IItensService {
         if (itens == null) {
             throw new ResourceNotFoundException("Item não encontrado com ID: " + id);
         }
-        return itensModelMapper.toDTO(itens);
+        return itensMapper.toDTO(itens);
     }
 
     @Override
@@ -67,12 +67,12 @@ public class ItensService implements IItensService {
         
         validarItemParaCriacao(createDTO);
         
-        Itens itens = itensModelMapper.fromCreateDTO(createDTO);
+        Itens itens = itensMapper.fromCreateDTO(createDTO);
         itens.setDtaCriacao(LocalDateTime.now());
         itens.setFlgInativo(false);
         
         Itens savedItens = itensRepository.save(itens);
-        return itensModelMapper.toDTO(savedItens);
+        return itensMapper.toDTO(savedItens);
     }
 
     @Override
@@ -95,10 +95,10 @@ public class ItensService implements IItensService {
             throw new BusinessException("Item", "atualizar", "Não é possível atualizar um item que já foi removido");
         }
         
-        itensModelMapper.updateFromDTO(existingItens, updateDTO);
+        itensMapper.updateFromDTO(existingItens, updateDTO);
         
         Itens updatedItens = itensRepository.save(existingItens);
-        return itensModelMapper.toDTO(updatedItens);
+        return itensMapper.toDTO(updatedItens);
     }
 
     @Override
@@ -128,7 +128,7 @@ public class ItensService implements IItensService {
     @Cacheable(value = "itens", key = "'active'")
     public ItemListDTO getActiveItens() {
         List<Itens> activeItens = itensRepository.findActive();
-        return itensModelMapper.toListDTO(activeItens);
+        return itensMapper.toListDTO(activeItens);
     }
 
     @Override
@@ -139,7 +139,7 @@ public class ItensService implements IItensService {
         }
         
         List<Itens> itens = itensRepository.findByUser(userId);
-        return itensModelMapper.toListDTO(itens);
+        return itensMapper.toListDTO(itens);
     }
 
     @Override
@@ -150,7 +150,7 @@ public class ItensService implements IItensService {
         }
         
         List<Itens> itens = itensRepository.findByCampus(campusId);
-        return itensModelMapper.toListDTO(itens);
+        return itensMapper.toListDTO(itens);
     }
 
     @Override
@@ -161,7 +161,7 @@ public class ItensService implements IItensService {
         }
         
         List<Itens> itens = itensRepository.findByLocal(localId);
-        return itensModelMapper.toListDTO(itens);
+        return itensMapper.toListDTO(itens);
     }
 
     @Override
@@ -172,7 +172,7 @@ public class ItensService implements IItensService {
         }
         
         List<Itens> itens = itensRepository.searchByTerm(searchTerm);
-        return itensModelMapper.toListDTO(itens);
+        return itensMapper.toListDTO(itens);
     }
 
     @Override
@@ -184,14 +184,14 @@ public class ItensService implements IItensService {
         
         // Validar tipo usando enum
         try {
-            Tipo_ItemEnum.valueOf(tipo.toUpperCase());
+            Tipo_Item.valueOf(tipo.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new BusinessException("Item", "buscar", "Tipo deve ser 'PERDIDO', 'ACHADO' ou 'DOADO'");
         }
         
         String tipoUpper = tipo.toUpperCase();
         List<Itens> itens = itensRepository.findByTipo(tipoUpper);
-        return itensModelMapper.toListDTO(itens);
+        return itensMapper.toListDTO(itens);
     }
     
     private void validarItemParaCriacao(ItemCreateDTO createDTO) {
@@ -215,9 +215,8 @@ public class ItensService implements IItensService {
             throw new BusinessException("Item", "criar", "ID do local é obrigatório e deve ser válido");
         }
         
-        if (localRepository.findById(createDTO.getLocalId()) == null) {
-            throw new ResourceNotFoundException("Local", "ID", createDTO.getLocalId());
-        }
+        localRepository.findById(createDTO.getLocalId())
+            .orElseThrow(() -> new ResourceNotFoundException("Local", "ID", createDTO.getLocalId()));
         
         if (createDTO.getUsuarioRelatorId() == null || createDTO.getUsuarioRelatorId() <= 0) {
             throw new BusinessException("Item", "criar", "ID do usuário relator é obrigatório e deve ser válido");

@@ -10,80 +10,91 @@ public class Endereco implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "Id")
+    private Integer Id;
 
-    private String logradouro;
+    @Column(name = "Logradouro", length = 255, nullable = false)
+    private String Logradouro;
 
-    private String numero;
+    @Column(name = "Numero", length = 20)
+    private String Numero;
 
-    private String complemento;
+    @Column(name = "Complemento", length = 100)
+    private String Complemento;
 
-    private String bairro;  
+    @Column(name = "Bairro", length = 100)
+    private String Bairro;
 
-    private String cep;
+    @Column(name = "CEP", length = 8)
+    private String CEP;
 
-    private Integer cidade_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "Cidade_id", nullable = false, foreignKey = @ForeignKey(name = "fk_enderecos_cidade"))
+    private Cidade Cidade_id;
 
+    @Column(name = "Dta_Criacao", nullable = false, updatable = false)
     private LocalDateTime Dta_Criacao;
 
+    @Column(name = "Flg_Inativo", nullable = false)
     private Boolean Flg_Inativo;
 
+    @Column(name = "Dta_Remocao")
     private LocalDateTime Dta_Remocao;
 
     public Integer getId() {
-        return id;
+        return Id;
     }
 
     public void setId(Integer id) {
-        this.id = id;
+        this.Id = id;
     }
 
     public String getLogradouro() {
-        return logradouro;
+        return Logradouro;
     }
 
     public void setLogradouro(String logradouro) {
-        this.logradouro = logradouro;
+        this.Logradouro = logradouro;
     }
 
     public String getNumero() {
-        return numero;
+        return Numero;
     }
 
     public void setNumero(String numero) {
-        this.numero = numero;
+        this.Numero = numero;
     }
 
     public String getComplemento() {
-        return complemento;
+        return Complemento;
     }
 
     public void setComplemento(String complemento) {
-        this.complemento = complemento;
+        this.Complemento = complemento;
     }
 
     public String getBairro() {
-        return bairro;
+        return Bairro;
     }
 
     public void setBairro(String bairro) {
-        this.bairro = bairro;
+        this.Bairro = bairro;
     }
 
     public String getCep() {
-        return cep;
+        return CEP;
     }
 
     public void setCep(String cep) {
-        this.cep = cep;
+        this.CEP = cep;
     }
 
-    public Integer getCidadeId() {
-        return cidade_id;
+    public Cidade getCidadeId() {
+        return Cidade_id;
     }
 
-    public void setCidadeId(Integer cidade_id) {
-        this.cidade_id = cidade_id;
+    public void setCidadeId(Cidade cidade) {
+        this.Cidade_id = cidade;
     }
 
     public LocalDateTime getDtaCriacao() {
@@ -106,6 +117,7 @@ public class Endereco implements Serializable {
         return Dta_Remocao;
     }
 
+    public void setDtaRemocao(LocalDateTime Dta_Remocao) {
+        this.Dta_Remocao = Dta_Remocao;
+    }
 }
-
-

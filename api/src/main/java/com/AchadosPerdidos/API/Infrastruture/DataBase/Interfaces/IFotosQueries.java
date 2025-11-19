@@ -3,13 +3,12 @@ package com.AchadosPerdidos.API.Infrastruture.DataBase.Interfaces;
 import com.AchadosPerdidos.API.Domain.Entity.Foto;
 import java.util.List;
 
+/**
+ * Interface para operações complexas de Fotos que requerem JOINs
+ * CRUD básico é feito via JPA no FotosRepository
+ */
 public interface IFotosQueries {
-    List<Foto> findAll();
-    Foto findById(int id);
-    Foto insert(Foto foto);
-    Foto update(Foto foto);
-    boolean deleteById(int id);
-    List<Foto> findActive();
+    // Operações com JOINs
     List<Foto> findByUser(int userId);
     List<Foto> findByItem(int itemId);
     List<Foto> findProfilePhotos(int userId);
