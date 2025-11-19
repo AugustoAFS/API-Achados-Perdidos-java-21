@@ -2,6 +2,7 @@ package com.AchadosPerdidos.API.Application.Services.Interfaces;
 
 import com.AchadosPerdidos.API.Application.DTOs.Auth.AuthResponseDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Auth.LoginRequestDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Auth.TokenResponseDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosCreateDTO;
@@ -15,5 +16,5 @@ public interface IUsuariosService {
     UsuariosUpdateDTO updateUsuario(int id, UsuariosUpdateDTO usuariosDTO);
     boolean deleteUsuario(int id);
     boolean redefinirSenha(String cpf, String matricula, String novaSenha);
-    AuthResponseDTO login(LoginRequestDTO loginRequestDTO);
+    TokenResponseDTO login(LoginRequestDTO loginRequestDTO);
 }

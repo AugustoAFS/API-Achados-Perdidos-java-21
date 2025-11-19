@@ -146,7 +146,7 @@ public class GoogleAuthService implements IGoogleAuthService {
             user.setEmail(userInfoJson.get("email").asText());
             user.setName(userInfoJson.get("name").asText());
             user.setPicture(userInfoJson.get("picture").asText());
-            user.setVerified_email(userInfoJson.get("verified_email").asBoolean());
+            user.setVerifiedEmail(userInfoJson.get("verified_email").asBoolean());
 
             _log.info("Informações do usuário obtidas com sucesso: {}", user.getEmail());
             return user;

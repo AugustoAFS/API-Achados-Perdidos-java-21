@@ -1,7 +1,7 @@
 package com.AchadosPerdidos.API.Application.Services;
 
 import com.AchadosPerdidos.API.Application.DTOs.Role.RoleDTO;
-import com.AchadosPerdidos.API.Application.Mapper.RoleModelMapper;
+import com.AchadosPerdidos.API.Application.Mapper.RoleMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IRoleService;
 import com.AchadosPerdidos.API.Domain.Entity.Role;
 import com.AchadosPerdidos.API.Domain.Repository.RoleRepository;
@@ -21,14 +21,14 @@ public class RoleService implements IRoleService {
     private RoleRepository roleRepository;
 
     @Autowired
-    private RoleModelMapper roleModelMapper;
+    private RoleMapper roleMapper;
 
     @Override
     @Cacheable(value = "roles", key = "'all'")
     public List<RoleDTO> getAllRoles() {
         List<Role> roles = roleRepository.findAll();
         return roles.stream()
-                .map(roleModelMapper::toDTO)
+                .map(roleMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -39,11 +39,9 @@ public class RoleService implements IRoleService {
             throw new IllegalArgumentException("ID da role deve ser válido");
         }
         
-        Role role = roleRepository.findById(id);
-        if (role == null) {
-            throw new ResourceNotFoundException("Role", "ID", id);
-        }
-        return roleModelMapper.toDTO(role);
+        Role role = roleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Role", "ID", id));
+        return roleMapper.toDTO(role);
     }
 
     @Override
@@ -53,11 +51,9 @@ public class RoleService implements IRoleService {
             throw new IllegalArgumentException("Nome da role não pode ser vazio");
         }
         
-        Role role = roleRepository.findByNome(nome);
-        if (role == null) {
-            throw new ResourceNotFoundException("Role", "nome", nome);
-        }
-        return roleModelMapper.toDTO(role);
+        Role role = roleRepository.findByNome(nome)
+                .orElseThrow(() -> new ResourceNotFoundException("Role", "nome", nome));
+        return roleMapper.toDTO(role);
     }
 
     @Override
@@ -65,7 +61,7 @@ public class RoleService implements IRoleService {
     public List<RoleDTO> getActiveRoles() {
         List<Role> activeRoles = roleRepository.findActive();
         return activeRoles.stream()
-                .map(roleModelMapper::toDTO)
+                .map(roleMapper::toDTO)
                 .collect(Collectors.toList());
     }
 }

@@ -1,26 +1,13 @@
 package com.AchadosPerdidos.API.Application.DTOs.Local;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.util.List;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class LocalListDTO {
-    @Schema(description = "Lista de locais")
     private List<LocalDTO> Locais;
-
-    public LocalListDTO() {
-        // Construtor padrao para frameworks de serializacao
-    }
-
-    public LocalListDTO(List<LocalDTO> Locais) {
-        this.Locais = Locais;
-    }
-
-    public List<LocalDTO> getLocais() {
-        return Locais;
-    }
-
-    public void setLocais(List<LocalDTO> Locais) {
-        this.Locais = Locais;
-    }
 }
-

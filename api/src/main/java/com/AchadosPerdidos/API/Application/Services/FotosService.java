@@ -2,13 +2,15 @@ package com.AchadosPerdidos.API.Application.Services;
 
 import com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosListDTO;
-import com.AchadosPerdidos.API.Application.Mapper.FotosModelMapper;
+import com.AchadosPerdidos.API.Application.Mapper.FotosMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotosService;
 import com.AchadosPerdidos.API.Domain.Entity.Foto;
 import com.AchadosPerdidos.API.Domain.Repository.FotosRepository;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -17,11 +19,13 @@ import java.util.List;
 @Service
 public class FotosService implements IFotosService {
 
+    private static final Logger logger = LoggerFactory.getLogger(FotosService.class);
+
     @Autowired
     private FotosRepository fotosRepository;
 
     @Autowired
-    private FotosModelMapper fotosModelMapper;
+    private FotosMapper fotosMapper;
 
     @Autowired
     private S3Service s3Service;
@@ -29,23 +33,23 @@ public class FotosService implements IFotosService {
     @Override
     public FotosListDTO getAllFotos() {
         List<Foto> fotos = fotosRepository.findAll();
-        return fotosModelMapper.toListDTO(fotos);
+        return fotosMapper.toListDTO(fotos);
     }
 
     @Override
     public FotosDTO getFotoById(int id) {
         Foto foto = fotosRepository.findById(id);
-        return fotosModelMapper.toDTO(foto);
+        return fotosMapper.toDTO(foto);
     }
 
     @Override
     public FotosDTO createFoto(FotosDTO fotosDTO) {
-        Foto foto = fotosModelMapper.toEntity(fotosDTO);
+        Foto foto = fotosMapper.toEntity(fotosDTO);
         foto.setDtaCriacao(LocalDateTime.now());
         foto.setFlgInativo(false);
         
         Foto savedFoto = fotosRepository.save(foto);
-        return fotosModelMapper.toDTO(savedFoto);
+        return fotosMapper.toDTO(savedFoto);
     }
 
     @Override
@@ -74,7 +78,7 @@ public class FotosService implements IFotosService {
         existingFoto.setDtaCriacao(LocalDateTime.now());
         
         Foto updatedFoto = fotosRepository.save(existingFoto);
-        return fotosModelMapper.toDTO(updatedFoto);
+        return fotosMapper.toDTO(updatedFoto);
     }
 
     @Override
@@ -90,43 +94,43 @@ public class FotosService implements IFotosService {
     @Override
     public FotosListDTO getActiveFotos() {
         List<Foto> activeFotos = fotosRepository.findActive();
-        return fotosModelMapper.toListDTO(activeFotos);
+        return fotosMapper.toListDTO(activeFotos);
     }
 
     @Override
     public FotosListDTO getFotosByUser(int userId) {
         List<Foto> fotos = fotosRepository.findByUser(userId);
-        return fotosModelMapper.toListDTO(fotos);
+        return fotosMapper.toListDTO(fotos);
     }
 
     @Override
     public FotosListDTO getFotosByItem(int itemId) {
         List<Foto> fotos = fotosRepository.findByItem(itemId);
-        return fotosModelMapper.toListDTO(fotos);
+        return fotosMapper.toListDTO(fotos);
     }
 
     @Override
     public FotosListDTO getProfilePhotos(int userId) {
         List<Foto> fotos = fotosRepository.findProfilePhotos(userId);
-        return fotosModelMapper.toListDTO(fotos);
+        return fotosMapper.toListDTO(fotos);
     }
 
     @Override
     public FotosListDTO getItemPhotos(int itemId) {
         List<Foto> fotos = fotosRepository.findItemPhotos(itemId);
-        return fotosModelMapper.toListDTO(fotos);
+        return fotosMapper.toListDTO(fotos);
     }
 
     @Override
     public FotosDTO getMainItemPhoto(int itemId) {
         Foto foto = fotosRepository.findMainItemPhoto(itemId);
-        return fotosModelMapper.toDTO(foto);
+        return fotosMapper.toDTO(foto);
     }
 
     @Override
     public FotosDTO getProfilePhoto(int userId) {
         Foto foto = fotosRepository.findProfilePhoto(userId);
-        return fotosModelMapper.toDTO(foto);
+        return fotosMapper.toDTO(foto);
     }
 
     /**
@@ -138,26 +142,42 @@ public class FotosService implements IFotosService {
      * @return DTO da foto salva
      */
     public FotosDTO uploadPhoto(MultipartFile file, Integer userId, Integer itemId, boolean isProfilePhoto) {
+        logger.info("Iniciando upload de foto - userId: {}, itemId: {}, isProfilePhoto: {}", userId, itemId, isProfilePhoto);
+        
         try {
             // Validar arquivo
-            if (file.isEmpty()) {
+            if (file == null || file.isEmpty()) {
+                logger.warn("Tentativa de upload com arquivo vazio");
                 throw new IllegalArgumentException("Arquivo não pode estar vazio");
             }
+
+            logger.debug("Arquivo recebido: nome={}, tamanho={}, contentType={}", 
+                file.getOriginalFilename(), file.getSize(), file.getContentType());
 
             // Validar tipo de arquivo
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
-                throw new IllegalArgumentException("Arquivo deve ser uma imagem");
+                logger.warn("Tentativa de upload de arquivo que não é imagem: {}", contentType);
+                throw new IllegalArgumentException("Arquivo deve ser uma imagem. Tipo recebido: " + contentType);
+            }
+
+            // Validar userId
+            if (userId == null || userId <= 0) {
+                logger.warn("Tentativa de upload com userId inválido: {}", userId);
+                throw new IllegalArgumentException("userId é obrigatório e deve ser maior que zero");
             }
 
             // Fazer upload para S3
             byte[] fileBytes;
             try {
                 fileBytes = file.getBytes();
+                logger.debug("Arquivo lido com sucesso. Tamanho em bytes: {}", fileBytes.length);
             } catch (IOException e) {
+                logger.error("Erro ao ler arquivo: {}", e.getMessage(), e);
                 throw new RuntimeException("Erro ao ler arquivo: " + e.getMessage(), e);
             }
             
+            logger.info("Fazendo upload para S3...");
             S3Service.S3UploadResult uploadResult = s3Service.uploadPhoto(
                 fileBytes,
                 file.getOriginalFilename(),
@@ -166,6 +186,7 @@ public class FotosService implements IFotosService {
                 itemId,
                 isProfilePhoto
             );
+            logger.info("Upload para S3 concluído. S3Key: {}, URL: {}", uploadResult.getS3Key(), uploadResult.getFileUrl());
 
             // Criar entidade Foto
             Foto foto = new Foto();
@@ -178,11 +199,30 @@ public class FotosService implements IFotosService {
             foto.setDtaCriacao(LocalDateTime.now());
 
             // Salvar no banco de dados
+            logger.debug("Salvando foto no banco de dados...");
             Foto savedFoto = fotosRepository.save(foto);
-            return fotosModelMapper.toDTO(savedFoto);
+            logger.info("Foto salva com sucesso. ID: {}", savedFoto.getId());
+            
+            return fotosMapper.toDTO(savedFoto);
 
+        } catch (IllegalArgumentException e) {
+            logger.error("Erro de validação no upload: {}", e.getMessage());
+            throw e;
+        } catch (IllegalStateException e) {
+            logger.error("Erro de configuração S3: {}", e.getMessage());
+            // Preserva a mensagem original do IllegalStateException para que seja mais clara
+            throw e;
         } catch (RuntimeException e) {
+            // Verifica se é um erro de bucket não encontrado
+            if (e.getMessage() != null && e.getMessage().contains("Bucket S3") && e.getMessage().contains("não existe")) {
+                logger.error("Bucket S3 não encontrado: {}", e.getMessage());
+                throw new IllegalStateException(e.getMessage(), e);
+            }
+            logger.error("Erro ao fazer upload da foto: {}", e.getMessage(), e);
             throw new RuntimeException("Erro ao fazer upload da foto: " + e.getMessage(), e);
+        } catch (Exception e) {
+            logger.error("Erro inesperado ao fazer upload: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro inesperado ao fazer upload: " + e.getMessage(), e);
         }
     }
 

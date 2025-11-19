@@ -1,51 +1,37 @@
 package com.AchadosPerdidos.API.Domain.Repository;
 
 import com.AchadosPerdidos.API.Domain.Entity.Cidade;
-import com.AchadosPerdidos.API.Domain.Repository.Interfaces.ICidadeRepository;
-import com.AchadosPerdidos.API.Infrastruture.DataBase.CidadeQueries;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
+/**
+ * Repository para gerenciar Cidades
+ * Usa JPA para CRUD básico
+ */
 @Repository
-public class CidadeRepository implements ICidadeRepository {
-
-    @Autowired
-    private CidadeQueries cidadeQueries;
+public interface CidadeRepository extends JpaRepository<Cidade, Integer> {
     
-    @Override
-    public List<Cidade> findAll() {
-        return cidadeQueries.findAll();
-    }
-
-    @Override
-    public Cidade findById(Integer id) {
-        return cidadeQueries.findById(id);
-    }
-
-    @Override
-    public Cidade save(Cidade cidade) {
-        if (cidade.getId() == null || cidade.getId() == 0) {
-            return cidadeQueries.insert(cidade);
-        } else {
-            return cidadeQueries.update(cidade);
-        }
-    }
-
-    @Override
-    public boolean deleteById(Integer id) {
-        return cidadeQueries.deleteById(id);
-    }
-
-    @Override
-    public List<Cidade> findActive() {
-        return cidadeQueries.findActive();
-    }
-
-    @Override
-    public List<Cidade> findByEstado(Integer estadoId) {
-        return cidadeQueries.findByEstado(estadoId);
+    // CRUD básico já vem do JpaRepository: save, findById, findAll, deleteById
+    
+    // Queries customizadas (necessário porque o campo é Flg_Inativo com underscore)
+    @Query("SELECT c FROM Cidade c WHERE c.Flg_Inativo = false")
+    List<Cidade> findByFlgInativoFalse();
+    
+    @Query("SELECT c FROM Cidade c WHERE c.Id = :id AND c.Flg_Inativo = false")
+    Optional<Cidade> findByIdAndFlgInativoFalse(@Param("id") Integer id);
+    
+    // Query customizada simples (sem JOIN)
+    @Query("SELECT c FROM Cidade c WHERE c.Estado_id.Id = :estadoId AND c.Flg_Inativo = false ORDER BY c.Nome")
+    List<Cidade> findByEstado(@Param("estadoId") Integer estadoId);
+    
+    // Métodos customizados compatíveis com ICidadeRepository
+    default List<Cidade> findActive() {
+        return findByFlgInativoFalse();
     }
 }
 

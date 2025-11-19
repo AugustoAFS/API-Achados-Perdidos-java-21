@@ -10,50 +10,59 @@ public class Campus implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "Id")
+    private Integer Id;
 
-    private String nome;
+    @Column(name = "Nome", length = 150, nullable = false)
+    private String Nome;
 
-    private Integer instituicao_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "Instituicao_id", nullable = false, foreignKey = @ForeignKey(name = "fk_campus_instituicao"))
+    private Instituicoes Instituicao_id;
 
-    private Integer endereco_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "Endereco_id", nullable = false, foreignKey = @ForeignKey(name = "fk_campus_endereco"))
+    private Endereco Endereco_id;
 
+    @Column(name = "Dta_Criacao", nullable = false, updatable = false)
     private LocalDateTime Dta_Criacao;
 
+    @Column(name = "Flg_Inativo", nullable = false)
     private Boolean Flg_Inativo;
 
+    @Column(name = "Dta_Remocao")
     private LocalDateTime Dta_Remocao;
 
     public Integer getId() {
-        return id;
+        return Id;
     }
 
     public void setId(Integer id) {
-        this.id = id;
+        this.Id = id;
     }
 
     public String getNome() {
-        return nome;
+        return Nome;
     }
 
     public void setNome(String nome) {
-        this.nome = nome;
+        this.Nome = nome;
     }
 
-    public Integer getInstituicaoId() {
-        return instituicao_id;
+    public Instituicoes getInstituicaoId() {
+        return Instituicao_id;
     }
 
-    public void setInstituicaoId(Integer instituicao_id) {
-        this.instituicao_id = instituicao_id;
+    public void setInstituicaoId(Instituicoes instituicao_id) {
+        this.Instituicao_id = instituicao_id;
     }
 
-    public Integer getEnderecoId() {
-        return endereco_id;
+    public Endereco getEnderecoId() {
+        return Endereco_id;
     }
 
-    public void setEnderecoId(Integer endereco_id) {
-        this.endereco_id = endereco_id;
+    public void setEnderecoId(Endereco endereco_id) {
+        this.Endereco_id = endereco_id;
     }
 
     public LocalDateTime getDtaCriacao() {
@@ -80,5 +89,3 @@ public class Campus implements Serializable {
         this.Dta_Remocao = Dta_Remocao;
     }
 }
-
-

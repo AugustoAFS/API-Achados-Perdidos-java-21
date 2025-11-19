@@ -1,7 +1,7 @@
 package com.AchadosPerdidos.API.Presentation.Controller;
 
-import com.AchadosPerdidos.API.Application.DTOs.Auth.AuthResponseDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Auth.LoginRequestDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Auth.TokenResponseDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Auth.RedefinirSenhaDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosListDTO;
@@ -44,9 +44,9 @@ public class UsuariosController {
 
     @PostMapping("/login")
     @Operation(summary = "Login de usuário", description = "Autentica um usuário com email e senha, retornando um token JWT")
-    public ResponseEntity<AuthResponseDTO> login(@RequestBody LoginRequestDTO loginRequestDTO) {
+    public ResponseEntity<TokenResponseDTO> login(@RequestBody LoginRequestDTO loginRequestDTO) {
         try {
-            AuthResponseDTO response = usuariosService.login(loginRequestDTO);
+            TokenResponseDTO response = usuariosService.login(loginRequestDTO);
             return ResponseEntity.ok(response);
         } catch (BusinessException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -89,9 +89,9 @@ public class UsuariosController {
     public ResponseEntity<String> redefinirSenha(@RequestBody RedefinirSenhaDTO redefinirSenhaDTO) {
         try {
             boolean sucesso = usuariosService.redefinirSenha(
-                redefinirSenhaDTO.getCpf(),
+                redefinirSenhaDTO.getCpf_Usuario(),
                 redefinirSenhaDTO.getMatricula(),
-                redefinirSenhaDTO.getNovaSenha()
+                redefinirSenhaDTO.getNova_Senha()
             );
             if (sucesso) {
                 return ResponseEntity.ok("Senha redefinida com sucesso");

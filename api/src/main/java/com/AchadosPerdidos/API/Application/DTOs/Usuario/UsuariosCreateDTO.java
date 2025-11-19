@@ -1,8 +1,12 @@
 package com.AchadosPerdidos.API.Application.DTOs.Usuario;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Schema(description = "DTO para criacao de usuario")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class UsuariosCreateDTO {
     private String nomeCompleto;
     private String cpf;
@@ -12,84 +16,4 @@ public class UsuariosCreateDTO {
     private String numeroTelefone;
     private Integer enderecoId;
     private Integer campusId;
-
-    public UsuariosCreateDTO() {
-        // Construtor padrao para frameworks de serializacao
-    }
-
-    public UsuariosCreateDTO(String nomeCompleto, String cpf, String email, String senha, String matricula, String numeroTelefone, Integer enderecoId, Integer campusId) {
-        this.nomeCompleto = nomeCompleto;
-        this.cpf = cpf;
-        this.email = email;
-        this.senha = senha;
-        this.matricula = matricula;
-        this.numeroTelefone = numeroTelefone;
-        this.enderecoId = enderecoId;
-        this.campusId = campusId;
-    }
-
-    public String getNomeCompleto() {
-        return nomeCompleto;
-    }
-
-    public void setNomeCompleto(String nomeCompleto) {
-        this.nomeCompleto = nomeCompleto;
-    }
-
-    public String getCpf() {
-        return cpf;
-    }
-
-    public void setCpf(String cpf) {
-        this.cpf = cpf;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getSenha() {
-        return senha;
-    }
-
-    public void setSenha(String senha) {
-        this.senha = senha;
-    }
-
-    public String getMatricula() {
-        return matricula;
-    }
-
-    public void setMatricula(String matricula) {
-        this.matricula = matricula;
-    }
-
-    public String getNumeroTelefone() {
-        return numeroTelefone;
-    }
-
-    public void setNumeroTelefone(String numeroTelefone) {
-        this.numeroTelefone = numeroTelefone;
-    }
-
-    public Integer getEnderecoId() {
-        return enderecoId;
-    }
-
-    public void setEnderecoId(Integer enderecoId) {
-        this.enderecoId = enderecoId;
-    }
-
-    public Integer getCampusId() {
-        return campusId;
-    }
-
-    public void setCampusId(Integer campusId) {
-        this.campusId = campusId;
-    }
 }
-

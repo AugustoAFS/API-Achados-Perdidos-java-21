@@ -10,40 +10,46 @@ public class Role implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "Id")
+    private Integer Id;
 
-    private String nome;
+    @Column(name = "Nome", length = 50, nullable = false, unique = true)
+    private String Nome;
 
-    private String descricao;
+    @Column(name = "Descricao", columnDefinition = "TEXT")
+    private String Descricao;
 
+    @Column(name = "Dta_Criacao", nullable = false, updatable = false)
     private LocalDateTime Dta_Criacao;
 
+    @Column(name = "Flg_Inativo", nullable = false)
     private Boolean Flg_Inativo;
 
+    @Column(name = "Dta_Remocao")
     private LocalDateTime Dta_Remocao;
 
     public Integer getId() {
-        return id;
+        return Id;
     }
 
     public void setId(Integer id) {
-        this.id = id;
+        this.Id = id;
     }
 
     public String getNome() {
-        return nome;
+        return Nome;
     }   
 
     public void setNome(String nome) {
-        this.nome = nome;
+        this.Nome = nome;
     }
 
     public String getDescricao() {
-        return descricao;
+        return Descricao;
     }
 
     public void setDescricao(String descricao) {
-        this.descricao = descricao;
+        this.Descricao = descricao;
     }
 
     public LocalDateTime getDtaCriacao() {

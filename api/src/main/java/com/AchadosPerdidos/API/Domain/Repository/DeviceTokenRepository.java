@@ -1,70 +1,48 @@
 package com.AchadosPerdidos.API.Domain.Repository;
 
 import com.AchadosPerdidos.API.Domain.Entity.DeviceToken;
-import com.AchadosPerdidos.API.Domain.Repository.Interfaces.IDeviceTokenRepository;
-import com.AchadosPerdidos.API.Infrastruture.DataBase.DeviceTokenQueries;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
+/**
+ * Repository para gerenciar tokens de dispositivos (Push Notifications)
+ * Usa JPA para CRUD básico
+ */
 @Repository
-public class DeviceTokenRepository implements IDeviceTokenRepository {
-
-    @Autowired
-    private DeviceTokenQueries deviceTokenQueries;
-
-    @Override
-    public List<DeviceToken> findAll() {
-        return deviceTokenQueries.findAll();
+public interface DeviceTokenRepository extends JpaRepository<DeviceToken, Integer> {
+    
+    // CRUD básico já vem do JpaRepository: save, findById, findAll, deleteById
+    
+    // Queries customizadas (necessário porque o campo é Flg_Inativo com underscore)
+    @Query("SELECT dt FROM DeviceToken dt WHERE dt.Flg_Inativo = false")
+    List<DeviceToken> findByFlgInativoFalse();
+    
+    @Query("SELECT dt FROM DeviceToken dt WHERE dt.Id = :id AND dt.Flg_Inativo = false")
+    Optional<DeviceToken> findByIdAndFlgInativoFalse(@Param("id") Integer id);
+    
+    // Queries customizadas simples
+    @Query("SELECT dt FROM DeviceToken dt WHERE dt.Usuario_id.Id = :usuarioId AND dt.Flg_Inativo = false")
+    List<DeviceToken> findByUsuarioId(@Param("usuarioId") Integer usuarioId);
+    
+    @Query("SELECT dt FROM DeviceToken dt WHERE dt.Usuario_id.Id = :usuarioId AND dt.Token = :token")
+    Optional<DeviceToken> findByUsuarioIdAndTokenOptional(@Param("usuarioId") Integer usuarioId, @Param("token") String token);
+    
+    @Query("SELECT dt FROM DeviceToken dt WHERE dt.Usuario_id.Id = :usuarioId AND dt.Flg_Inativo = false ORDER BY dt.Dta_Atualizacao DESC")
+    List<DeviceToken> findActiveTokensByUsuarioId(@Param("usuarioId") Integer usuarioId);
+    
+    // Métodos customizados
+    default List<DeviceToken> findActive() {
+        return findByFlgInativoFalse();
     }
-
-    @Override
-    public DeviceToken findById(Integer id) {
-        return deviceTokenQueries.findById(id);
-    }
-
-    @Override
-    public List<DeviceToken> findByUsuarioId(Integer usuarioId) {
-        return deviceTokenQueries.findByUsuarioId(usuarioId);
-    }
-
-    @Override
-    public DeviceToken findByUsuarioIdAndToken(Integer usuarioId, String token) {
-        return deviceTokenQueries.findByUsuarioIdAndToken(usuarioId, token);
-    }
-
-    @Override
-    public List<DeviceToken> findActiveTokensByUsuarioId(Integer usuarioId) {
-        return deviceTokenQueries.findActiveTokensByUsuarioId(usuarioId);
-    }
-
-    @Override
-    public DeviceToken save(DeviceToken deviceToken) {
-        DeviceToken existing = null;
-        if (deviceToken.getId() != null) {
-            existing = deviceTokenQueries.findById(deviceToken.getId());
-        } else if (deviceToken.getUsuario_id() != null && deviceToken.getToken() != null) {
-            existing = deviceTokenQueries.findByUsuarioIdAndToken(deviceToken.getUsuario_id(), deviceToken.getToken());
-        }
-        
-        if (existing == null) {
-            return deviceTokenQueries.insert(deviceToken);
-        } else {
-            // Atualiza o token existente
-            deviceToken.setId(existing.getId());
-            return deviceTokenQueries.update(deviceToken);
-        }
-    }
-
-    @Override
-    public boolean deleteById(Integer id) {
-        return deviceTokenQueries.deleteById(id);
-    }
-
-    @Override
-    public List<DeviceToken> findActive() {
-        return deviceTokenQueries.findActive();
+    
+    // Conversão para compatibilidade com interface
+    default DeviceToken findByUsuarioIdAndToken(Integer usuarioId, String token) {
+        return findByUsuarioIdAndTokenOptional(usuarioId, token).orElse(null);
     }
 }
 

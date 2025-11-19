@@ -10,70 +10,79 @@ public class Foto implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "Id")
+    private Integer Id;
 
-    private String url;
+    @Column(name = "URL", columnDefinition = "TEXT", nullable = false)
+    private String URL;
 
-    private String provedor_armazenamento;
+    @Column(name = "Provedor_armazenamento", length = 100, nullable = false)
+    private String Provedor_armazenamento;
 
-    private String chave_armazenamento;
+    @Column(name = "Chave_armazenamento", columnDefinition = "TEXT")
+    private String Chave_armazenamento;
 
-    private String nome_arquivo_original;
+    @Column(name = "Nome_arquivo_original", length = 255)
+    private String Nome_arquivo_original;
 
-    private Long tamanho_arquivo_bytes;
+    @Column(name = "Tamanho_arquivo_bytes")
+    private Long Tamanho_arquivo_bytes;
 
+    @Column(name = "Dta_Criacao", nullable = false, updatable = false)
     private LocalDateTime Dta_Criacao;
 
+    @Column(name = "Flg_Inativo", nullable = false)
     private Boolean Flg_Inativo;
 
+    @Column(name = "Dta_Remocao")
     private LocalDateTime Dta_Remocao;
 
     public Integer getId() {
-        return id;
+        return Id;
     }
 
     public void setId(Integer id) {
-        this.id = id;
+        this.Id = id;
     }
 
     public String getUrl() {
-        return url;
+        return URL;
     }
 
     public void setUrl(String url) {
-        this.url = url;
+        this.URL = url;
     }
 
     public String getProvedorArmazenamento() {
-        return provedor_armazenamento;
+        return Provedor_armazenamento;
     }
 
     public void setProvedorArmazenamento(String provedor_armazenamento) {
-        this.provedor_armazenamento = provedor_armazenamento;
+        this.Provedor_armazenamento = provedor_armazenamento;
     }
 
     public String getChaveArmazenamento() {
-        return chave_armazenamento;
+        return Chave_armazenamento;
     }
 
     public void setChaveArmazenamento(String chave_armazenamento) {
-        this.chave_armazenamento = chave_armazenamento;
+        this.Chave_armazenamento = chave_armazenamento;
     }
 
     public String getNomeArquivoOriginal() {
-        return nome_arquivo_original;
+        return Nome_arquivo_original;
     }
 
     public void setNomeArquivoOriginal(String nome_arquivo_original) {
-        this.nome_arquivo_original = nome_arquivo_original;
+        this.Nome_arquivo_original = nome_arquivo_original;
     }
 
     public Long getTamanhoArquivoBytes() {
-        return tamanho_arquivo_bytes;
+        return Tamanho_arquivo_bytes;
     }
 
     public void setTamanhoArquivoBytes(Long tamanho_arquivo_bytes) {
-        this.tamanho_arquivo_bytes = tamanho_arquivo_bytes;
+        this.Tamanho_arquivo_bytes = tamanho_arquivo_bytes;
     }
 
     public LocalDateTime getDtaCriacao() {

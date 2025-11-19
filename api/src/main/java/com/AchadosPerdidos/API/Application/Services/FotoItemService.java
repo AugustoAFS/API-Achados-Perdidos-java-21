@@ -4,7 +4,7 @@ import com.AchadosPerdidos.API.Application.DTOs.FotoItem.FotoItemCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.FotoItem.FotoItemDTO;
 import com.AchadosPerdidos.API.Application.DTOs.FotoItem.FotoItemListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.FotoItem.FotoItemUpdateDTO;
-import com.AchadosPerdidos.API.Application.Mapper.FotoItemModelMapper;
+import com.AchadosPerdidos.API.Application.Mapper.FotoItemMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotoItemService;
 import com.AchadosPerdidos.API.Domain.Entity.FotoItem;
 import com.AchadosPerdidos.API.Domain.Repository.FotoItemRepository;
@@ -26,7 +26,7 @@ public class FotoItemService implements IFotoItemService {
     private FotoItemRepository fotoItemRepository;
 
     @Autowired
-    private FotoItemModelMapper fotoItemModelMapper;
+    private FotoItemMapper fotoItemMapper;
 
     @Autowired
     private FotosRepository fotosRepository;
@@ -37,7 +37,7 @@ public class FotoItemService implements IFotoItemService {
     @Override
     @Cacheable(value = "fotosItem", key = "'all'")
     public FotoItemListDTO getAllFotosItem() {
-        return fotoItemModelMapper.toListDTO(fotoItemRepository.findAll());
+        return fotoItemMapper.toListDTO(fotoItemRepository.findAll());
     }
 
     @Override
@@ -54,7 +54,7 @@ public class FotoItemService implements IFotoItemService {
         if (fotoItem == null) {
             throw new ResourceNotFoundException("Foto de item não encontrada para item ID: " + itemId + " e foto ID: " + fotoId);
         }
-        return fotoItemModelMapper.toDTO(fotoItem);
+        return fotoItemMapper.toDTO(fotoItem);
     }
 
     @Override
@@ -88,12 +88,12 @@ public class FotoItemService implements IFotoItemService {
             throw new BusinessException("FotoItem", "criar", "Já existe uma associação ativa entre este item e esta foto");
         }
 
-        FotoItem fotoItem = fotoItemModelMapper.fromCreateDTO(createDTO);
+        FotoItem fotoItem = fotoItemMapper.fromCreateDTO(createDTO);
         fotoItem.setDtaCriacao(LocalDateTime.now());
         fotoItem.setFlgInativo(false);
 
         FotoItem savedFotoItem = fotoItemRepository.save(fotoItem);
-        return fotoItemModelMapper.toDTO(savedFotoItem);
+        return fotoItemMapper.toDTO(savedFotoItem);
     }
 
     @Override
@@ -114,10 +114,10 @@ public class FotoItemService implements IFotoItemService {
             throw new ResourceNotFoundException("Foto de item não encontrada para item ID: " + itemId + " e foto ID: " + fotoId);
         }
 
-        fotoItemModelMapper.updateFromDTO(existingFotoItem, updateDTO);
+        fotoItemMapper.updateFromDTO(existingFotoItem, updateDTO);
 
         FotoItem updatedFotoItem = fotoItemRepository.save(existingFotoItem);
-        return fotoItemModelMapper.toDTO(updatedFotoItem);
+        return fotoItemMapper.toDTO(updatedFotoItem);
     }
 
     @Override
@@ -141,7 +141,7 @@ public class FotoItemService implements IFotoItemService {
     @Override
     @Cacheable(value = "fotosItem", key = "'active'")
     public FotoItemListDTO getActiveFotosItem() {
-        return fotoItemModelMapper.toListDTO(fotoItemRepository.findActive());
+        return fotoItemMapper.toListDTO(fotoItemRepository.findActive());
     }
 
     @Override
@@ -150,7 +150,7 @@ public class FotoItemService implements IFotoItemService {
         if (itemId == null || itemId <= 0) {
             throw new IllegalArgumentException("ID do item deve ser válido");
         }
-        return fotoItemModelMapper.toListDTO(fotoItemRepository.findByItemId(itemId));
+        return fotoItemMapper.toListDTO(fotoItemRepository.findByItemId(itemId));
     }
 
     @Override
@@ -159,7 +159,7 @@ public class FotoItemService implements IFotoItemService {
         if (fotoId == null || fotoId <= 0) {
             throw new IllegalArgumentException("ID da foto deve ser válido");
         }
-        return fotoItemModelMapper.toListDTO(fotoItemRepository.findByFotoId(fotoId));
+        return fotoItemMapper.toListDTO(fotoItemRepository.findByFotoId(fotoId));
     }
 }
 

@@ -9,6 +9,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Configuração específica para JWT
@@ -18,21 +20,28 @@ import java.nio.charset.StandardCharsets;
 public class JwtConfig {
 
     @Value("${jwt.secret-key}")
-    private String SecretKey;
+    private String secretKey;
 
     @Value("${jwt.issuer}")
-    private String Issuer;
+    private String issuer;
 
     @Value("${jwt.audience}")
-    private String Audience;
+    private String audience;
 
     @Value("${jwt.expiry-in-minutes:60}")
-    private int ExpiryInMinutes;
-
+    private int expiryInMinutes;
 
     @Bean
     public SecretKey jwtSecretKey() {
-        return Keys.hmacShaKeyFor(SecretKey.getBytes(StandardCharsets.UTF_8));
+        try {
+            // Garante que a chave tenha pelo menos 256 bits (32 bytes)
+            // Usa SHA-256 para gerar uma chave de tamanho fixo e seguro
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] keyBytes = digest.digest(secretKey.getBytes(StandardCharsets.UTF_8));
+            return Keys.hmacShaKeyFor(keyBytes);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Erro ao gerar chave secreta JWT", e);
+        }
     }
 
     @Bean
@@ -41,15 +50,19 @@ public class JwtConfig {
     }
 
     public String getIssuer() {
-        return Issuer;
+        return issuer;
     }
 
     public String getAudience() {
-        return Audience;
+        return audience;
     }
 
     public int getExpiryInMinutes() {
-        return ExpiryInMinutes;
+        return expiryInMinutes;
+    }
+
+    public String getSecretKey() {
+        return secretKey;
     }
 }
 

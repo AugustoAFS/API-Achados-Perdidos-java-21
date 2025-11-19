@@ -3,8 +3,9 @@ package com.AchadosPerdidos.API.Application.Services;
 import com.AchadosPerdidos.API.Application.DTOs.Endereco.EnderecoDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Endereco.EnderecoCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Endereco.EnderecoUpdateDTO;
-import com.AchadosPerdidos.API.Application.Mapper.EnderecoModelMapper;
+import com.AchadosPerdidos.API.Application.Mapper.EnderecoMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IEnderecoService;
+import com.AchadosPerdidos.API.Domain.Entity.Cidade;
 import com.AchadosPerdidos.API.Domain.Entity.Endereco;
 import com.AchadosPerdidos.API.Domain.Repository.CidadeRepository;
 import com.AchadosPerdidos.API.Domain.Repository.EnderecoRepository;
@@ -30,14 +31,14 @@ public class EnderecoService implements IEnderecoService {
     private CidadeRepository cidadeRepository;
 
     @Autowired
-    private EnderecoModelMapper enderecoModelMapper;
+    private EnderecoMapper enderecoMapper;
 
     @Override
     @Cacheable(value = "enderecos", key = "'all'")
     public List<EnderecoDTO> getAllEnderecos() {
         List<Endereco> enderecos = enderecoRepository.findAll();
         return enderecos.stream()
-                .map(enderecoModelMapper::toDTO)
+                .map(enderecoMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -48,11 +49,8 @@ public class EnderecoService implements IEnderecoService {
             throw new IllegalArgumentException("ID do endereço deve ser válido");
         }
         
-        Endereco endereco = enderecoRepository.findById(id);
-        if (endereco == null) {
-            throw new ResourceNotFoundException("Endereço", "ID", id);
-        }
-        return enderecoModelMapper.toDTO(endereco);
+        Endereco endereco = getEnderecoOrThrow(id);
+        return enderecoMapper.toDTO(endereco);
     }
 
     @Override
@@ -75,10 +73,7 @@ public class EnderecoService implements IEnderecoService {
         }
         
         // Regra de negócio: Verificar se a cidade existe
-        com.AchadosPerdidos.API.Domain.Entity.Cidade cidade = cidadeRepository.findById(createDTO.getCidadeId());
-        if (cidade == null) {
-            throw new ResourceNotFoundException("Cidade", "ID", createDTO.getCidadeId());
-        }
+        Cidade cidade = validarCidadeExiste(createDTO.getCidadeId());
         
         // Regra de negócio: Validar formato do CEP (se fornecido) - 8 dígitos sem traço
         if (createDTO.getCep() != null && !createDTO.getCep().matches("\\d{8}")) {
@@ -91,12 +86,12 @@ public class EnderecoService implements IEnderecoService {
         endereco.setComplemento(createDTO.getComplemento());
         endereco.setBairro(createDTO.getBairro());
         endereco.setCep(createDTO.getCep());
-        endereco.setCidadeId(createDTO.getCidadeId());
+        endereco.setCidadeId(cidade);
         endereco.setDtaCriacao(LocalDateTime.now());
         endereco.setFlgInativo(false);
         
         Endereco savedEndereco = enderecoRepository.save(endereco);
-        return enderecoModelMapper.toDTO(savedEndereco);
+        return enderecoMapper.toDTO(savedEndereco);
     }
 
     @Override
@@ -110,10 +105,7 @@ public class EnderecoService implements IEnderecoService {
             throw new IllegalArgumentException("Dados de atualização não podem ser nulos");
         }
         
-        Endereco existingEndereco = enderecoRepository.findById(id);
-        if (existingEndereco == null) {
-            throw new ResourceNotFoundException("Endereço", "ID", id);
-        }
+        Endereco existingEndereco = getEnderecoOrThrow(id);
         
         if (updateDTO.getLogradouro() != null) {
             if (!StringUtils.hasText(updateDTO.getLogradouro())) {
@@ -144,18 +136,14 @@ public class EnderecoService implements IEnderecoService {
                 throw new BusinessException("Endereço", "atualizar", "ID da cidade deve ser válido");
             }
             // Verificar se a nova cidade existe
-            com.AchadosPerdidos.API.Domain.Entity.Cidade cidade = cidadeRepository.findById(updateDTO.getCidadeId());
-            if (cidade == null) {
-                throw new ResourceNotFoundException("Cidade", "ID", updateDTO.getCidadeId());
-            }
-            existingEndereco.setCidadeId(updateDTO.getCidadeId());
+            existingEndereco.setCidadeId(validarCidadeExiste(updateDTO.getCidadeId()));
         }
         if (updateDTO.getFlgInativo() != null) {
             existingEndereco.setFlgInativo(updateDTO.getFlgInativo());
         }
         
         Endereco updatedEndereco = enderecoRepository.save(existingEndereco);
-        return enderecoModelMapper.toDTO(updatedEndereco);
+        return enderecoMapper.toDTO(updatedEndereco);
     }
 
     @Override
@@ -165,10 +153,7 @@ public class EnderecoService implements IEnderecoService {
             throw new IllegalArgumentException("ID do endereço deve ser válido");
         }
         
-        Endereco endereco = enderecoRepository.findById(id);
-        if (endereco == null) {
-            throw new ResourceNotFoundException("Endereço", "ID", id);
-        }
+        Endereco endereco = getEnderecoOrThrow(id);
         
         // Soft delete: Marcar como inativo ao invés de deletar fisicamente
         if (Boolean.TRUE.equals(endereco.getFlgInativo())) {
@@ -179,7 +164,7 @@ public class EnderecoService implements IEnderecoService {
         // Endereco entity não possui setDtaRemocao, apenas getter
         
         Endereco updatedEndereco = enderecoRepository.save(endereco);
-        return enderecoModelMapper.toDTO(updatedEndereco);
+        return enderecoMapper.toDTO(updatedEndereco);
     }
 
     @Override
@@ -191,7 +176,7 @@ public class EnderecoService implements IEnderecoService {
         
         List<Endereco> enderecos = enderecoRepository.findByCidade(cidadeId);
         return enderecos.stream()
-                .map(enderecoModelMapper::toDTO)
+                .map(enderecoMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -200,8 +185,18 @@ public class EnderecoService implements IEnderecoService {
     public List<EnderecoDTO> getActiveEnderecos() {
         List<Endereco> activeEnderecos = enderecoRepository.findActive();
         return activeEnderecos.stream()
-                .map(enderecoModelMapper::toDTO)
+                .map(enderecoMapper::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    private Endereco getEnderecoOrThrow(Integer id) {
+        return enderecoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Endereço", "ID", id));
+    }
+
+    private Cidade validarCidadeExiste(Integer cidadeId) {
+        return cidadeRepository.findById(cidadeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cidade", "ID", cidadeId));
     }
 }
 

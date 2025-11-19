@@ -1,5 +1,6 @@
 package com.AchadosPerdidos.API.Application.Config;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,23 +10,23 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 
+@Getter
 @Configuration
 public class S3Config {
-    
-    // Chave de acesso AWS (Access Key ID) - com valor padrão para desenvolvimento
-    @Value("${aws.s3.access-key:default-access-key}")
+
+    @Value("${AWS_S3_ACCESS_KEY:default-access-key}")
     private String accessKey;
 
-    // Chave secreta AWS (Secret Access Key) - com valor padrão para desenvolvimento
-    @Value("${aws.s3.secret-key:default-secret-key}")
+    @Value("${AWS_S3_SECRET_KEY:default-secret-key}")
     private String secretKey;
 
-    // Região AWS onde está o bucket (ex: us-east-1, sa-east-1) - com valor padrão
-    @Value("${aws.s3.region:us-east-1}")
+    @Value("${AWS_S3_BUCKET:}")
+    private String bucketName;
+
+    @Value("${AWS_S3_REGION:us-east-1}")
     private String region;
 
-    // URL do endpoint S3 (opcional - usado para MinIO ou outros serviços S3-compatíveis)
-    @Value("${aws.s3.endpoint-url:}")
+    @Value("${AWS_S3_ENDPOINT_URL:}")
     private String endpointUrl;
 
     @Bean
@@ -45,5 +46,10 @@ public class S3Config {
         }
         
         return builder.build();
+    }
+
+    @Bean
+    public String s3BucketName() {
+        return bucketName;
     }
 } 

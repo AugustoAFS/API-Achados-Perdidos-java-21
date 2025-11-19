@@ -44,69 +44,9 @@ public class FotosQueries implements IFotosQueries {
         return foto;
     };
 
-    @Override
-    public List<Foto> findAll() {
-        String sql = "SELECT * FROM ap_achados_perdidos.fotos ORDER BY Dta_Criacao DESC";
-        return jdbcTemplate.query(sql, rowMapper);
-    }
-
-    @Override
-    public Foto findById(int id) {
-        String sql = "SELECT * FROM ap_achados_perdidos.fotos WHERE id = ?";
-        List<Foto> fotos = jdbcTemplate.query(sql, rowMapper, id);
-        return fotos.isEmpty() ? null : fotos.get(0);
-    }
-
-    @Override
-    public Foto insert(Foto foto) {
-        String sql = "INSERT INTO ap_achados_perdidos.fotos (url, provedor_armazenamento, chave_armazenamento, nome_arquivo_original, tamanho_arquivo_bytes, Dta_Criacao, Flg_Inativo) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sql, 
-            foto.getUrl(),
-            foto.getProvedorArmazenamento() != null ? foto.getProvedorArmazenamento() : "local",
-            foto.getChaveArmazenamento(),
-            foto.getNomeArquivoOriginal(),
-            foto.getTamanhoArquivoBytes(),
-            foto.getDtaCriacao() != null ? Timestamp.valueOf(foto.getDtaCriacao()) : Timestamp.valueOf(LocalDateTime.now()),
-            foto.getFlgInativo() != null ? foto.getFlgInativo() : false);
-        
-        // Buscar o registro inserido para retornar com o ID
-        String selectSql = "SELECT * FROM ap_achados_perdidos.fotos WHERE url = ? AND Dta_Criacao = ? ORDER BY id DESC LIMIT 1";
-        List<Foto> inserted = jdbcTemplate.query(selectSql, rowMapper, 
-            foto.getUrl(), 
-            foto.getDtaCriacao() != null ? Timestamp.valueOf(foto.getDtaCriacao()) : Timestamp.valueOf(LocalDateTime.now()));
-        
-        return inserted.isEmpty() ? null : inserted.get(0);
-    }
-
-    @Override
-    public Foto update(Foto foto) {
-        String sql = "UPDATE ap_achados_perdidos.fotos SET url = ?, provedor_armazenamento = ?, chave_armazenamento = ?, nome_arquivo_original = ?, tamanho_arquivo_bytes = ?, Flg_Inativo = ?, Dta_Remocao = ? WHERE id = ?";
-        jdbcTemplate.update(sql, 
-            foto.getUrl(),
-            foto.getProvedorArmazenamento() != null ? foto.getProvedorArmazenamento() : "local",
-            foto.getChaveArmazenamento(),
-            foto.getNomeArquivoOriginal(),
-            foto.getTamanhoArquivoBytes(),
-            foto.getFlgInativo(),
-            foto.getDtaRemocao() != null ? Timestamp.valueOf(foto.getDtaRemocao()) : null,
-            foto.getId());
-        
-        return findById(foto.getId());
-    }
-
-    @Override
-    public boolean deleteById(int id) {
-        String sql = "DELETE FROM ap_achados_perdidos.fotos WHERE id = ?";
-        int rowsAffected = jdbcTemplate.update(sql, id);
-        return rowsAffected > 0;
-    }
-
-    @Override
-    public List<Foto> findActive() {
-        String sql = "SELECT * FROM ap_achados_perdidos.fotos WHERE Flg_Inativo = false ORDER BY Dta_Criacao DESC";
-        return jdbcTemplate.query(sql, rowMapper);
-    }
-
+    /**
+     * Busca fotos por usuário usando JOIN com fotos_usuario
+     */
     @Override
     public List<Foto> findByUser(int userId) {
         String sql = "SELECT f.* FROM ap_achados_perdidos.fotos f " +

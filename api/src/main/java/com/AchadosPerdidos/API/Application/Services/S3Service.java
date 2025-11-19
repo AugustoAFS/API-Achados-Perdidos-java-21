@@ -1,7 +1,6 @@
 package com.AchadosPerdidos.API.Application.Services;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -10,8 +9,10 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -21,11 +22,16 @@ import java.util.UUID;
 @Service
 public class S3Service {
 
-    @Autowired
-    private S3Client s3Client;
+    private static final Logger logger = LoggerFactory.getLogger(S3Service.class);
+    private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
-    @Value("${aws.s3.bucket-name:}")
-    private String bucketName;
+    private final S3Client s3Client;
+    private final String bucketName;
+
+    public S3Service(S3Client s3Client, @Qualifier("s3BucketName") String bucketName) {
+        this.s3Client = s3Client;
+        this.bucketName = bucketName;
+    }
 
     /**
      * Faz upload de um arquivo para o S3
@@ -37,8 +43,10 @@ public class S3Service {
      */
     public String uploadFile(byte[] fileContent, String fileName, String contentType, String folder) {
         try {
+            validateBucketConfiguration();
+
             // Gerar chave única para o arquivo
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+            String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMATTER);
             String uniqueId = UUID.randomUUID().toString();
             String fileExtension = getFileExtension(fileName);
             String s3Key = folder != null ? 
@@ -60,13 +68,20 @@ public class S3Service {
                     .build();
 
             // Fazer upload
-            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(
-                    new ByteArrayInputStream(fileContent), fileContent.length));
+            logger.debug("Fazendo upload para S3 - Bucket: {}, Key: {}", bucketName, s3Key);
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(fileContent));
+            logger.info("Upload concluído com sucesso - Key: {}", s3Key);
 
-            // Retornar URL do arquivo
-            return generateFileUrl(s3Key);
+            return s3Key;
 
+        } catch (NoSuchBucketException e) {
+            logger.error("Bucket S3 não encontrado: {}. Verifique se o bucket existe e se o nome está correto na variável AWS_S3_BUCKET", bucketName);
+            throw new IllegalStateException(
+                String.format("Bucket S3 '%s' não existe. " +
+                    "Por favor, crie o bucket no AWS S3 ou verifique se a variável de ambiente AWS_S3_BUCKET está configurada corretamente.", 
+                    bucketName), e);
         } catch (Exception e) {
+            logger.error("Erro ao fazer upload do arquivo para S3: {}", e.getMessage(), e);
             throw new RuntimeException("Erro ao fazer upload do arquivo para S3: " + e.getMessage(), e);
         }
     }
@@ -109,6 +124,7 @@ public class S3Service {
      */
     public byte[] downloadFile(String s3Key) {
         try {
+            validateBucketConfiguration();
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                     .bucket(bucketName)
                     .key(s3Key)
@@ -128,6 +144,7 @@ public class S3Service {
      */
     public boolean fileExists(String s3Key) {
         try {
+            validateBucketConfiguration();
             HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
                     .bucket(bucketName)
                     .key(s3Key)
@@ -149,6 +166,7 @@ public class S3Service {
      */
     public boolean deleteFile(String s3Key) {
         try {
+            validateBucketConfiguration();
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                     .bucket(bucketName)
                     .key(s3Key)
@@ -178,6 +196,18 @@ public class S3Service {
     private String getFileExtension(String fileName) {
         int lastDotIndex = fileName.lastIndexOf('.');
         return lastDotIndex > 0 ? fileName.substring(lastDotIndex) : "";
+    }
+
+    private void validateBucketConfiguration() {
+        if (bucketName == null || bucketName.isBlank()) {
+            logger.error("Bucket S3 não configurado. Variável AWS_S3_BUCKET está vazia ou não definida.");
+            throw new IllegalStateException(
+                "Bucket S3 não configurado. " +
+                "Defina a variável de ambiente AWS_S3_BUCKET com o nome do bucket. " +
+                "Exemplo: AWS_S3_BUCKET=meu-bucket-fotos"
+            );
+        }
+        logger.debug("Bucket S3 configurado: {}", bucketName);
     }
 
     /**

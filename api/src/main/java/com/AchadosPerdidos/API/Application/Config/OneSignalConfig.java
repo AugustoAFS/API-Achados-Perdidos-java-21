@@ -27,31 +27,27 @@ public class OneSignalConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(OneSignalConfig.class);
     
-    @Value("${onesignal.app.id:}")
-    private String oneSignalAppId;
-    
-    @Value("${onesignal.rest.api.key:}")
-    private String oneSignalRestApiKey;
-    
-    @Value("${onesignal.enabled:false}")
-    private boolean oneSignalEnabled;
-    
-    @Value("${onesignal.api.url:https://api.onesignal.com/notifications}")
-    private String oneSignalApiUrl;
-    
-    private final RestTemplate restTemplate;
+    @Value("${ONESIGNAL_APP_ID:}")
+    private String appId;
 
-    public OneSignalConfig() {
-        this.restTemplate = new RestTemplate();
-    }
+    @Value("${ONESIGNAL_REST_API_KEY:}")
+    private String restApiKey;
+
+    @Value("${ONESIGNAL_ENABLED:false}")
+    private boolean enabled;
+
+    @Value("${ONESIGNAL_API_URL:https://api.onesignal.com/notifications}")
+    private String apiUrl;
+
+    private final RestTemplate restTemplate = new RestTemplate();
 
     /**
      * Verifica se o OneSignal está habilitado e configurado
      */
     public boolean isEnabled() {
-        return oneSignalEnabled && 
-               oneSignalAppId != null && !oneSignalAppId.trim().isEmpty() && 
-               oneSignalRestApiKey != null && !oneSignalRestApiKey.trim().isEmpty();
+        return enabled &&
+               appId != null && !appId.trim().isEmpty() &&
+               restApiKey != null && !restApiKey.trim().isEmpty();
     }
 
     /**
@@ -75,7 +71,7 @@ public class OneSignalConfig {
         
         try {
             Map<String, Object> payload = new HashMap<>();
-            payload.put("app_id", oneSignalAppId);
+            payload.put("app_id", appId);
             payload.put("include_player_ids", List.of(deviceToken));
             
             Map<String, String> contents = new HashMap<>();
@@ -94,7 +90,7 @@ public class OneSignalConfig {
             HttpHeaders headers = createHeaders();
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
             ResponseEntity<String> response = restTemplate.exchange(
-                oneSignalApiUrl,
+                apiUrl,
                 HttpMethod.POST,
                 request,
                 String.class
@@ -130,7 +126,7 @@ public class OneSignalConfig {
         
         try {
             Map<String, Object> payload = new HashMap<>();
-            payload.put("app_id", oneSignalAppId);
+            payload.put("app_id", appId);
             payload.put("include_player_ids", deviceTokens);
             
             Map<String, String> contents = new HashMap<>();
@@ -149,7 +145,7 @@ public class OneSignalConfig {
             HttpHeaders headers = createHeaders();
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
             ResponseEntity<String> response = restTemplate.exchange(
-                oneSignalApiUrl,
+                apiUrl,
                 HttpMethod.POST,
                 request,
                 String.class
@@ -186,7 +182,7 @@ public class OneSignalConfig {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         // OneSignal requer Basic Auth com a API Key em base64
-        String auth = Base64.getEncoder().encodeToString((oneSignalRestApiKey + ":").getBytes(StandardCharsets.UTF_8));
+        String auth = Base64.getEncoder().encodeToString((restApiKey + ":").getBytes(StandardCharsets.UTF_8));
         headers.set("Authorization", "Basic " + auth);
         return headers;
     }

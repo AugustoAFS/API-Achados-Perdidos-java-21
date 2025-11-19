@@ -41,7 +41,7 @@ public class ChatController {
             message.setData_Hora_Menssagem(LocalDateTime.now());
         }
         if (message.getStatus() == null) {
-            message.setStatus(Status_Menssagem.SENT);
+            message.setStatus(Status_Menssagem.ENVIADA);
         }
         if (message.getTipo() == null) {
             message.setTipo(Tipo_Menssagem.CHAT);
@@ -71,7 +71,7 @@ public class ChatController {
         message.setTipo(Tipo_Menssagem.SYSTEM);
         message.setMenssagem("Usuário está online");
         message.setData_Hora_Menssagem(LocalDateTime.now());
-        message.setStatus(Status_Menssagem.SENT);
+        message.setStatus(Status_Menssagem.ENVIADA);
         
         ChatMessage savedMessage = chatService.saveMessage(message);
         
@@ -96,7 +96,7 @@ public class ChatController {
         message.setTipo(Tipo_Menssagem.SYSTEM);
         message.setMenssagem("Usuário está offline");
         message.setData_Hora_Menssagem(LocalDateTime.now());
-        message.setStatus(Status_Menssagem.SENT);
+        message.setStatus(Status_Menssagem.ENVIADA);
         
         ChatMessage savedMessage = chatService.saveMessage(message);
         
@@ -114,7 +114,7 @@ public class ChatController {
     @PostMapping("/private")
     public ResponseEntity<ChatMessage> sendPrivateMessageRest(@RequestBody ChatMessage message) {
         message.setData_Hora_Menssagem(LocalDateTime.now());
-        message.setStatus(Status_Menssagem.SENT);
+        message.setStatus(Status_Menssagem.ENVIADA);
         message.setTipo(Tipo_Menssagem.CHAT);
         
         ChatMessage savedMessage = chatService.saveMessage(message);
@@ -140,7 +140,7 @@ public class ChatController {
         message.setMenssagem("está digitando...");
         message.setTipo(Tipo_Menssagem.TYPING);
         message.setData_Hora_Menssagem(LocalDateTime.now());
-        message.setStatus(Status_Menssagem.SENT);
+        message.setStatus(Status_Menssagem.ENVIADA);
         
         // Envia via WebSocket
         String destination = "/topic/private." + message.getId_Usuario_Destino();
@@ -163,7 +163,7 @@ public class ChatController {
         message.setMenssagem("parou de digitar");
         message.setTipo(Tipo_Menssagem.STOP_TYPING);
         message.setData_Hora_Menssagem(LocalDateTime.now());
-        message.setStatus(Status_Menssagem.SENT);
+        message.setStatus(Status_Menssagem.ENVIADA);
         
         // Envia via WebSocket
         String destination = "/topic/private." + message.getId_Usuario_Destino();
@@ -218,7 +218,7 @@ public class ChatController {
             notificationMessage.setId_Usuario_Destino("");
             notificationMessage.setMenssagem("Mensagens marcadas como lidas");
             notificationMessage.setData_Hora_Menssagem(LocalDateTime.now());
-            notificationMessage.setStatus(Status_Menssagem.READ);
+            notificationMessage.setStatus(Status_Menssagem.LIDA);
             notificationMessage.setTipo(Tipo_Menssagem.SYSTEM);
             messagingTemplate.convertAndSend(destination, notificationMessage);
         }

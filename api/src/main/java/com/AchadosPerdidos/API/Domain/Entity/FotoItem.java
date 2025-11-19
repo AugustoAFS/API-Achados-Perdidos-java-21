@@ -1,4 +1,5 @@
 package com.AchadosPerdidos.API.Domain.Entity;
+
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -9,32 +10,42 @@ public class FotoItem implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "Id")
+    private Integer Id;
 
-    private Integer item_id;
+    @Column(name = "Item_id", nullable = false)
+    private Integer Item_id;
 
-    private Integer foto_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "Foto_id", nullable = false, foreignKey = @ForeignKey(name = "fk_fotos_item_foto"))
+    private Foto Foto_id;
 
+    @Column(name = "Dta_Criacao", nullable = false, updatable = false)
     private LocalDateTime Dta_Criacao;
 
+    @Column(name = "Flg_Inativo", nullable = false)
     private Boolean Flg_Inativo;
-    
+
+    @Column(name = "Dta_Remocao")
     private LocalDateTime Dta_Remocao;
 
+
+
+
     public Integer getItemId() {
-        return item_id;
+        return Item_id;
     }
 
     public void setItemId(Integer item_id) {
-        this.item_id = item_id;
+        this.Item_id = item_id;
     }
 
-    public Integer getFotoId() {
-        return foto_id;
+    public Foto getFotoId() {
+        return Foto_id;
     }
 
-    public void setFotoId(Integer foto_id) {
-        this.foto_id = foto_id;
+    public void setFotoId(Foto foto_id) {
+        this.Foto_id = foto_id;
     }
 
     public LocalDateTime getDtaCriacao() {
@@ -58,10 +69,10 @@ public class FotoItem implements Serializable {
     }
 
     public Integer getId() {
-        return id;
+        return Id;
     }
 
     public void setId(Integer id) {
-        this.id = id;
+        this.Id = id;
     }
 }

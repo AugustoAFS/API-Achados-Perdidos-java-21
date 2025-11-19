@@ -1,51 +1,37 @@
 package com.AchadosPerdidos.API.Domain.Repository;
 
 import com.AchadosPerdidos.API.Domain.Entity.Endereco;
-import com.AchadosPerdidos.API.Domain.Repository.Interfaces.IEnderecoRepository;
-import com.AchadosPerdidos.API.Infrastruture.DataBase.EnderecoQueries;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
+/**
+ * Repository para gerenciar Endereços
+ * Usa JPA para CRUD básico
+ */
 @Repository
-public class EnderecoRepository implements IEnderecoRepository {
-
-    @Autowired
-    private EnderecoQueries enderecoQueries;
+public interface EnderecoRepository extends JpaRepository<Endereco, Integer> {
     
-    @Override
-    public List<Endereco> findAll() {
-        return enderecoQueries.findAll();
-    }
-
-    @Override
-    public Endereco findById(Integer id) {
-        return enderecoQueries.findById(id);
-    }
-
-    @Override
-    public Endereco save(Endereco endereco) {
-        if (endereco.getId() == null || endereco.getId() == 0) {
-            return enderecoQueries.insert(endereco);
-        } else {
-            return enderecoQueries.update(endereco);
-        }
-    }
-
-    @Override
-    public boolean deleteById(Integer id) {
-        return enderecoQueries.deleteById(id);
-    }
-
-    @Override
-    public List<Endereco> findActive() {
-        return enderecoQueries.findActive();
-    }
-
-    @Override
-    public List<Endereco> findByCidade(Integer cidadeId) {
-        return enderecoQueries.findByCidade(cidadeId);
+    // CRUD básico já vem do JpaRepository: save, findById, findAll, deleteById
+    
+    // Queries customizadas (necessário porque o campo é Flg_Inativo com underscore)
+    @Query("SELECT e FROM Endereco e WHERE e.Flg_Inativo = false")
+    List<Endereco> findByFlgInativoFalse();
+    
+    @Query("SELECT e FROM Endereco e WHERE e.Id = :id AND e.Flg_Inativo = false")
+    Optional<Endereco> findByIdAndFlgInativoFalse(@Param("id") Integer id);
+    
+    // Query customizada simples (sem JOIN)
+    @Query("SELECT e FROM Endereco e WHERE e.Cidade_id.Id = :cidadeId AND e.Flg_Inativo = false ORDER BY e.Logradouro")
+    List<Endereco> findByCidade(@Param("cidadeId") Integer cidadeId);
+    
+    // Métodos customizados
+    default List<Endereco> findActive() {
+        return findByFlgInativoFalse();
     }
 }
 

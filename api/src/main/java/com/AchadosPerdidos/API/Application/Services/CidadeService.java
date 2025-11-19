@@ -3,9 +3,10 @@ package com.AchadosPerdidos.API.Application.Services;
 import com.AchadosPerdidos.API.Application.DTOs.Cidade.CidadeDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Cidade.CidadeCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Cidade.CidadeUpdateDTO;
-import com.AchadosPerdidos.API.Application.Mapper.CidadeModelMapper;
+import com.AchadosPerdidos.API.Application.Mapper.CidadeMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.ICidadeService;
 import com.AchadosPerdidos.API.Domain.Entity.Cidade;
+import com.AchadosPerdidos.API.Domain.Entity.Estado;
 import com.AchadosPerdidos.API.Domain.Repository.CidadeRepository;
 import com.AchadosPerdidos.API.Domain.Repository.EstadoRepository;
 import com.AchadosPerdidos.API.Exeptions.BusinessException;
@@ -30,14 +31,14 @@ public class CidadeService implements ICidadeService {
     private EstadoRepository estadoRepository;
 
     @Autowired
-    private CidadeModelMapper cidadeModelMapper;
+    private CidadeMapper cidadeMapper;
 
     @Override
     @Cacheable(value = "cidades", key = "'all'")
     public List<CidadeDTO> getAllCidades() {
         List<Cidade> cidades = cidadeRepository.findAll();
         return cidades.stream()
-                .map(cidadeModelMapper::toDTO)
+                .map(cidadeMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -48,11 +49,8 @@ public class CidadeService implements ICidadeService {
             throw new IllegalArgumentException("ID da cidade deve ser válido");
         }
         
-        Cidade cidade = cidadeRepository.findById(id);
-        if (cidade == null) {
-            throw new ResourceNotFoundException("Cidade", "ID", id);
-        }
-        return cidadeModelMapper.toDTO(cidade);
+        Cidade cidade = getCidadeOrThrow(id);
+        return cidadeMapper.toDTO(cidade);
     }
 
     @Override
@@ -71,19 +69,14 @@ public class CidadeService implements ICidadeService {
         }
         
         // Regra de negócio: Verificar se o estado existe
-        com.AchadosPerdidos.API.Domain.Entity.Estado estado = estadoRepository.findById(createDTO.getEstadoId());
-        if (estado == null) {
-            throw new ResourceNotFoundException("Estado", "ID", createDTO.getEstadoId());
-        }
-        
         Cidade cidade = new Cidade();
         cidade.setNome(createDTO.getNome());
-        cidade.setEstadoId(createDTO.getEstadoId());
+        cidade.setEstadoId(getEstadoEntity(createDTO.getEstadoId()));
         cidade.setDtaCriacao(LocalDateTime.now());
         cidade.setFlgInativo(false);
         
         Cidade savedCidade = cidadeRepository.save(cidade);
-        return cidadeModelMapper.toDTO(savedCidade);
+        return cidadeMapper.toDTO(savedCidade);
     }
 
     @Override
@@ -97,10 +90,7 @@ public class CidadeService implements ICidadeService {
             throw new IllegalArgumentException("Dados de atualização não podem ser nulos");
         }
         
-        Cidade existingCidade = cidadeRepository.findById(id);
-        if (existingCidade == null) {
-            throw new ResourceNotFoundException("Cidade", "ID", id);
-        }
+        Cidade existingCidade = getCidadeOrThrow(id);
         
         if (updateDTO.getNome() != null) {
             if (!StringUtils.hasText(updateDTO.getNome())) {
@@ -113,18 +103,14 @@ public class CidadeService implements ICidadeService {
                 throw new BusinessException("Cidade", "atualizar", "ID do estado deve ser válido");
             }
             // Verificar se o novo estado existe
-            com.AchadosPerdidos.API.Domain.Entity.Estado estado = estadoRepository.findById(updateDTO.getEstadoId());
-            if (estado == null) {
-                throw new ResourceNotFoundException("Estado", "ID", updateDTO.getEstadoId());
-            }
-            existingCidade.setEstadoId(updateDTO.getEstadoId());
+            existingCidade.setEstadoId(getEstadoEntity(updateDTO.getEstadoId()));
         }
         if (updateDTO.getFlgInativo() != null) {
             existingCidade.setFlgInativo(updateDTO.getFlgInativo());
         }
         
         Cidade updatedCidade = cidadeRepository.save(existingCidade);
-        return cidadeModelMapper.toDTO(updatedCidade);
+        return cidadeMapper.toDTO(updatedCidade);
     }
 
     @Override
@@ -134,10 +120,7 @@ public class CidadeService implements ICidadeService {
             throw new IllegalArgumentException("ID da cidade deve ser válido");
         }
         
-        Cidade cidade = cidadeRepository.findById(id);
-        if (cidade == null) {
-            throw new ResourceNotFoundException("Cidade", "ID", id);
-        }
+        Cidade cidade = getCidadeOrThrow(id);
         
         // Soft delete: Marcar como inativo ao invés de deletar fisicamente
         if (Boolean.TRUE.equals(cidade.getFlgInativo())) {
@@ -148,7 +131,7 @@ public class CidadeService implements ICidadeService {
         cidade.setDtaRemocao(LocalDateTime.now());
         
         Cidade updatedCidade = cidadeRepository.save(cidade);
-        return cidadeModelMapper.toDTO(updatedCidade);
+        return cidadeMapper.toDTO(updatedCidade);
     }
 
     @Override
@@ -160,7 +143,7 @@ public class CidadeService implements ICidadeService {
         
         List<Cidade> cidades = cidadeRepository.findByEstado(estadoId);
         return cidades.stream()
-                .map(cidadeModelMapper::toDTO)
+                .map(cidadeMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -169,8 +152,18 @@ public class CidadeService implements ICidadeService {
     public List<CidadeDTO> getActiveCidades() {
         List<Cidade> activeCidades = cidadeRepository.findActive();
         return activeCidades.stream()
-                .map(cidadeModelMapper::toDTO)
+                .map(cidadeMapper::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    private Cidade getCidadeOrThrow(Integer id) {
+        return cidadeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cidade", "ID", id));
+    }
+
+    private Estado getEstadoEntity(Integer estadoId) {
+        return estadoRepository.findById(estadoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Estado", "ID", estadoId));
     }
 }
 

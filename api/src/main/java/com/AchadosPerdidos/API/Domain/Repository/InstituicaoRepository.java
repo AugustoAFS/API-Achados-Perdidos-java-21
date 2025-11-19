@@ -2,49 +2,37 @@ package com.AchadosPerdidos.API.Domain.Repository;
 
 import com.AchadosPerdidos.API.Domain.Entity.Instituicoes;
 import com.AchadosPerdidos.API.Domain.Repository.Interfaces.IInstituicaoRepository;
-import com.AchadosPerdidos.API.Infrastruture.DataBase.InstituicaoQueries;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
+/**
+ * Repository para gerenciar Instituições de Ensino
+ * Usa JPA para CRUD básico
+ */
 @Repository
-public class InstituicaoRepository implements IInstituicaoRepository {
-
-    @Autowired
-    private InstituicaoQueries instituicaoQueries;
-
+public interface InstituicaoRepository extends JpaRepository<Instituicoes, Integer>, IInstituicaoRepository {
+    
+    // CRUD básico já vem do JpaRepository: save, findById, findAll, deleteById
+    
+    // Queries customizadas (necessário porque o campo é Flg_Inativo com underscore)
+    @Query("SELECT i FROM Instituicoes i WHERE i.Flg_Inativo = false")
+    List<Instituicoes> findByFlgInativoFalse();
+    
+    @Query("SELECT i FROM Instituicoes i WHERE i.Id = :id AND i.Flg_Inativo = false")
+    Optional<Instituicoes> findByIdAndFlgInativoFalse(@Param("id") Integer id);
+    
+    // Query customizada simples (sem JOIN)
+    @Query("SELECT i FROM Instituicoes i WHERE i.Tipo = :tipoInstituicao AND i.Flg_Inativo = false ORDER BY i.Nome")
+    List<Instituicoes> findByType(@Param("tipoInstituicao") String tipoInstituicao);
+    
+    // Implementação padrão dos métodos da interface
     @Override
-    public List<Instituicoes> findAll() {
-        return instituicaoQueries.findAll();
-    }
-
-    @Override
-    public Instituicoes findById(int id) {
-        return instituicaoQueries.findById(id);
-    }
-
-    @Override
-    public Instituicoes save(Instituicoes instituicao) {
-        if (instituicao.getId() == null || instituicao.getId() == 0) {
-            return instituicaoQueries.insert(instituicao);
-        } else {
-            return instituicaoQueries.update(instituicao);
-        }
-    }
-
-    @Override
-    public boolean deleteById(int id) {
-        return instituicaoQueries.deleteById(id);
-    }
-
-    @Override
-    public List<Instituicoes> findActive() {
-        return instituicaoQueries.findActive();
-    }
-
-    @Override
-    public List<Instituicoes> findByType(String tipoInstituicao) {
-        return instituicaoQueries.findByType(tipoInstituicao);
+    default List<Instituicoes> findActive() {
+        return findByFlgInativoFalse();
     }
 }

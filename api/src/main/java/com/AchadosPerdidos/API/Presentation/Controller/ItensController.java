@@ -7,7 +7,7 @@ import com.AchadosPerdidos.API.Application.DTOs.Item.ItemUpdateDTO;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IItensService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IJWTService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.INotificationService;
-import com.AchadosPerdidos.API.Domain.Enum.Tipo_ItemEnum;
+import com.AchadosPerdidos.API.Domain.Enum.Tipo_Item;
 import com.AchadosPerdidos.API.Exeptions.BusinessException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -170,7 +170,7 @@ public class ItensController {
     public ResponseEntity<ItemDTO> createItemPerdido(@RequestBody ItemCreateDTO itemCreateDTO, HttpServletRequest request) {
         try {
             // Definir tipo como PERDIDO
-            itemCreateDTO.setTipoItem(Tipo_ItemEnum.PERDIDO);
+            itemCreateDTO.setTipoItem(Tipo_Item.PERDIDO);
             
             // Extrair token JWT do header Authorization
             String authHeader = request.getHeader("Authorization");
@@ -210,7 +210,7 @@ public class ItensController {
     public ResponseEntity<ItemDTO> createItemAchado(@RequestBody ItemCreateDTO itemCreateDTO, HttpServletRequest request) {
         try {
             // Definir tipo como ACHADO
-            itemCreateDTO.setTipoItem(Tipo_ItemEnum.ACHADO);
+            itemCreateDTO.setTipoItem(Tipo_Item.ACHADO);
             
             // Extrair token JWT do header Authorization
             String authHeader = request.getHeader("Authorization");

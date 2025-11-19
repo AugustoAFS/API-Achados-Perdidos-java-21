@@ -4,7 +4,7 @@ import com.AchadosPerdidos.API.Application.DTOs.DeviceToken.DeviceTokenCreateDTO
 import com.AchadosPerdidos.API.Application.DTOs.DeviceToken.DeviceTokenDTO;
 import com.AchadosPerdidos.API.Application.DTOs.DeviceToken.DeviceTokenListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.DeviceToken.DeviceTokenUpdateDTO;
-import com.AchadosPerdidos.API.Application.Mapper.DeviceTokenModelMapper;
+import com.AchadosPerdidos.API.Application.Mapper.DeviceTokenMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IDeviceTokenService;
 import com.AchadosPerdidos.API.Domain.Entity.DeviceToken;
 import com.AchadosPerdidos.API.Domain.Repository.DeviceTokenRepository;
@@ -24,7 +24,7 @@ public class DeviceTokenService implements IDeviceTokenService {
     private DeviceTokenRepository deviceTokenRepository;
 
     @Autowired
-    private DeviceTokenModelMapper deviceTokenModelMapper;
+    private DeviceTokenMapper deviceTokenMapper;
 
     @Autowired
     private UsuariosRepository usuariosRepository;
@@ -32,7 +32,7 @@ public class DeviceTokenService implements IDeviceTokenService {
     @Override
     @Cacheable(value = "deviceTokens", key = "'all'")
     public DeviceTokenListDTO getAllDeviceTokens() {
-        return deviceTokenModelMapper.toListDTO(deviceTokenRepository.findAll());
+        return deviceTokenMapper.toListDTO(deviceTokenRepository.findAll());
     }
 
     @Override
@@ -42,12 +42,8 @@ public class DeviceTokenService implements IDeviceTokenService {
             throw new IllegalArgumentException("ID do token deve ser válido");
         }
 
-        DeviceToken deviceToken = deviceTokenRepository.findById(id);
-        if (deviceToken == null) {
-            throw new ResourceNotFoundException("Token de dispositivo não encontrado com ID: " + id);
-        }
-
-        return deviceTokenModelMapper.toDTO(deviceToken);
+        DeviceToken deviceToken = getDeviceTokenOrThrow(id);
+        return deviceTokenMapper.toDTO(deviceToken);
     }
 
     @Override
@@ -61,7 +57,7 @@ public class DeviceTokenService implements IDeviceTokenService {
             throw new ResourceNotFoundException("Usuário não encontrado com ID: " + usuarioId);
         }
 
-        return deviceTokenModelMapper.toListDTO(deviceTokenRepository.findByUsuarioId(usuarioId));
+        return deviceTokenMapper.toListDTO(deviceTokenRepository.findByUsuarioId(usuarioId));
     }
 
     @Override
@@ -75,7 +71,7 @@ public class DeviceTokenService implements IDeviceTokenService {
             throw new ResourceNotFoundException("Usuário não encontrado com ID: " + usuarioId);
         }
 
-        return deviceTokenModelMapper.toListDTO(deviceTokenRepository.findActiveTokensByUsuarioId(usuarioId));
+        return deviceTokenMapper.toListDTO(deviceTokenRepository.findActiveTokensByUsuarioId(usuarioId));
     }
 
     @Override
@@ -114,15 +110,15 @@ public class DeviceTokenService implements IDeviceTokenService {
                 existing.setFlg_Inativo(false);
                 existing.setDta_Remocao(null);
                 existing.setDta_Atualizacao(LocalDateTime.now());
-                return deviceTokenModelMapper.toDTO(deviceTokenRepository.save(existing));
+                return deviceTokenMapper.toDTO(deviceTokenRepository.save(existing));
             }
             // Se já existe e está ativo, retorna o existente
-            return deviceTokenModelMapper.toDTO(existing);
+            return deviceTokenMapper.toDTO(existing);
         }
 
-        DeviceToken deviceToken = deviceTokenModelMapper.toEntity(createDTO);
+        DeviceToken deviceToken = deviceTokenMapper.toEntity(createDTO);
         DeviceToken saved = deviceTokenRepository.save(deviceToken);
-        return deviceTokenModelMapper.toDTO(saved);
+        return deviceTokenMapper.toDTO(saved);
     }
 
     @Override
@@ -136,10 +132,7 @@ public class DeviceTokenService implements IDeviceTokenService {
             throw new IllegalArgumentException("DTO de atualização não pode ser nulo");
         }
 
-        DeviceToken existing = deviceTokenRepository.findById(id);
-        if (existing == null) {
-            throw new ResourceNotFoundException("Token de dispositivo não encontrado com ID: " + id);
-        }
+        DeviceToken existing = getDeviceTokenOrThrow(id);
 
         if (updateDTO.getPlataforma() != null) {
             String plataforma = updateDTO.getPlataforma().toUpperCase();
@@ -148,9 +141,9 @@ public class DeviceTokenService implements IDeviceTokenService {
             }
         }
 
-        DeviceToken updated = deviceTokenModelMapper.toEntity(updateDTO, existing);
+        DeviceToken updated = deviceTokenMapper.toEntity(updateDTO, existing);
         DeviceToken saved = deviceTokenRepository.save(updated);
-        return deviceTokenModelMapper.toDTO(saved);
+        return deviceTokenMapper.toDTO(saved);
     }
 
     @Override
@@ -186,13 +179,13 @@ public class DeviceTokenService implements IDeviceTokenService {
             existing.setDta_Remocao(null);
             existing.setDta_Atualizacao(LocalDateTime.now());
             existing.setPlataforma(plataformaUpper);
-            return deviceTokenModelMapper.toDTO(deviceTokenRepository.save(existing));
+            return deviceTokenMapper.toDTO(deviceTokenRepository.save(existing));
         } else {
             // Se não existe, cria novo
             DeviceTokenCreateDTO createDTO = new DeviceTokenCreateDTO(usuarioId, token, plataformaUpper);
-            DeviceToken deviceToken = deviceTokenModelMapper.toEntity(createDTO);
+            DeviceToken deviceToken = deviceTokenMapper.toEntity(createDTO);
             DeviceToken saved = deviceTokenRepository.save(deviceToken);
-            return deviceTokenModelMapper.toDTO(saved);
+            return deviceTokenMapper.toDTO(saved);
         }
     }
 
@@ -203,18 +196,20 @@ public class DeviceTokenService implements IDeviceTokenService {
             throw new IllegalArgumentException("ID do token deve ser válido");
         }
 
-        DeviceToken existing = deviceTokenRepository.findById(id);
-        if (existing == null) {
-            throw new ResourceNotFoundException("Token de dispositivo não encontrado com ID: " + id);
-        }
-
-        return deviceTokenRepository.deleteById(id);
+        DeviceToken existing = getDeviceTokenOrThrow(id);
+        deviceTokenRepository.deleteById(existing.getId());
+        return true;
     }
 
     @Override
     @Cacheable(value = "deviceTokens", key = "'active'")
     public DeviceTokenListDTO getActiveDeviceTokens() {
-        return deviceTokenModelMapper.toListDTO(deviceTokenRepository.findActive());
+        return deviceTokenMapper.toListDTO(deviceTokenRepository.findActive());
+    }
+    
+    private DeviceToken getDeviceTokenOrThrow(Integer id) {
+        return deviceTokenRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Token de dispositivo não encontrado com ID: " + id));
     }
 }
 

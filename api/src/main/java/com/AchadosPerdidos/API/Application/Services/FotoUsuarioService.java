@@ -4,7 +4,7 @@ import com.AchadosPerdidos.API.Application.DTOs.FotoUsuario.FotoUsuarioCreateDTO
 import com.AchadosPerdidos.API.Application.DTOs.FotoUsuario.FotoUsuarioDTO;
 import com.AchadosPerdidos.API.Application.DTOs.FotoUsuario.FotoUsuarioListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.FotoUsuario.FotoUsuarioUpdateDTO;
-import com.AchadosPerdidos.API.Application.Mapper.FotoUsuarioModelMapper;
+import com.AchadosPerdidos.API.Application.Mapper.FotoUsuarioMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotoUsuarioService;
 import com.AchadosPerdidos.API.Domain.Entity.FotoUsuario;
 import com.AchadosPerdidos.API.Domain.Repository.FotoUsuarioRepository;
@@ -26,7 +26,7 @@ public class FotoUsuarioService implements IFotoUsuarioService {
     private FotoUsuarioRepository fotoUsuarioRepository;
 
     @Autowired
-    private FotoUsuarioModelMapper fotoUsuarioModelMapper;
+    private FotoUsuarioMapper fotoUsuarioMapper;
 
     @Autowired
     private FotosRepository fotosRepository;
@@ -37,7 +37,7 @@ public class FotoUsuarioService implements IFotoUsuarioService {
     @Override
     @Cacheable(value = "fotosUsuario", key = "'all'")
     public FotoUsuarioListDTO getAllFotosUsuario() {
-        return fotoUsuarioModelMapper.toListDTO(fotoUsuarioRepository.findAll());
+        return fotoUsuarioMapper.toListDTO(fotoUsuarioRepository.findAll());
     }
 
     @Override
@@ -54,7 +54,7 @@ public class FotoUsuarioService implements IFotoUsuarioService {
         if (fotoUsuario == null) {
             throw new ResourceNotFoundException("Foto de usuário não encontrada para usuário ID: " + usuarioId + " e foto ID: " + fotoId);
         }
-        return fotoUsuarioModelMapper.toDTO(fotoUsuario);
+        return fotoUsuarioMapper.toDTO(fotoUsuario);
     }
 
     @Override
@@ -88,12 +88,12 @@ public class FotoUsuarioService implements IFotoUsuarioService {
             throw new BusinessException("FotoUsuario", "criar", "Já existe uma associação ativa entre este usuário e esta foto");
         }
 
-        FotoUsuario fotoUsuario = fotoUsuarioModelMapper.fromCreateDTO(createDTO);
+        FotoUsuario fotoUsuario = fotoUsuarioMapper.fromCreateDTO(createDTO);
         fotoUsuario.setDtaCriacao(LocalDateTime.now());
         fotoUsuario.setFlgInativo(false);
 
         FotoUsuario savedFotoUsuario = fotoUsuarioRepository.save(fotoUsuario);
-        return fotoUsuarioModelMapper.toDTO(savedFotoUsuario);
+        return fotoUsuarioMapper.toDTO(savedFotoUsuario);
     }
 
     @Override
@@ -114,11 +114,11 @@ public class FotoUsuarioService implements IFotoUsuarioService {
             throw new ResourceNotFoundException("Foto de usuário não encontrada para usuário ID: " + usuarioId + " e foto ID: " + fotoId);
         }
 
-        fotoUsuarioModelMapper.updateFromDTO(existingFotoUsuario, updateDTO);
+        fotoUsuarioMapper.updateFromDTO(existingFotoUsuario, updateDTO);
         existingFotoUsuario.setDtaRemocao(updateDTO.getFlgInativo() != null && updateDTO.getFlgInativo() ? LocalDateTime.now() : null);
 
         FotoUsuario updatedFotoUsuario = fotoUsuarioRepository.save(existingFotoUsuario);
-        return fotoUsuarioModelMapper.toDTO(updatedFotoUsuario);
+        return fotoUsuarioMapper.toDTO(updatedFotoUsuario);
     }
 
     @Override
@@ -142,7 +142,7 @@ public class FotoUsuarioService implements IFotoUsuarioService {
     @Override
     @Cacheable(value = "fotosUsuario", key = "'active'")
     public FotoUsuarioListDTO getActiveFotosUsuario() {
-        return fotoUsuarioModelMapper.toListDTO(fotoUsuarioRepository.findActive());
+        return fotoUsuarioMapper.toListDTO(fotoUsuarioRepository.findActive());
     }
 
     @Override
@@ -151,7 +151,7 @@ public class FotoUsuarioService implements IFotoUsuarioService {
         if (usuarioId == null || usuarioId <= 0) {
             throw new IllegalArgumentException("ID do usuário deve ser válido");
         }
-        return fotoUsuarioModelMapper.toListDTO(fotoUsuarioRepository.findByUsuarioId(usuarioId));
+        return fotoUsuarioMapper.toListDTO(fotoUsuarioRepository.findByUsuarioId(usuarioId));
     }
 
     @Override
@@ -160,7 +160,7 @@ public class FotoUsuarioService implements IFotoUsuarioService {
         if (fotoId == null || fotoId <= 0) {
             throw new IllegalArgumentException("ID da foto deve ser válido");
         }
-        return fotoUsuarioModelMapper.toListDTO(fotoUsuarioRepository.findByFotoId(fotoId));
+        return fotoUsuarioMapper.toListDTO(fotoUsuarioRepository.findByFotoId(fotoId));
     }
 }
 

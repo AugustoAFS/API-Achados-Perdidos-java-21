@@ -10,50 +10,58 @@ public class Local implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "Id")
+    private Integer Id;
 
-    private String nome;
+    @Column(name = "Nome", length = 150, nullable = false)
+    private String Nome;
 
-    private String descricao;
+    @Column(name = "Descricao", columnDefinition = "TEXT")
+    private String Descricao;
 
-    private Integer campus_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "Campus_id", nullable = false, foreignKey = @ForeignKey(name = "fk_campus_local"))
+    private Campus Campus_id;
 
+    @Column(name = "Dta_Criacao", nullable = false, updatable = false)
     private LocalDateTime Dta_Criacao;
 
+    @Column(name = "Flg_Inativo", nullable = false)
     private Boolean Flg_Inativo;
 
+    @Column(name = "Dta_Remocao")
     private LocalDateTime Dta_Remocao;
 
     public Integer getId() {
-        return id;
+        return Id;
     }
 
     public void setId(Integer id) {
-        this.id = id;
+        this.Id = id;
     }
 
     public String getNome() {
-        return nome;
+        return Nome;
     }
 
     public void setNome(String nome) {
-        this.nome = nome;
+        this.Nome = nome;
     }
 
     public String getDescricao() {
-        return descricao;
+        return Descricao;
     }
 
     public void setDescricao(String descricao) {
-        this.descricao = descricao;
+        this.Descricao = descricao;
     }
 
-    public Integer getCampus_id() {
-        return campus_id;
+    public Campus getCampus_id() {
+        return Campus_id;
     }
 
-    public void setCampus_id(Integer campus_id) {
-        this.campus_id = campus_id;
+    public void setCampus_id(Campus campus_id) {
+        this.Campus_id = campus_id;
     }
 
     public LocalDateTime getDtaCriacao() {

@@ -4,9 +4,11 @@ import com.AchadosPerdidos.API.Application.DTOs.Campus.CampusDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Campus.CampusListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Campus.CampusCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Campus.CampusUpdateDTO;
-import com.AchadosPerdidos.API.Application.Mapper.CampusModelMapper;
+import com.AchadosPerdidos.API.Application.Mapper.CampusMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.ICampusService;
 import com.AchadosPerdidos.API.Domain.Entity.Campus;
+import com.AchadosPerdidos.API.Domain.Entity.Endereco;
+import com.AchadosPerdidos.API.Domain.Entity.Instituicoes;
 import com.AchadosPerdidos.API.Domain.Repository.CampusRepository;
 import com.AchadosPerdidos.API.Domain.Repository.InstituicaoRepository;
 import com.AchadosPerdidos.API.Domain.Repository.EnderecoRepository;
@@ -28,7 +30,7 @@ public class CampusService implements ICampusService {
     private CampusRepository campusRepository;
 
     @Autowired
-    private CampusModelMapper campusModelMapper;
+    private CampusMapper campusMapper;
     
     @Autowired
     private InstituicaoRepository instituicaoRepository;
@@ -40,7 +42,7 @@ public class CampusService implements ICampusService {
     @Cacheable(value = "campus", key = "'all'")
     public CampusListDTO getAllCampus() {
         List<Campus> campus = campusRepository.findAll();
-        return campusModelMapper.toListDTO(campus);
+        return campusMapper.toListDTO(campus);
     }
 
     @Override
@@ -50,11 +52,8 @@ public class CampusService implements ICampusService {
             throw new IllegalArgumentException("ID do campus deve ser válido");
         }
         
-        Campus campus = campusRepository.findById(id);
-        if (campus == null) {
-            throw new ResourceNotFoundException("Campus não encontrado com ID: " + id);
-        }
-        return campusModelMapper.toDTO(campus);
+        Campus campus = getCampusOrThrow(id);
+        return campusMapper.toDTO(campus);
     }
 
     @Override
@@ -66,12 +65,12 @@ public class CampusService implements ICampusService {
         
         validarCampusParaCriacao(campusDTO.getNome(), campusDTO.getInstituicaoId(), campusDTO.getEnderecoId());
         
-        Campus campus = campusModelMapper.toEntity(campusDTO);
+        Campus campus = campusMapper.toEntity(campusDTO);
         campus.setDtaCriacao(LocalDateTime.now());
         campus.setFlgInativo(false);
         
         Campus savedCampus = campusRepository.save(campus);
-        return campusModelMapper.toDTO(savedCampus);
+        return campusMapper.toDTO(savedCampus);
     }
 
     @Override
@@ -85,13 +84,13 @@ public class CampusService implements ICampusService {
         
         Campus campus = new Campus();
         campus.setNome(createDTO.getNome());
-        campus.setInstituicaoId(createDTO.getInstituicaoId());
-        campus.setEnderecoId(createDTO.getEnderecoId());
+        campus.setInstituicaoId(validarInstituicaoExiste(createDTO.getInstituicaoId()));
+        campus.setEnderecoId(validarEnderecoExiste(createDTO.getEnderecoId()));
         campus.setDtaCriacao(LocalDateTime.now());
         campus.setFlgInativo(false);
         
         Campus savedCampus = campusRepository.save(campus);
-        return campusModelMapper.toDTO(savedCampus);
+        return campusMapper.toDTO(savedCampus);
     }
 
     @Override
@@ -105,10 +104,7 @@ public class CampusService implements ICampusService {
             throw new IllegalArgumentException("Dados de atualização não podem ser nulos");
         }
         
-        Campus existingCampus = campusRepository.findById(id);
-        if (existingCampus == null) {
-            throw new ResourceNotFoundException("Campus não encontrado com ID: " + id);
-        }
+        Campus existingCampus = getCampusOrThrow(id);
         
         if (existingCampus.getDtaRemocao() != null) {
             throw new BusinessException("Não é possível atualizar um campus que já foi removido");
@@ -117,17 +113,15 @@ public class CampusService implements ICampusService {
         validarCampusParaCriacao(campusDTO.getNome(), campusDTO.getInstituicaoId(), campusDTO.getEnderecoId());
         
         existingCampus.setNome(campusDTO.getNome());
-        existingCampus.setInstituicaoId(campusDTO.getInstituicaoId());
-        existingCampus.setEnderecoId(campusDTO.getEnderecoId());
+        existingCampus.setInstituicaoId(validarInstituicaoExiste(campusDTO.getInstituicaoId()));
+        existingCampus.setEnderecoId(validarEnderecoExiste(campusDTO.getEnderecoId()));
         existingCampus.setFlgInativo(campusDTO.getFlgInativo());
         if (campusDTO.getDtaRemocao() != null) {
-            existingCampus.setDtaRemocao(campusDTO.getDtaRemocao().toInstant()
-                .atZone(java.time.ZoneId.systemDefault())
-                .toLocalDateTime());
+            existingCampus.setDtaRemocao(campusDTO.getDtaRemocao());
         }
         
         Campus updatedCampus = campusRepository.save(existingCampus);
-        return campusModelMapper.toDTO(updatedCampus);
+        return campusMapper.toDTO(updatedCampus);
     }
 
     @Override
@@ -141,10 +135,7 @@ public class CampusService implements ICampusService {
             throw new IllegalArgumentException("Dados de atualização não podem ser nulos");
         }
         
-        Campus existingCampus = campusRepository.findById(id);
-        if (existingCampus == null) {
-            throw new ResourceNotFoundException("Campus não encontrado com ID: " + id);
-        }
+        Campus existingCampus = getCampusOrThrow(id);
         
         if (existingCampus.getDtaRemocao() != null) {
             throw new BusinessException("Não é possível atualizar um campus que já foi removido");
@@ -161,13 +152,11 @@ public class CampusService implements ICampusService {
         }
         
         if (updateDTO.getInstituicaoId() != null) {
-            validarInstituicaoExiste(updateDTO.getInstituicaoId());
-            existingCampus.setInstituicaoId(updateDTO.getInstituicaoId());
+            existingCampus.setInstituicaoId(validarInstituicaoExiste(updateDTO.getInstituicaoId()));
         }
         
         if (updateDTO.getEnderecoId() != null) {
-            validarEnderecoExiste(updateDTO.getEnderecoId());
-            existingCampus.setEnderecoId(updateDTO.getEnderecoId());
+            existingCampus.setEnderecoId(validarEnderecoExiste(updateDTO.getEnderecoId()));
         }
         
         if (updateDTO.getFlgInativo() != null) {
@@ -175,7 +164,7 @@ public class CampusService implements ICampusService {
         }
         
         Campus updatedCampus = campusRepository.save(existingCampus);
-        return campusModelMapper.toDTO(updatedCampus);
+        return campusMapper.toDTO(updatedCampus);
     }
 
     @Override
@@ -185,10 +174,7 @@ public class CampusService implements ICampusService {
             throw new IllegalArgumentException("ID do campus deve ser válido");
         }
         
-        Campus campus = campusRepository.findById(id);
-        if (campus == null) {
-            throw new ResourceNotFoundException("Campus não encontrado com ID: " + id);
-        }
+        Campus campus = getCampusOrThrow(id);
         
         if (Boolean.TRUE.equals(campus.getFlgInativo())) {
             throw new BusinessException("O campus já está inativo");
@@ -205,7 +191,7 @@ public class CampusService implements ICampusService {
     @Cacheable(value = "campus", key = "'active'")
     public CampusListDTO getActiveCampus() {
         List<Campus> activeCampus = campusRepository.findActive();
-        return campusModelMapper.toListDTO(activeCampus);
+        return campusMapper.toListDTO(activeCampus);
     }
 
     @Override
@@ -216,7 +202,7 @@ public class CampusService implements ICampusService {
         }
         
         List<Campus> campus = campusRepository.findByInstitution(institutionId);
-        return campusModelMapper.toListDTO(campus);
+        return campusMapper.toListDTO(campus);
     }
     
     private void validarCampusParaCriacao(String nome, Integer instituicaoId, Integer enderecoId) {
@@ -243,15 +229,18 @@ public class CampusService implements ICampusService {
         validarEnderecoExiste(enderecoId);
     }
     
-    private void validarInstituicaoExiste(Integer instituicaoId) {
-        if (instituicaoRepository.findById(instituicaoId) == null) {
-            throw new ResourceNotFoundException("Instituição", "ID", instituicaoId);
-        }
+    private Instituicoes validarInstituicaoExiste(Integer instituicaoId) {
+        return instituicaoRepository.findById(instituicaoId)
+            .orElseThrow(() -> new ResourceNotFoundException("Instituição", "ID", instituicaoId));
     }
     
-    private void validarEnderecoExiste(Integer enderecoId) {
-        if (enderecoRepository.findById(enderecoId) == null) {
-            throw new ResourceNotFoundException("Endereço", "ID", enderecoId);
-        }
+    private Endereco validarEnderecoExiste(Integer enderecoId) {
+        return enderecoRepository.findById(enderecoId)
+            .orElseThrow(() -> new ResourceNotFoundException("Endereço", "ID", enderecoId));
+    }
+    
+    private Campus getCampusOrThrow(int id) {
+        return campusRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Campus", "ID", id));
     }
 }

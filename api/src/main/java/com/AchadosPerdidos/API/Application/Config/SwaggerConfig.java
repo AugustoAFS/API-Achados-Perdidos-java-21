@@ -22,13 +22,13 @@ public class SwaggerConfig {
 
     private static final Logger logger = Logger.getLogger(SwaggerConfig.class.getName());
 
-    @Value("${swagger.server.url:}")
-    private String serverUrl;
-
-    @Value("${swagger.server.description:}")
-    private String serverDescription;
-
     private final EnvironmentConfig environmentConfig;
+
+    @Value("${SWAGGER_SERVER_URL:}")
+    private String swaggerServerUrl;
+
+    @Value("${SWAGGER_SERVER_DESCRIPTION:}")
+    private String swaggerServerDescription;
 
     public SwaggerConfig(EnvironmentConfig environmentConfig) {
         this.environmentConfig = environmentConfig;
@@ -85,8 +85,8 @@ public class SwaggerConfig {
 
     private String getServerUrl() {
         // PRIORIDADE 1: Propriedade do arquivo de configuração (tem prioridade máxima)
-        if (serverUrl != null && !serverUrl.isEmpty() && !serverUrl.equals("${swagger.server.url:}")) {
-            return serverUrl;
+        if (swaggerServerUrl != null && !swaggerServerUrl.isEmpty()) {
+            return swaggerServerUrl;
         }
         
         // PRIORIDADE 2: Verifica os perfis ativos usando utilitário centralizado
@@ -145,8 +145,8 @@ public class SwaggerConfig {
 
     private String getServerDescription() {
         // PRIORIDADE 1: Propriedade do arquivo de configuração
-        if (serverDescription != null && !serverDescription.isEmpty()) {
-            return serverDescription;
+        if (swaggerServerDescription != null && !swaggerServerDescription.isEmpty()) {
+            return swaggerServerDescription;
         }
         
         // PRIORIDADE 2: Baseado nos perfis ativos usando utilitário centralizado

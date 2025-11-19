@@ -1,7 +1,7 @@
 package com.AchadosPerdidos.API.Presentation.Controller;
 
-import com.AchadosPerdidos.API.Application.DTOs.Auth.AuthResponseDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Auth.GoogleUserDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Auth.TokenResponseDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosDTO;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IGoogleAuthService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IJWTService;
@@ -111,17 +111,8 @@ public class GoogleAuthController {
             
             logger.info("Token JWT gerado com sucesso para o usuário: {}", usuario.getEmail());
             
-            // Criar resposta com token e informações do usuário
-            AuthResponseDTO response = new AuthResponseDTO(
-                token,
-                "Bearer",
-                3600, // 1 hora
-                usuario.getId(),
-                usuario.getNomeCompleto(),
-                usuario.getEmail(),
-                "User",
-                ""
-            );
+            // Retornar apenas o token por questões de segurança
+            TokenResponseDTO response = new TokenResponseDTO(token);
             
             return ResponseEntity.ok(response);
             

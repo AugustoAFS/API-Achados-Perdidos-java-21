@@ -13,14 +13,14 @@ import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 @Configuration
 public class GoogleOAuthConfig {
 
-    @Value("${google.auth.client-id}")
-    private String Client_Id;
+    @Value("${GOOGLE_AUTH_CLIENT_ID}")
+    private String clientId;
 
-    @Value("${google.auth.client-secret}")
-    private String Client_Secret;
+    @Value("${GOOGLE_AUTH_CLIENT_SECRET}")
+    private String clientSecret;
 
-    @Value("${google.auth.redirect-uri}")
-    private String Redirect_Uri;
+    @Value("${GOOGLE_AUTH_REDIRECT_URI}")
+    private String redirectUri;
 
 
     @Bean
@@ -30,11 +30,11 @@ public class GoogleOAuthConfig {
 
     private ClientRegistration googleClientRegistration() {
         return ClientRegistration.withRegistrationId("google")
-                .clientId(Client_Id)
-                .clientSecret(Client_Secret)
+                .clientId(clientId)
+                .clientSecret(clientSecret)
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri(Redirect_Uri)
+                .redirectUri(redirectUri)
                 .scope("openid", "profile", "email")
                 .authorizationUri("https://accounts.google.com/o/oauth2/v2/auth")
                 .tokenUri("https://www.googleapis.com/oauth2/v4/token")

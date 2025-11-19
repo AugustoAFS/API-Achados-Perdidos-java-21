@@ -3,7 +3,7 @@ package com.AchadosPerdidos.API.Application.Services;
 import com.AchadosPerdidos.API.Application.DTOs.Estado.EstadoDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Estado.EstadoCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Estado.EstadoUpdateDTO;
-import com.AchadosPerdidos.API.Application.Mapper.EstadoModelMapper;
+import com.AchadosPerdidos.API.Application.Mapper.EstadoMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IEstadoService;
 import com.AchadosPerdidos.API.Domain.Entity.Estado;
 import com.AchadosPerdidos.API.Domain.Repository.EstadoRepository;
@@ -26,14 +26,14 @@ public class EstadoService implements IEstadoService {
     private EstadoRepository estadoRepository;
 
     @Autowired
-    private EstadoModelMapper estadoModelMapper;
+    private EstadoMapper estadoMapper;
 
     @Override
     @Cacheable(value = "estados", key = "'all'")
     public List<EstadoDTO> getAllEstados() {
         List<Estado> estados = estadoRepository.findAll();
         return estados.stream()
-                .map(estadoModelMapper::toDTO)
+                .map(estadoMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -44,11 +44,8 @@ public class EstadoService implements IEstadoService {
             throw new IllegalArgumentException("ID do estado deve ser válido");
         }
         
-        Estado estado = estadoRepository.findById(id);
-        if (estado == null) {
-            throw new ResourceNotFoundException("Estado", "ID", id);
-        }
-        return estadoModelMapper.toDTO(estado);
+        Estado estado = getEstadoOrThrow(id);
+        return estadoMapper.toDTO(estado);
     }
 
     @Override
@@ -66,7 +63,7 @@ public class EstadoService implements IEstadoService {
         if (estado == null) {
             throw new ResourceNotFoundException("Estado", "UF", uf);
         }
-        return estadoModelMapper.toDTO(estado);
+        return estadoMapper.toDTO(estado);
     }
 
     @Override
@@ -101,7 +98,7 @@ public class EstadoService implements IEstadoService {
         estado.setFlgInativo(false);
         
         Estado savedEstado = estadoRepository.save(estado);
-        return estadoModelMapper.toDTO(savedEstado);
+        return estadoMapper.toDTO(savedEstado);
     }
 
     @Override
@@ -115,10 +112,7 @@ public class EstadoService implements IEstadoService {
             throw new IllegalArgumentException("Dados de atualização não podem ser nulos");
         }
         
-        Estado existingEstado = estadoRepository.findById(id);
-        if (existingEstado == null) {
-            throw new ResourceNotFoundException("Estado", "ID", id);
-        }
+        Estado existingEstado = getEstadoOrThrow(id);
         
         if (updateDTO.getNome() != null) {
             if (!StringUtils.hasText(updateDTO.getNome())) {
@@ -149,7 +143,7 @@ public class EstadoService implements IEstadoService {
         }
         
         Estado updatedEstado = estadoRepository.save(existingEstado);
-        return estadoModelMapper.toDTO(updatedEstado);
+        return estadoMapper.toDTO(updatedEstado);
     }
 
     @Override
@@ -159,10 +153,7 @@ public class EstadoService implements IEstadoService {
             throw new IllegalArgumentException("ID do estado deve ser válido");
         }
         
-        Estado estado = estadoRepository.findById(id);
-        if (estado == null) {
-            throw new ResourceNotFoundException("Estado", "ID", id);
-        }
+        Estado estado = getEstadoOrThrow(id);
         
         // Soft delete: Marcar como inativo ao invés de deletar fisicamente
         if (Boolean.TRUE.equals(estado.getFlgInativo())) {
@@ -173,7 +164,7 @@ public class EstadoService implements IEstadoService {
         estado.setDtaRemocao(LocalDateTime.now());
         
         Estado updatedEstado = estadoRepository.save(estado);
-        return estadoModelMapper.toDTO(updatedEstado);
+        return estadoMapper.toDTO(updatedEstado);
     }
 
     @Override
@@ -181,7 +172,11 @@ public class EstadoService implements IEstadoService {
     public List<EstadoDTO> getActiveEstados() {
         List<Estado> activeEstados = estadoRepository.findActive();
         return activeEstados.stream()
-                .map(estadoModelMapper::toDTO)
+                .map(estadoMapper::toDTO)
                 .collect(Collectors.toList());
+    }
+    private Estado getEstadoOrThrow(Integer id) {
+        return estadoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Estado", "ID", id));
     }
 }
