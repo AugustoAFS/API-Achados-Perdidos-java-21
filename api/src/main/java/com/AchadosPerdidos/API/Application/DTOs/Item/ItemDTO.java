@@ -4,7 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import com.AchadosPerdidos.API.Domain.Enum.Tipo_Item;
+import com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosDTO;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -19,4 +21,5 @@ public class ItemDTO {
     private LocalDateTime dtaCriacao;
     private Boolean flgInativo;
     private LocalDateTime dtaRemocao;
+    private List<FotosDTO> fotos;
 }
