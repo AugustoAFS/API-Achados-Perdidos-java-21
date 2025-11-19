@@ -251,6 +251,7 @@ public class ItensController {
                         } catch (Exception e) {
                             // Log erro mas não falha a criação do item
                             // O item já foi criado, apenas esta foto falhou
+                            // A exceção já foi logada no FotosService
                         }
                     }
                 }
