@@ -213,10 +213,10 @@ public class ItensController {
     }
 
     @PostMapping(value = "/perdidos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Criar item perdido com foto", description = "Cria um novo item perdido com foto em uma única requisição. O usuário relator é obtido automaticamente do token JWT.")
+    @Operation(summary = "Criar item perdido com foto(s)", description = "Cria um novo item perdido com uma ou mais fotos em uma única requisição. O usuário relator é obtido automaticamente do token JWT.")
     public ResponseEntity<ItemDTO> createItemPerdidoWithPhoto(
             @Parameter(description = "Dados do item (JSON)") @RequestPart("item") ItemCreateDTO itemCreateDTO,
-            @Parameter(description = "Arquivo de imagem do item") @RequestPart(value = "file", required = false) MultipartFile file,
+            @Parameter(description = "Arquivo(s) de imagem do item (pode enviar múltiplas fotos)") @RequestPart(value = "files", required = false) MultipartFile[] files,
             HttpServletRequest request) {
         try {
             // Definir tipo como PERDIDO
@@ -242,13 +242,17 @@ public class ItensController {
             // Criar item
             ItemDTO createdItem = itensService.createItem(itemCreateDTO);
             
-            // Se houver foto, fazer upload e associar ao item
-            if (file != null && !file.isEmpty() && createdItem != null) {
-                try {
-                    fotosService.uploadItemPhoto(file, usuarioRelatorId, createdItem.getId());
-                } catch (Exception e) {
-                    // Log erro mas não falha a criação do item
-                    // O item já foi criado, apenas a foto falhou
+            // Se houver fotos, fazer upload e associar ao item
+            if (files != null && files.length > 0 && createdItem != null) {
+                for (MultipartFile file : files) {
+                    if (file != null && !file.isEmpty()) {
+                        try {
+                            fotosService.uploadItemPhoto(file, usuarioRelatorId, createdItem.getId());
+                        } catch (Exception e) {
+                            // Log erro mas não falha a criação do item
+                            // O item já foi criado, apenas esta foto falhou
+                        }
+                    }
                 }
             }
             
@@ -266,16 +270,16 @@ public class ItensController {
     }
 
     @PostMapping(value = "/achados", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Criar item achado com foto", description = "Cria um novo item achado com foto. A foto é obrigatória. O usuário relator é obtido automaticamente do token JWT.")
+    @Operation(summary = "Criar item achado com foto(s)", description = "Cria um novo item achado com uma ou mais fotos. Pelo menos uma foto é obrigatória. O usuário relator é obtido automaticamente do token JWT.")
     public ResponseEntity<ItemDTO> createItemAchado(
             @Parameter(description = "Dados do item (JSON)") @RequestPart("item") ItemCreateDTO itemCreateDTO,
-            @Parameter(description = "Arquivo de imagem do item (obrigatório)") @RequestPart("file") MultipartFile file,
+            @Parameter(description = "Arquivo(s) de imagem do item (obrigatório - pode enviar múltiplas fotos)") @RequestPart("files") MultipartFile[] files,
             HttpServletRequest request) {
         try {
-            // Validar se a foto foi enviada (obrigatória para itens achados)
-            if (file == null || file.isEmpty()) {
+            // Validar se pelo menos uma foto foi enviada (obrigatória para itens achados)
+            if (files == null || files.length == 0 || files[0] == null || files[0].isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(null); // Ou retornar um DTO de erro
+                    .body(null);
             }
             
             // Definir tipo como ACHADO
@@ -301,12 +305,21 @@ public class ItensController {
             // Criar item
             ItemDTO createdItem = itensService.createItem(itemCreateDTO);
             
-            // Fazer upload da foto e associar ao item (obrigatório)
+            // Fazer upload das fotos e associar ao item (obrigatório)
             if (createdItem != null) {
-                try {
-                    fotosService.uploadItemPhoto(file, usuarioRelatorId, createdItem.getId());
-                } catch (Exception e) {
-                    // Se o upload da foto falhar, retornar erro pois é obrigatório
+                boolean atLeastOneUploaded = false;
+                for (MultipartFile file : files) {
+                    if (file != null && !file.isEmpty()) {
+                        try {
+                            fotosService.uploadItemPhoto(file, usuarioRelatorId, createdItem.getId());
+                            atLeastOneUploaded = true;
+                        } catch (Exception e) {
+                            // Log erro mas continua tentando outras fotos
+                        }
+                    }
+                }
+                // Se nenhuma foto foi enviada com sucesso, retornar erro
+                if (!atLeastOneUploaded) {
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
                 }
             }
