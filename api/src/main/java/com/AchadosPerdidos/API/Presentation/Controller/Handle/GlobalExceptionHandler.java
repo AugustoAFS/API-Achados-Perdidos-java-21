@@ -11,6 +11,7 @@ import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -89,6 +90,18 @@ public class GlobalExceptionHandler {
         errorResponse.put("message", "O parâmetro '" + ex.getVariableName() + "' é obrigatório na URL.");
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
+        logger.warn("MaxUploadSizeExceededException: {}", ex.getMessage());
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("timestamp", LocalDateTime.now());
+        errorResponse.put("status", HttpStatus.PAYLOAD_TOO_LARGE.value());
+        errorResponse.put("error", "Arquivo muito grande");
+        errorResponse.put("message", "O tamanho do arquivo excede o limite máximo permitido de 10MB por arquivo ou 50MB por requisição. Por favor, envie arquivos menores.");
+        
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(errorResponse);
     }
 
     @ExceptionHandler(Exception.class)
