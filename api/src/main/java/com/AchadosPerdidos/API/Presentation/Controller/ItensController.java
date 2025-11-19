@@ -7,15 +7,19 @@ import com.AchadosPerdidos.API.Application.DTOs.Item.ItemUpdateDTO;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IItensService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IJWTService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.INotificationService;
+import com.AchadosPerdidos.API.Application.Services.FotosService;
 import com.AchadosPerdidos.API.Domain.Enum.Tipo_Item;
 import com.AchadosPerdidos.API.Exeptions.BusinessException;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/itens")
@@ -30,6 +34,9 @@ public class ItensController {
 
     @Autowired
     private IJWTService jwtService;
+
+    @Autowired
+    private FotosService fotosService;
 
     @GetMapping
     @Operation(summary = "Listar todos os itens")
@@ -165,7 +172,7 @@ public class ItensController {
         return ResponseEntity.ok(itens);
     }
 
-    @PostMapping("/perdidos")
+    @PostMapping(value = "/perdidos", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Criar item perdido", description = "Cria um novo item perdido. O usuário relator é obtido automaticamente do token JWT.")
     public ResponseEntity<ItemDTO> createItemPerdido(@RequestBody ItemCreateDTO itemCreateDTO, HttpServletRequest request) {
         try {
@@ -205,10 +212,72 @@ public class ItensController {
         }
     }
 
-    @PostMapping("/achados")
-    @Operation(summary = "Criar item achado", description = "Cria um novo item achado. O usuário relator é obtido automaticamente do token JWT.")
-    public ResponseEntity<ItemDTO> createItemAchado(@RequestBody ItemCreateDTO itemCreateDTO, HttpServletRequest request) {
+    @PostMapping(value = "/perdidos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Criar item perdido com foto", description = "Cria um novo item perdido com foto em uma única requisição. O usuário relator é obtido automaticamente do token JWT.")
+    public ResponseEntity<ItemDTO> createItemPerdidoWithPhoto(
+            @Parameter(description = "Dados do item (JSON)") @RequestPart("item") ItemCreateDTO itemCreateDTO,
+            @Parameter(description = "Arquivo de imagem do item") @RequestPart(value = "file", required = false) MultipartFile file,
+            HttpServletRequest request) {
         try {
+            // Definir tipo como PERDIDO
+            itemCreateDTO.setTipoItem(Tipo_Item.PERDIDO);
+            
+            // Extrair token JWT do header Authorization
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            String token = authHeader.substring(7);
+            
+            // Obter userId do token
+            String userIdStr = jwtService.getUserIdFromToken(token);
+            if (userIdStr == null || userIdStr.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            Integer usuarioRelatorId = Integer.valueOf(userIdStr);
+            itemCreateDTO.setUsuarioRelatorId(usuarioRelatorId);
+            
+            // Criar item
+            ItemDTO createdItem = itensService.createItem(itemCreateDTO);
+            
+            // Se houver foto, fazer upload e associar ao item
+            if (file != null && !file.isEmpty() && createdItem != null) {
+                try {
+                    fotosService.uploadItemPhoto(file, usuarioRelatorId, createdItem.getId());
+                } catch (Exception e) {
+                    // Log erro mas não falha a criação do item
+                    // O item já foi criado, apenas a foto falhou
+                }
+            }
+            
+            // Envia notificação automática quando item é criado
+            if (createdItem != null) {
+                notificationService.notifyItemFound(createdItem.getId(), createdItem.getUsuarioRelatorId());
+            }
+            
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdItem);
+        } catch (BusinessException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping(value = "/achados", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Criar item achado com foto", description = "Cria um novo item achado com foto. A foto é obrigatória. O usuário relator é obtido automaticamente do token JWT.")
+    public ResponseEntity<ItemDTO> createItemAchado(
+            @Parameter(description = "Dados do item (JSON)") @RequestPart("item") ItemCreateDTO itemCreateDTO,
+            @Parameter(description = "Arquivo de imagem do item (obrigatório)") @RequestPart("file") MultipartFile file,
+            HttpServletRequest request) {
+        try {
+            // Validar se a foto foi enviada (obrigatória para itens achados)
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(null); // Ou retornar um DTO de erro
+            }
+            
             // Definir tipo como ACHADO
             itemCreateDTO.setTipoItem(Tipo_Item.ACHADO);
             
@@ -231,6 +300,16 @@ public class ItensController {
             
             // Criar item
             ItemDTO createdItem = itensService.createItem(itemCreateDTO);
+            
+            // Fazer upload da foto e associar ao item (obrigatório)
+            if (createdItem != null) {
+                try {
+                    fotosService.uploadItemPhoto(file, usuarioRelatorId, createdItem.getId());
+                } catch (Exception e) {
+                    // Se o upload da foto falhar, retornar erro pois é obrigatório
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                }
+            }
             
             // Envia notificação automática quando item é criado
             if (createdItem != null) {

@@ -2,8 +2,13 @@ package com.AchadosPerdidos.API.Application.Services;
 
 import com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosListDTO;
+import com.AchadosPerdidos.API.Application.DTOs.FotoUsuario.FotoUsuarioCreateDTO;
+import com.AchadosPerdidos.API.Application.DTOs.FotoUsuario.FotoUsuarioUpdateDTO;
+import com.AchadosPerdidos.API.Application.DTOs.FotoItem.FotoItemCreateDTO;
 import com.AchadosPerdidos.API.Application.Mapper.FotosMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotosService;
+import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotoUsuarioService;
+import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotoItemService;
 import com.AchadosPerdidos.API.Domain.Entity.Foto;
 import com.AchadosPerdidos.API.Domain.Repository.FotosRepository;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,6 +34,12 @@ public class FotosService implements IFotosService {
 
     @Autowired
     private S3Service s3Service;
+
+    @Autowired
+    private IFotoUsuarioService fotoUsuarioService;
+
+    @Autowired
+    private IFotoItemService fotoItemService;
 
     @Override
     public FotosListDTO getAllFotos() {
@@ -203,7 +214,23 @@ public class FotosService implements IFotosService {
             Foto savedFoto = fotosRepository.save(foto);
             logger.info("Foto salva com sucesso. ID: {}", savedFoto.getId());
             
-            return fotosMapper.toDTO(savedFoto);
+            FotosDTO fotoDTO = fotosMapper.toDTO(savedFoto);
+            
+            // Se for foto de item (não é foto de perfil e tem itemId), criar associação automaticamente
+            if (!isProfilePhoto && itemId != null && itemId > 0 && fotoDTO != null && fotoDTO.getId() != null) {
+                try {
+                    var createDTO = new FotoItemCreateDTO();
+                    createDTO.setItemId(itemId);
+                    createDTO.setFotoId(fotoDTO.getId());
+                    fotoItemService.createFotoItem(createDTO);
+                    logger.info("Associação criada entre item ID: {} e foto ID: {}", itemId, fotoDTO.getId());
+                } catch (Exception e) {
+                    logger.error("Erro ao criar associação foto-item após upload: {}", e.getMessage(), e);
+                    // Não falha o upload se a associação falhar, mas loga o erro
+                }
+            }
+            
+            return fotoDTO;
 
         } catch (IllegalArgumentException e) {
             logger.error("Erro de validação no upload: {}", e.getMessage());
@@ -276,7 +303,38 @@ public class FotosService implements IFotosService {
      * @return DTO da foto salva
      */
     public FotosDTO uploadProfilePhoto(MultipartFile file, Integer userId) {
-        return uploadPhoto(file, userId, null, true);
+        FotosDTO foto = uploadPhoto(file, userId, null, true);
+        
+        // Criar associação automaticamente na tabela fotos_usuario
+        try {
+            if (foto != null && foto.getId() != null) {
+                // Desativar fotos de perfil anteriores
+                var fotosUsuarioList = fotoUsuarioService.findByUsuarioId(userId);
+                if (fotosUsuarioList != null && fotosUsuarioList.getFotoUsuarios() != null) {
+                    for (var fu : fotosUsuarioList.getFotoUsuarios()) {
+                        if (fu.getFotoId() != null && !fu.getFotoId().equals(foto.getId()) && 
+                            (fu.getFlgInativo() == null || !fu.getFlgInativo())) {
+                            var updateDTO = new FotoUsuarioUpdateDTO();
+                            updateDTO.setFlgInativo(true);
+                            fotoUsuarioService.updateFotoUsuario(userId, fu.getFotoId(), updateDTO);
+                            logger.info("Foto de perfil anterior (ID: {}) desativada para usuário ID: {}", fu.getFotoId(), userId);
+                        }
+                    }
+                }
+                
+                // Criar nova associação
+                var createDTO = new FotoUsuarioCreateDTO();
+                createDTO.setUsuarioId(userId);
+                createDTO.setFotoId(foto.getId());
+                fotoUsuarioService.createFotoUsuario(createDTO);
+                logger.info("Associação criada entre usuário ID: {} e foto ID: {}", userId, foto.getId());
+            }
+        } catch (Exception e) {
+            logger.error("Erro ao criar associação foto-usuário após upload: {}", e.getMessage(), e);
+            // Não falha o upload se a associação falhar, mas loga o erro
+        }
+        
+        return foto;
     }
 
     /**
@@ -287,6 +345,23 @@ public class FotosService implements IFotosService {
      * @return DTO da foto salva
      */
     public FotosDTO uploadItemPhoto(MultipartFile file, Integer userId, Integer itemId) {
-        return uploadPhoto(file, userId, itemId, false);
+        FotosDTO foto = uploadPhoto(file, userId, itemId, false);
+        
+        // Criar associação automaticamente na tabela fotos_item
+        try {
+            if (foto != null && foto.getId() != null && itemId != null && itemId > 0) {
+                // Criar nova associação
+                var createDTO = new FotoItemCreateDTO();
+                createDTO.setItemId(itemId);
+                createDTO.setFotoId(foto.getId());
+                fotoItemService.createFotoItem(createDTO);
+                logger.info("Associação criada entre item ID: {} e foto ID: {}", itemId, foto.getId());
+            }
+        } catch (Exception e) {
+            logger.error("Erro ao criar associação foto-item após upload: {}", e.getMessage(), e);
+            // Não falha o upload se a associação falhar, mas loga o erro
+        }
+        
+        return foto;
     }
 }

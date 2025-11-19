@@ -4,8 +4,15 @@ import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosUpdateDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Campus.CampusDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosDTO;
+import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuarioCampusService;
+import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotoUsuarioService;
+import com.AchadosPerdidos.API.Application.Services.Interfaces.ICampusService;
+import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotosService;
 import com.AchadosPerdidos.API.Domain.Entity.Endereco;
 import com.AchadosPerdidos.API.Domain.Entity.Usuario;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -15,12 +22,68 @@ import java.util.stream.Collectors;
 @Component
 public class UsuariosMapper {
 
+    @Autowired
+    private IUsuarioCampusService usuarioCampusService;
+
+    @Autowired
+    private IFotoUsuarioService fotoUsuarioService;
+
+    @Autowired
+    private ICampusService campusService;
+
+    @Autowired
+    private IFotosService fotosService;
+
     public UsuariosDTO toDTO(Usuario usuario) {
         if (usuario == null) {
             return null;
         }
         
         Integer enderecoId = usuario.getEndereco_id() != null ? usuario.getEndereco_id().getId() : null;
+
+        // Buscar campus do usuário
+        List<CampusDTO> campusList = null;
+        try {
+            var usuarioCampusList = usuarioCampusService.findByUsuarioId(usuario.getId());
+            if (usuarioCampusList != null && usuarioCampusList.getUsuarioCampus() != null) {
+                campusList = usuarioCampusList.getUsuarioCampus().stream()
+                    .filter(uc -> uc.getFlgInativo() == null || !uc.getFlgInativo())
+                    .map(uc -> {
+                        try {
+                            // Buscar campus completo pelo ID
+                            var campusDTO = campusService.getCampusById(uc.getCampusId());
+                            return campusDTO;
+                        } catch (Exception e) {
+                            return null;
+                        }
+                    })
+                    .filter(c -> c != null)
+                    .collect(Collectors.toList());
+            }
+        } catch (Exception e) {
+            // Log silencioso, não falha se não conseguir buscar campus
+        }
+
+        // Buscar foto de perfil do usuário
+        FotosDTO fotoPerfil = null;
+        try {
+            var fotosUsuarioList = fotoUsuarioService.findByUsuarioId(usuario.getId());
+            if (fotosUsuarioList != null && fotosUsuarioList.getFotoUsuarios() != null) {
+                var fotoAtiva = fotosUsuarioList.getFotoUsuarios().stream()
+                    .filter(fu -> fu.getFlgInativo() == null || !fu.getFlgInativo())
+                    .findFirst();
+                if (fotoAtiva.isPresent()) {
+                    try {
+                        // Buscar a foto completa pelo ID
+                        fotoPerfil = fotosService.getFotoById(fotoAtiva.get().getFotoId());
+                    } catch (Exception e) {
+                        // Log silencioso
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Log silencioso, não falha se não conseguir buscar foto
+        }
 
         return new UsuariosDTO(
             usuario.getId(),
@@ -29,6 +92,8 @@ public class UsuariosMapper {
             usuario.getEmail(),
             usuario.getMatricula(),
             enderecoId,
+            campusList,
+            fotoPerfil,
             usuario.getDta_Criacao(),
             usuario.getFlg_Inativo(),
             usuario.getDta_Remocao()
@@ -118,14 +183,15 @@ public class UsuariosMapper {
             return null;
         }
         
-        return new UsuariosUpdateDTO(
-            usuario.getNomeCompleto(),
-            usuario.getCpf(),
-            usuario.getEmail(),
-            usuario.getMatricula(),
-            usuario.getEndereco_id() != null ? usuario.getEndereco_id().getId() : null,
-            usuario.getFlg_Inativo()
-        );
+        UsuariosUpdateDTO dto = new UsuariosUpdateDTO();
+        dto.setNomeCompleto(usuario.getNomeCompleto());
+        dto.setCpf(usuario.getCpf());
+        dto.setEmail(usuario.getEmail());
+        dto.setMatricula(usuario.getMatricula());
+        dto.setEnderecoId(usuario.getEndereco_id() != null ? usuario.getEndereco_id().getId() : null);
+        dto.setFlgInativo(usuario.getFlg_Inativo());
+        // campusId e fotoId não são preenchidos aqui, pois vêm das tabelas relacionadas
+        return dto;
     }
 
     public UsuariosListDTO toListDTO(List<Usuario> usuarios) {
