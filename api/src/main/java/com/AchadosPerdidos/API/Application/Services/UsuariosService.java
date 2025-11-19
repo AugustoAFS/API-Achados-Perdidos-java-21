@@ -429,19 +429,27 @@ public class UsuariosService implements IUsuariosService {
      */
     private void validateLoginRequest(LoginRequestDTO loginRequestDTO) {
         if (loginRequestDTO == null) {
+            logger.error("LoginRequestDTO é nulo");
             throw new ValidationException("Dados de login não podem ser nulos");
         }
 
+        logger.debug("Validando login - Email_Usuario: '{}', Senha_Hash presente: {}", 
+            loginRequestDTO.getEmail_Usuario(), 
+            loginRequestDTO.getSenha_Hash() != null);
+
         if (!StringUtils.hasText(loginRequestDTO.getEmail_Usuario())) {
+            logger.error("Email_Usuario está vazio ou nulo. Valor recebido: '{}'", loginRequestDTO.getEmail_Usuario());
             throw new ValidationException("Email é obrigatório");
         }
 
         if (!StringUtils.hasText(loginRequestDTO.getSenha_Hash())) {
+            logger.error("Senha_Hash está vazia ou nula");
             throw new ValidationException("Senha é obrigatória");
         }
 
         // Validar formato do email
         if (!EMAIL_PATTERN.matcher(loginRequestDTO.getEmail_Usuario().trim()).matches()) {
+            logger.error("Formato de email inválido: '{}'", loginRequestDTO.getEmail_Usuario());
             throw new ValidationException("Formato de email inválido");
         }
     }
