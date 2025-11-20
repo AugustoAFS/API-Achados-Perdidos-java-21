@@ -37,7 +37,8 @@ public class ItensService implements IItensService {
     @Override
     @Cacheable(value = "itens", key = "'all'")
     public ItemListDTO getAllItens() {
-        List<Itens> itens = itensRepository.findAll();
+        // Retorna apenas itens ativos
+        List<Itens> itens = itensRepository.findActive();
         return itensMapper.toListDTO(itens);
     }
 
