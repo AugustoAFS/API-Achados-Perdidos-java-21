@@ -2,16 +2,35 @@ package com.AchadosPerdidos.API.Domain.Entity.Chat;
 
 import com.AchadosPerdidos.API.Domain.Enum.Tipo_Menssagem;
 import com.AchadosPerdidos.API.Domain.Enum.Status_Menssagem;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 import java.time.LocalDateTime;
 
+@Document(collection = "chat_messages")
 public class ChatMessage {
+    @Id
     private String id;
+    
+    @Field("id_Chat")
     private String Id_Chat;
+    
+    @Field("id_Usuario_Remetente")
     private String Id_Usuario_Remetente;
+    
+    @Field("id_Usuario_Destino")
     private String Id_Usuario_Destino;
+    
+    @Field("menssagem")
     private String Menssagem;
+    
+    @Field("data_Hora_Menssagem")
     private LocalDateTime Data_Hora_Menssagem;
+    
+    @Field("status")
     private Status_Menssagem Status;
+    
+    @Field("tipo")
     private Tipo_Menssagem Tipo;
 
     public ChatMessage() {}

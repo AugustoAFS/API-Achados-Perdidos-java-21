@@ -4,6 +4,8 @@ import com.AchadosPerdidos.API.Domain.Entity.Chat.ChatMessage;
 import com.AchadosPerdidos.API.Domain.Enum.Status_Menssagem;
 import com.AchadosPerdidos.API.Domain.Enum.Tipo_Menssagem;
 import com.AchadosPerdidos.API.Domain.Repository.Interfaces.IChatRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -17,6 +19,8 @@ import java.util.List;
 
 @Repository
 public class ChatRepository implements IChatRepository {
+    
+    private static final Logger logger = LoggerFactory.getLogger(ChatRepository.class);
     
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -37,14 +41,33 @@ public class ChatRepository implements IChatRepository {
 
     @Override
     public ChatMessage save(ChatMessage chatMessage) {
-        if (chatMessage.getId() == null || chatMessage.getId().isEmpty()) {
-            // MongoDB gera ID automaticamente se for null
-            if (chatMessage.getData_Hora_Menssagem() == null) {
-                chatMessage.setData_Hora_Menssagem(LocalDateTime.now());
+        try {
+            logger.debug("Tentando salvar mensagem no MongoDB - Collection: {}", COLLECTION_NAME);
+            String mensagemPreview = chatMessage.getMenssagem();
+            if (mensagemPreview != null && mensagemPreview.length() > 50) {
+                mensagemPreview = mensagemPreview.substring(0, 50) + "...";
             }
-            return mongoTemplate.insert(chatMessage, COLLECTION_NAME);
-        } else {
-            return mongoTemplate.save(chatMessage, COLLECTION_NAME);
+            logger.debug("Mensagem - ID: {}, ChatId: {}, Remetente: {}, Destino: {}, Mensagem: {}", 
+                chatMessage.getId(), chatMessage.getId_Chat(), 
+                chatMessage.getId_Usuario_Remetente(), chatMessage.getId_Usuario_Destino(),
+                mensagemPreview != null ? mensagemPreview : "null");
+            
+            if (chatMessage.getId() == null || chatMessage.getId().isEmpty()) {
+                // MongoDB gera ID automaticamente se for null
+                if (chatMessage.getData_Hora_Menssagem() == null) {
+                    chatMessage.setData_Hora_Menssagem(LocalDateTime.now());
+                }
+                ChatMessage saved = mongoTemplate.insert(chatMessage, COLLECTION_NAME);
+                logger.info("Mensagem inserida no MongoDB com sucesso - Novo ID: {}", saved.getId());
+                return saved;
+            } else {
+                ChatMessage saved = mongoTemplate.save(chatMessage, COLLECTION_NAME);
+                logger.info("Mensagem atualizada no MongoDB com sucesso - ID: {}", saved.getId());
+                return saved;
+            }
+        } catch (Exception e) {
+            logger.error("Erro ao salvar mensagem no MongoDB: {}", e.getMessage(), e);
+            throw new RuntimeException("Erro ao salvar mensagem no MongoDB: " + e.getMessage(), e);
         }
     }
 
@@ -58,8 +81,11 @@ public class ChatRepository implements IChatRepository {
 
     @Override
     public List<ChatMessage> findByChatId(String chatId) {
+        logger.debug("Buscando mensagens por chatId: {}", chatId);
         Query query = new Query(Criteria.where("id_Chat").is(chatId));
-        return mongoTemplate.find(query, ChatMessage.class, COLLECTION_NAME);
+        List<ChatMessage> messages = mongoTemplate.find(query, ChatMessage.class, COLLECTION_NAME);
+        logger.debug("Encontradas {} mensagens para chatId: {}", messages.size(), chatId);
+        return messages;
     }
 
     @Override
