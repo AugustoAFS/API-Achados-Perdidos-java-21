@@ -41,4 +41,15 @@ public class RoleController {
         List<RoleDTO> activeRoles = roleService.getActiveRoles();
         return ResponseEntity.ok(activeRoles);
     }
+
+    @GetMapping("/nome/{nome}")
+    @Operation(summary = "Buscar role por nome", description = "Retorna uma role específica pelo seu nome (ex: ALUNO, SERVIDOR, USER)")
+    public ResponseEntity<RoleDTO> getRoleByNome(@PathVariable String nome) {
+        try {
+            RoleDTO role = roleService.getRoleByNome(nome);
+            return ResponseEntity.ok(role);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

@@ -8,6 +8,7 @@ import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosUpdateDTO;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuariosService;
 import com.AchadosPerdidos.API.Exeptions.BusinessException;
+import com.AchadosPerdidos.API.Exeptions.ValidationException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -58,6 +59,36 @@ public class UsuariosController {
     public ResponseEntity<UsuariosCreateDTO> createUsuario(@RequestBody UsuariosCreateDTO usuariosCreateDTO) {
         UsuariosCreateDTO createdUsuario = usuariosService.createUsuario(usuariosCreateDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUsuario);
+    }
+
+    @PostMapping("/aluno")
+    @Operation(summary = "Criar novo aluno", description = "Cria um novo usuário do tipo ALUNO. A matrícula é obrigatória. A instituição será preenchida automaticamente baseada no campus selecionado.")
+    public ResponseEntity<UsuariosCreateDTO> createAluno(@RequestBody UsuariosCreateDTO usuariosCreateDTO) {
+        try {
+            UsuariosCreateDTO createdAluno = usuariosService.createAluno(usuariosCreateDTO);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdAluno);
+        } catch (BusinessException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (ValidationException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/servidor")
+    @Operation(summary = "Criar novo servidor", description = "Cria um novo usuário do tipo SERVIDOR. O CPF é obrigatório e deve ter 11 dígitos. A instituição será preenchida automaticamente baseada no campus selecionado.")
+    public ResponseEntity<UsuariosCreateDTO> createServidor(@RequestBody UsuariosCreateDTO usuariosCreateDTO) {
+        try {
+            UsuariosCreateDTO createdServidor = usuariosService.createServidor(usuariosCreateDTO);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdServidor);
+        } catch (BusinessException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (ValidationException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @PutMapping("/{id}")
