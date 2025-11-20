@@ -86,6 +86,8 @@ public class SecurityConfig {
                                 "/error"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/usuarios/aluno").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/usuarios/servidor").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/redefinir-senha").permitAll()
                         .requestMatchers("/api/usuarios/criar").permitAll()
