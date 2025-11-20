@@ -10,9 +10,13 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -26,10 +30,12 @@ public class S3Service {
     private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
     private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
     private final String bucketName;
 
-    public S3Service(S3Client s3Client, @Qualifier("s3BucketName") String bucketName) {
+    public S3Service(S3Client s3Client, S3Presigner s3Presigner, @Qualifier("s3BucketName") String bucketName) {
         this.s3Client = s3Client;
+        this.s3Presigner = s3Presigner;
         this.bucketName = bucketName;
     }
 
@@ -186,6 +192,53 @@ public class S3Service {
      */
     private String generateFileUrl(String s3Key) {
         return String.format("https://%s.s3.amazonaws.com/%s", bucketName, s3Key);
+    }
+
+    /**
+     * Gera uma Signed URL temporária para acesso ao arquivo no S3
+     * @param s3Key Chave do arquivo no S3
+     * @param expirationMinutes Tempo de expiração em minutos (padrão: 60 minutos)
+     * @return URL assinada temporária
+     */
+    public String generateSignedUrl(String s3Key, int expirationMinutes) {
+        try {
+            validateBucketConfiguration();
+            
+            if (s3Key == null || s3Key.isBlank()) {
+                logger.warn("Tentativa de gerar Signed URL com chave S3 vazia");
+                return null;
+            }
+
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(s3Key)
+                    .build();
+
+            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                    .signatureDuration(Duration.ofMinutes(expirationMinutes))
+                    .getObjectRequest(getObjectRequest)
+                    .build();
+
+            PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
+            String signedUrl = presignedRequest.url().toString();
+            
+            logger.debug("Signed URL gerada para chave: {} (expira em {} minutos)", s3Key, expirationMinutes);
+            return signedUrl;
+
+        } catch (Exception e) {
+            logger.error("Erro ao gerar Signed URL para chave {}: {}", s3Key, e.getMessage(), e);
+            // Em caso de erro, retorna null para que o mapper possa usar a URL do banco como fallback
+            return null;
+        }
+    }
+
+    /**
+     * Gera uma Signed URL temporária para acesso ao arquivo no S3 (expiração padrão: 1 hora)
+     * @param s3Key Chave do arquivo no S3
+     * @return URL assinada temporária
+     */
+    public String generateSignedUrl(String s3Key) {
+        return generateSignedUrl(s3Key, 60); // Padrão: 1 hora
     }
 
     /**
