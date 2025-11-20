@@ -13,6 +13,8 @@ public interface IUsuariosService {
     UsuariosListDTO getUsuarioById(int id);
     UsuariosDTO getUsuarioByEmail(String email);
     UsuariosCreateDTO createUsuario(UsuariosCreateDTO usuariosDTO);
+    UsuariosCreateDTO createAluno(UsuariosCreateDTO usuariosDTO);
+    UsuariosCreateDTO createServidor(UsuariosCreateDTO usuariosDTO);
     UsuariosUpdateDTO updateUsuario(int id, UsuariosUpdateDTO usuariosDTO);
     boolean deleteUsuario(int id);
     boolean redefinirSenha(String cpf, String matricula, String novaSenha);

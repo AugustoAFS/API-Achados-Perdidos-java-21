@@ -623,6 +623,172 @@ public class UsuariosService implements IUsuariosService {
 
 
     /**
+     * Cria um novo usuário do tipo ALUNO
+     * Valida que a matrícula é obrigatória
+     */
+    @Override
+    @CacheEvict(value = "usuarios", allEntries = true)
+    public UsuariosCreateDTO createAluno(UsuariosCreateDTO usuariosCreateDTO) {
+        logger.info("Iniciando criação de novo aluno");
+
+        if (usuariosCreateDTO == null) {
+            throw new ValidationException("Dados do aluno não podem ser nulos");
+        }
+
+        // Validar matrícula obrigatória para aluno
+        if (!StringUtils.hasText(usuariosCreateDTO.getMatricula())) {
+            throw new ValidationException("A matrícula é obrigatória para alunos");
+        }
+
+        // Validações de entrada (herda do método padrão)
+        validateUsuarioCreation(usuariosCreateDTO);
+
+        // Verificação de duplicatas
+        checkDuplicateEmail(usuariosCreateDTO.getEmail(), null);
+        checkDuplicateMatricula(usuariosCreateDTO.getMatricula(), null);
+
+        // Mapear DTO para Entidade
+        Usuario usuario = usuariosMapper.fromCreateDTO(usuariosCreateDTO);
+
+        // Definir role ALUNO
+        Role alunoRole = getRoleByNome("ALUNO");
+        usuario.setRole_id(alunoRole);
+        logger.debug("Role 'ALUNO' atribuída ao novo aluno");
+
+        // Criptografar senha
+        String hashSenha = passwordEncoder.encode(usuariosCreateDTO.getSenha());
+        usuario.setHash_senha(hashSenha);
+
+        // Definir dados de auditoria
+        usuario.setDta_Criacao(LocalDateTime.now());
+        usuario.setFlg_Inativo(false);
+
+        // Salvar usuário
+        Usuario savedUsuario = usuariosRepository.save(usuario);
+        logger.info("Aluno criado com sucesso - ID: {}, Email: {}, Matrícula: {}", 
+            savedUsuario.getId(), savedUsuario.getEmail(), savedUsuario.getMatricula());
+
+        // Associar ao campus se fornecido
+        if (usuariosCreateDTO.getCampusId() != null && usuariosCreateDTO.getCampusId() > 0) {
+            try {
+                UsuarioCampusCreateDTO usuarioCampusCreateDTO = new UsuarioCampusCreateDTO();
+                usuarioCampusCreateDTO.setUsuarioId(savedUsuario.getId());
+                usuarioCampusCreateDTO.setCampusId(usuariosCreateDTO.getCampusId());
+
+                usuarioCampusService.createUsuarioCampus(usuarioCampusCreateDTO);
+                logger.info("Aluno associado ao campus ID: {}", usuariosCreateDTO.getCampusId());
+            } catch (Exception e) {
+                logger.error("Erro ao associar aluno ao campus: {}", e.getMessage(), e);
+            }
+        }
+
+        return usuariosMapper.toCreateDTO(savedUsuario);
+    }
+
+    /**
+     * Cria um novo usuário do tipo SERVIDOR
+     * Valida que o CPF é obrigatório e tem 11 dígitos
+     */
+    @Override
+    @CacheEvict(value = "usuarios", allEntries = true)
+    public UsuariosCreateDTO createServidor(UsuariosCreateDTO usuariosCreateDTO) {
+        logger.info("Iniciando criação de novo servidor");
+
+        if (usuariosCreateDTO == null) {
+            throw new ValidationException("Dados do servidor não podem ser nulos");
+        }
+
+        // Validar CPF obrigatório para servidor
+        if (!StringUtils.hasText(usuariosCreateDTO.getCpf())) {
+            throw new ValidationException("O CPF é obrigatório para servidores");
+        }
+
+        // Validar formato do CPF (11 dígitos)
+        String cleanCpf = usuariosCreateDTO.getCpf().replaceAll("[^0-9]", "");
+        if (cleanCpf.length() != 11) {
+            throw new ValidationException("CPF inválido. Deve conter exatamente 11 dígitos");
+        }
+
+        // Validações de entrada (herda do método padrão)
+        validateUsuarioCreation(usuariosCreateDTO);
+
+        // Verificação de duplicatas
+        checkDuplicateEmail(usuariosCreateDTO.getEmail(), null);
+        checkDuplicateCPF(cleanCpf, null);
+
+        // Mapear DTO para Entidade
+        Usuario usuario = usuariosMapper.fromCreateDTO(usuariosCreateDTO);
+        usuario.setCpf(cleanCpf); // Garantir que o CPF está limpo
+
+        // Definir role SERVIDOR
+        Role servidorRole = getRoleByNome("SERVIDOR");
+        usuario.setRole_id(servidorRole);
+        logger.debug("Role 'SERVIDOR' atribuída ao novo servidor");
+
+        // Criptografar senha
+        String hashSenha = passwordEncoder.encode(usuariosCreateDTO.getSenha());
+        usuario.setHash_senha(hashSenha);
+
+        // Definir dados de auditoria
+        usuario.setDta_Criacao(LocalDateTime.now());
+        usuario.setFlg_Inativo(false);
+
+        // Salvar usuário
+        Usuario savedUsuario = usuariosRepository.save(usuario);
+        logger.info("Servidor criado com sucesso - ID: {}, Email: {}, CPF: {}", 
+            savedUsuario.getId(), savedUsuario.getEmail(), savedUsuario.getCpf());
+
+        // Associar ao campus se fornecido
+        if (usuariosCreateDTO.getCampusId() != null && usuariosCreateDTO.getCampusId() > 0) {
+            try {
+                UsuarioCampusCreateDTO usuarioCampusCreateDTO = new UsuarioCampusCreateDTO();
+                usuarioCampusCreateDTO.setUsuarioId(savedUsuario.getId());
+                usuarioCampusCreateDTO.setCampusId(usuariosCreateDTO.getCampusId());
+
+                usuarioCampusService.createUsuarioCampus(usuarioCampusCreateDTO);
+                logger.info("Servidor associado ao campus ID: {}", usuariosCreateDTO.getCampusId());
+            } catch (Exception e) {
+                logger.error("Erro ao associar servidor ao campus: {}", e.getMessage(), e);
+            }
+        }
+
+        return usuariosMapper.toCreateDTO(savedUsuario);
+    }
+
+    /**
+     * Verifica se já existe usuário com a matrícula informada
+     */
+    private void checkDuplicateMatricula(String matricula, Integer excludeId) {
+        if (!StringUtils.hasText(matricula)) {
+            return;
+        }
+
+        Usuario usuarioExistente = usuariosRepository.findByMatricula(matricula.trim());
+        if (usuarioExistente != null && (excludeId == null || !excludeId.equals(usuarioExistente.getId()))) {
+            logger.warn("Tentativa de criar/atualizar usuário com matrícula duplicada: {}", matricula);
+            throw new BusinessException("Já existe um usuário cadastrado com a matrícula: " + matricula);
+        }
+    }
+
+    /**
+     * Busca uma role por nome
+     */
+    private Role getRoleByNome(String nomeRole) {
+        try {
+            Optional<Role> role = roleRepository.findByNome(nomeRole);
+            if (role.isPresent()) {
+                logger.debug("Role '{}' encontrada", nomeRole);
+                return role.get();
+            }
+            logger.error("Role '{}' não encontrada no sistema", nomeRole);
+            throw new BusinessException("Role '" + nomeRole + "' não encontrada. Contate o administrador.");
+        } catch (Exception e) {
+            logger.error("Erro ao buscar role '{}': {}", nomeRole, e.getMessage(), e);
+            throw new BusinessException("Erro ao buscar role '" + nomeRole + "': " + e.getMessage());
+        }
+    }
+
+    /**
      * Obtém a role padrão para novos usuários
      * Tenta buscar uma role com nome "USER", caso contrário usa a primeira role ativa disponível
      */
