@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -102,6 +103,30 @@ public class GlobalExceptionHandler {
         errorResponse.put("message", "O tamanho do arquivo excede o limite máximo permitido de 10MB por arquivo ou 50MB por requisição. Por favor, envie arquivos menores.");
         
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(errorResponse);
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<Map<String, Object>> handleMissingServletRequestPartException(MissingServletRequestPartException ex) {
+        logger.warn("MissingServletRequestPartException: {}", ex.getMessage());
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("timestamp", LocalDateTime.now());
+        errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
+        errorResponse.put("error", "Parte obrigatória ausente");
+        
+        String partName = ex.getRequestPartName();
+        String message;
+        
+        if ("files".equals(partName)) {
+            message = "O campo 'files' é obrigatório para criar um item achado. Por favor, envie pelo menos uma foto do item.";
+        } else if ("item".equals(partName)) {
+            message = "O campo 'item' é obrigatório. Por favor, envie os dados do item em formato JSON.";
+        } else {
+            message = "A parte '" + partName + "' é obrigatória na requisição multipart/form-data.";
+        }
+        
+        errorResponse.put("message", message);
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(Exception.class)
