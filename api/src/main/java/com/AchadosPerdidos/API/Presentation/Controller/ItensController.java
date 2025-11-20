@@ -130,12 +130,6 @@ public class ItensController {
         return ResponseEntity.ok(itens);
     }
 
-    @GetMapping("/local/{localId}")
-    @Operation(summary = "Buscar itens por local")
-    public ResponseEntity<ItemListDTO> getItensByLocal(@PathVariable int localId) {
-        ItemListDTO itens = itensService.getItensByLocal(localId);
-        return ResponseEntity.ok(itens);
-    }
 
     @GetMapping("/search")
     @Operation(summary = "Buscar itens por termo")

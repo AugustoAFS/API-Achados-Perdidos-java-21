@@ -31,7 +31,6 @@ public class CacheConfig {
         "itensDevolvidos",
         "usuarios", 
         "campus",
-        "localItems",
         "cidades",
         "estados",
         "enderecos",

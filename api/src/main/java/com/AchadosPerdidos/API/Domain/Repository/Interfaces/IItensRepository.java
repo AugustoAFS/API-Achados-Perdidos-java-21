@@ -23,7 +23,6 @@ public interface IItensRepository {
     List<Itens> findActive();
     List<Itens> findByUser(int userId);
     List<Itens> findByCampus(int campusId);
-    List<Itens> findByLocal(int localId);
     List<Itens> searchByTerm(String searchTerm);
     List<Itens> findByTipo(String tipo);
 
