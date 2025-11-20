@@ -5,7 +5,6 @@ import com.AchadosPerdidos.API.Application.DTOs.Item.ItemDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Item.ItemListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Item.ItemUpdateDTO;
 import com.AchadosPerdidos.API.Domain.Entity.Itens;
-import com.AchadosPerdidos.API.Domain.Entity.Local;
 import com.AchadosPerdidos.API.Domain.Entity.Usuario;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotosService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +25,6 @@ public class ItensMapper {
             return null;
         }
         
-        Integer localId = itens.getLocal_id() != null ? itens.getLocal_id().getId() : null;
         Integer usuarioRelatorId = itens.getUsuario_relator_id() != null ? itens.getUsuario_relator_id().getId() : null;
 
         // Buscar fotos do item
@@ -48,7 +46,7 @@ public class ItensMapper {
         dto.setNome(itens.getNome());
         dto.setDescricao(itens.getDescricao());
         dto.setTipoItem(itens.getTipoItem());
-        dto.setLocalId(localId);
+        dto.setDescLocalItem(itens.getDesc_Local_Item());
         dto.setUsuarioRelatorId(usuarioRelatorId);
         dto.setDtaCriacao(itens.getDtaCriacao());
         dto.setFlgInativo(itens.getFlgInativo());
@@ -68,7 +66,7 @@ public class ItensMapper {
         itens.setNome(dto.getNome());
         itens.setDescricao(dto.getDescricao());
         itens.setTipoItem(dto.getTipoItem());
-        itens.setLocal_id(toLocal(dto.getLocalId()));
+        itens.setDesc_Local_Item(dto.getDescLocalItem());
         itens.setUsuario_relator_id(toUsuario(dto.getUsuarioRelatorId()));
         itens.setDtaCriacao(dto.getDtaCriacao());
         itens.setFlgInativo(dto.getFlgInativo());
@@ -86,7 +84,7 @@ public class ItensMapper {
         itens.setNome(dto.getNome());
         itens.setDescricao(dto.getDescricao());
         itens.setTipoItem(dto.getTipoItem());
-        itens.setLocal_id(toLocal(dto.getLocalId()));
+        itens.setDesc_Local_Item(dto.getDescLocalItem());
         itens.setUsuario_relator_id(toUsuario(dto.getUsuarioRelatorId()));
         
         return itens;
@@ -106,8 +104,8 @@ public class ItensMapper {
         if (dto.getTipoItem() != null) {
             itens.setTipoItem(dto.getTipoItem());
         }
-        if (dto.getLocalId() != null) {
-            itens.setLocal_id(toLocal(dto.getLocalId()));
+        if (dto.getDescLocalItem() != null) {
+            itens.setDesc_Local_Item(dto.getDescLocalItem());
         }
         if (dto.getUsuarioRelatorId() != null) {
             itens.setUsuario_relator_id(toUsuario(dto.getUsuarioRelatorId()));
@@ -127,15 +125,6 @@ public class ItensMapper {
                 .collect(Collectors.toList());
         
         return new ItemListDTO(dtoList, dtoList.size());
-    }
-
-    private Local toLocal(Integer id) {
-        if (id == null) {
-            return null;
-        }
-        Local local = new Local();
-        local.setId(id);
-        return local;
     }
 
     private Usuario toUsuario(Integer id) {

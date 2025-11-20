@@ -12,6 +12,6 @@ public class ItemCreateDTO {
     private String nome;
     private String descricao;
     private Tipo_Item tipoItem;
-    private Integer localId;
+    private String descLocalItem;
     private Integer usuarioRelatorId;
 }

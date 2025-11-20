@@ -29,9 +29,8 @@ public class Itens implements Serializable {
     @Column(name = "Status_item", length = 50, nullable = false)
     private Status_Item Status_item;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "Local_id", nullable = false, foreignKey = @ForeignKey(name = "fk_itens_local"))
-    private Local Local_id;
+    @Column(name = "Desc_Local_Item", columnDefinition = "TEXT", nullable = false)
+    private String Desc_Local_Item;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "Usuario_relator_id", nullable = false, foreignKey = @ForeignKey(name = "fk_itens_usuario_relator"))
@@ -93,12 +92,12 @@ public class Itens implements Serializable {
         this.Status_item = status_item;
     }
 
-    public Local getLocal_id() {
-        return Local_id;
+    public String getDesc_Local_Item() {
+        return Desc_Local_Item;
     }
 
-    public void setLocal_id(Local local_id) {
-        this.Local_id = local_id;
+    public void setDesc_Local_Item(String desc_Local_Item) {
+        this.Desc_Local_Item = desc_Local_Item;
     }
 
     public Usuario getUsuario_relator_id() {

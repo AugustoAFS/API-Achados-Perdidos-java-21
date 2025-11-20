@@ -50,11 +50,9 @@ public class ItensQueries implements IItensQueries {
         }
 
         // Mapear relacionamentos - criar objetos mínimos com apenas ID
-        Integer localId = rs.getObject("local_id", Integer.class);
-        if (localId != null) {
-            com.AchadosPerdidos.API.Domain.Entity.Local local = new com.AchadosPerdidos.API.Domain.Entity.Local();
-            local.setId(localId);
-            itens.setLocal_id(local);
+        String descLocalItem = rs.getString("Desc_Local_Item");
+        if (descLocalItem != null) {
+            itens.setDesc_Local_Item(descLocalItem);
         }
         
         Integer usuarioRelatorId = rs.getObject("usuario_relator_id", Integer.class);
@@ -92,15 +90,13 @@ public class ItensQueries implements IItensQueries {
     };
 
     /**
-     * Busca itens por campus usando JOIN com locais
-     * Esta operação requer JOIN, por isso fica nas Queries
+     * Busca itens por campus - REMOVIDO: não é mais possível buscar por campus sem a tabela locais
+     * Esta funcionalidade foi removida com a remoção da tabela locais
      */
     @Override
     public List<Itens> findByCampus(int campusId) {
-        String sql = "SELECT i.* FROM ap_achados_perdidos.itens i " +
-                     "INNER JOIN ap_achados_perdidos.locais l ON i.local_id = l.id " +
-                     "WHERE l.campus_id = ? AND i.Flg_Inativo = false ORDER BY i.Dta_Criacao DESC";
-        return jdbcTemplate.query(sql, rowMapper, campusId);
+        // Retorna lista vazia pois não há mais relação com campus através de locais
+        return java.util.Collections.emptyList();
     }
 
     /**

@@ -14,7 +14,6 @@ public interface IItensService {
     ItemListDTO getActiveItens();
     ItemListDTO getItensByUser(int userId);
     ItemListDTO getItensByCampus(int campusId);
-    ItemListDTO getItensByLocal(int localId);
     ItemListDTO searchItens(String searchTerm);
     ItemListDTO getItensByTipo(String tipo);
 }

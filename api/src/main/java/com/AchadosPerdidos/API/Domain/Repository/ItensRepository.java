@@ -84,15 +84,6 @@ public class ItensRepository implements IItensRepository {
     }
 
     @Override
-    public List<Itens> findByLocal(int localId) {
-        TypedQuery<Itens> query = entityManager.createQuery(
-            "SELECT i FROM Itens i WHERE i.Local_id.Id = :localId AND i.Flg_Inativo = false ORDER BY i.Dta_Criacao DESC", 
-            Itens.class);
-        query.setParameter("localId", localId);
-        return query.getResultList();
-    }
-
-    @Override
     public List<Itens> findByTipo(String tipo) {
         Tipo_Item tipoItem = Tipo_Item.valueOf(tipo.toUpperCase());
         TypedQuery<Itens> query = entityManager.createQuery(

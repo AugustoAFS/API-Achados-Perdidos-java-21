@@ -10,7 +10,6 @@ import com.AchadosPerdidos.API.Domain.Entity.Itens;
 import com.AchadosPerdidos.API.Domain.Enum.Tipo_Item;
 import com.AchadosPerdidos.API.Domain.Enum.Status_Item;
 import com.AchadosPerdidos.API.Domain.Repository.ItensRepository;
-import com.AchadosPerdidos.API.Domain.Repository.LocalRepository;
 import com.AchadosPerdidos.API.Domain.Repository.UsuariosRepository;
 import com.AchadosPerdidos.API.Exeptions.BusinessException;
 import com.AchadosPerdidos.API.Exeptions.ResourceNotFoundException;
@@ -31,9 +30,6 @@ public class ItensService implements IItensService {
 
     @Autowired
     private ItensMapper itensMapper;
-    
-    @Autowired
-    private LocalRepository localRepository;
     
     @Autowired
     private UsuariosRepository usuariosRepository;
@@ -155,16 +151,6 @@ public class ItensService implements IItensService {
         return itensMapper.toListDTO(itens);
     }
 
-    @Override
-    @Cacheable(value = "itens", key = "'local_' + #localId")
-    public ItemListDTO getItensByLocal(int localId) {
-        if (localId <= 0) {
-            throw new IllegalArgumentException("ID do local deve ser válido");
-        }
-        
-        List<Itens> itens = itensRepository.findByLocal(localId);
-        return itensMapper.toListDTO(itens);
-    }
 
     @Override
     @Cacheable(value = "itens", key = "'search_' + #searchTerm")
@@ -213,12 +199,9 @@ public class ItensService implements IItensService {
             throw new BusinessException("Item", "criar", "Tipo do item é obrigatório");
         }
         
-        if (createDTO.getLocalId() == null || createDTO.getLocalId() <= 0) {
-            throw new BusinessException("Item", "criar", "ID do local é obrigatório e deve ser válido");
+        if (createDTO.getDescLocalItem() == null || createDTO.getDescLocalItem().trim().isEmpty()) {
+            throw new BusinessException("Item", "criar", "Descrição do local é obrigatória");
         }
-        
-        localRepository.findById(createDTO.getLocalId())
-            .orElseThrow(() -> new ResourceNotFoundException("Local", "ID", createDTO.getLocalId()));
         
         if (createDTO.getUsuarioRelatorId() == null || createDTO.getUsuarioRelatorId() <= 0) {
             throw new BusinessException("Item", "criar", "ID do usuário relator é obrigatório e deve ser válido");
