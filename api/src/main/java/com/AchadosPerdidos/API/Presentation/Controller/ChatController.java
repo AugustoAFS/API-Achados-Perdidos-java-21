@@ -273,6 +273,39 @@ public class ChatController {
     }
 
     /**
+     * REST: Buscar histórico de chats do usuário
+     */
+    @Operation(summary = "Buscar histórico de chats", description = "Retorna lista de chats do usuário com última mensagem, contador de não lidas e nome do outro usuário")
+    @GetMapping("/chats/{userId}")
+    public ResponseEntity<com.AchadosPerdidos.API.Application.DTOs.ChatMessage.ChatSummaryListDTO> getUserChats(
+            @Parameter(description = "ID do usuário") @PathVariable String userId) {
+        try {
+            com.AchadosPerdidos.API.Application.DTOs.ChatMessage.ChatSummaryListDTO chats = chatService.getUserChats(userId);
+            return ResponseEntity.ok(chats);
+        } catch (Exception e) {
+            logger.error("Erro ao buscar histórico de chats para usuário {}: {}", userId, e.getMessage(), e);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * REST: Buscar mensagens não lidas do usuário
+     */
+    @Operation(summary = "Buscar mensagens não lidas", description = "Retorna lista de mensagens não lidas do usuário")
+    @GetMapping("/unread/{userId}")
+    public ResponseEntity<List<ChatMessage>> getUnreadMessages(
+            @Parameter(description = "ID do usuário") @PathVariable String userId) {
+        try {
+            List<ChatMessage> unreadMessages = chatService.getUnreadMessages(userId);
+            logger.info("Encontradas {} mensagens não lidas para o usuário {}", unreadMessages.size(), userId);
+            return ResponseEntity.ok(unreadMessages);
+        } catch (Exception e) {
+            logger.error("Erro ao buscar mensagens não lidas para usuário {}: {}", userId, e.getMessage(), e);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
      * Envia push notification para o destinatário da mensagem, se necessário
      * Só envia push para mensagens do tipo CHAT (não envia para SYSTEM, TYPING, etc.)
      */
@@ -335,12 +368,17 @@ public class ChatController {
             }
 
             // Envia push notification para todos os dispositivos do usuário
+            logger.info("🔔 Tentando enviar push notification - Usuário: {}, Tokens: {}, Título: '{}', Corpo: '{}'", 
+                usuarioDestinoId, deviceTokens.size(), title, body.length() > 50 ? body.substring(0, 50) + "..." : body);
+            
             int sentCount = oneSignalConfig.sendPushNotificationToMultiple(deviceTokens, title, body, data);
             
             if (sentCount > 0) {
-                logger.info("Push notification enviada para {} dispositivo(s) do usuário {}", sentCount, usuarioDestinoId);
+                logger.info("✅ Push notification enviada com SUCESSO para {} dispositivo(s) do usuário {} - Tokens: {}", 
+                    sentCount, usuarioDestinoId, deviceTokens);
             } else {
-                logger.warn("Falha ao enviar push notification para o usuário {}", usuarioDestinoId);
+                logger.warn("❌ FALHA ao enviar push notification para o usuário {} - Verifique se OneSignal está configurado corretamente", 
+                    usuarioDestinoId);
             }
 
         } catch (Exception e) {
