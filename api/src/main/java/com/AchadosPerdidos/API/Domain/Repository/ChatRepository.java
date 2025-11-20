@@ -253,5 +253,49 @@ public class ChatRepository implements IChatRepository {
         );
         return mongoTemplate.find(query, ChatMessage.class, COLLECTION_NAME);
     }
+
+    /**
+     * Busca todos os chats únicos de um usuário (como remetente ou destinatário)
+     * Retorna a última mensagem de cada chat
+     */
+    public List<ChatMessage> findUserChats(String userId) {
+        // Busca mensagens onde o usuário é remetente ou destinatário
+        Criteria criteria = new Criteria().orOperator(
+                Criteria.where("id_Usuario_Remetente").is(userId),
+                Criteria.where("id_Usuario_Destino").is(userId)
+        );
+        
+        // Ordena por data descendente para pegar as mais recentes
+        Query query = new Query(criteria)
+                .with(Sort.by(Sort.Direction.DESC, "data_Hora_Menssagem"));
+        
+        List<ChatMessage> allMessages = mongoTemplate.find(query, ChatMessage.class, COLLECTION_NAME);
+        
+        // Agrupa por chatId e pega apenas a última mensagem de cada chat
+        return allMessages.stream()
+                .filter(msg -> msg.getId_Chat() != null && !msg.getId_Chat().isEmpty())
+                .collect(java.util.stream.Collectors.toMap(
+                    ChatMessage::getId_Chat,
+                    msg -> msg,
+                    (existing, replacement) -> existing.getData_Hora_Menssagem()
+                        .isAfter(replacement.getData_Hora_Menssagem()) ? existing : replacement
+                ))
+                .values()
+                .stream()
+                .sorted((a, b) -> b.getData_Hora_Menssagem().compareTo(a.getData_Hora_Menssagem()))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * Conta mensagens não lidas de um usuário em um chat específico
+     */
+    public int countUnreadMessagesByChat(String chatId, String userId) {
+        Query query = new Query(
+                Criteria.where("id_Chat").is(chatId)
+                        .and("id_Usuario_Destino").is(userId)
+                        .and("status").ne(Status_Menssagem.LIDA)
+        );
+        return (int) mongoTemplate.count(query, ChatMessage.class, COLLECTION_NAME);
+    }
 }
 
