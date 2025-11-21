@@ -6,6 +6,8 @@ import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosUpdateDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Usuario.AlunoCreateDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Usuario.ServidorCreateDTO;
 import com.AchadosPerdidos.API.Application.Mapper.UsuariosMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IJWTService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuariosService;
@@ -628,27 +630,40 @@ public class UsuariosService implements IUsuariosService {
      */
     @Override
     @CacheEvict(value = "usuarios", allEntries = true)
-    public UsuariosCreateDTO createAluno(UsuariosCreateDTO usuariosCreateDTO) {
+    public UsuariosCreateDTO createAluno(AlunoCreateDTO alunoDTO) {
         logger.info("Iniciando criação de novo aluno");
 
-        if (usuariosCreateDTO == null) {
+        if (alunoDTO == null) {
             throw new ValidationException("Dados do aluno não podem ser nulos");
         }
 
         // Validar matrícula obrigatória para aluno
-        if (!StringUtils.hasText(usuariosCreateDTO.getMatricula())) {
+        if (!StringUtils.hasText(alunoDTO.getMatricula())) {
             throw new ValidationException("A matrícula é obrigatória para alunos");
         }
 
-        // Validações de entrada (herda do método padrão)
-        validateUsuarioCreation(usuariosCreateDTO);
+        // Validações básicas
+        if (!StringUtils.hasText(alunoDTO.getNomeCompleto()) || alunoDTO.getNomeCompleto().trim().length() < 3) {
+            throw new ValidationException("O nome completo é obrigatório e deve ter pelo menos 3 caracteres");
+        }
+
+        if (!StringUtils.hasText(alunoDTO.getEmail())) {
+            throw new ValidationException("O email é obrigatório");
+        }
+        if (!EMAIL_PATTERN.matcher(alunoDTO.getEmail().trim()).matches()) {
+            throw new ValidationException("Formato de email inválido");
+        }
+
+        if (!StringUtils.hasText(alunoDTO.getSenha()) || alunoDTO.getSenha().length() < 6) {
+            throw new ValidationException("A senha é obrigatória e deve ter pelo menos 6 caracteres");
+        }
 
         // Verificação de duplicatas
-        checkDuplicateEmail(usuariosCreateDTO.getEmail(), null);
-        checkDuplicateMatricula(usuariosCreateDTO.getMatricula(), null);
+        checkDuplicateEmail(alunoDTO.getEmail(), null);
+        checkDuplicateMatricula(alunoDTO.getMatricula(), null);
 
-        // Mapear DTO para Entidade
-        Usuario usuario = usuariosMapper.fromCreateDTO(usuariosCreateDTO);
+        // Mapear DTO específico para Entidade
+        Usuario usuario = usuariosMapper.fromAlunoCreateDTO(alunoDTO);
 
         // Definir role ALUNO
         Role alunoRole = getRoleByNome("ALUNO");
@@ -656,7 +671,7 @@ public class UsuariosService implements IUsuariosService {
         logger.debug("Role 'ALUNO' atribuída ao novo aluno");
 
         // Criptografar senha
-        String hashSenha = passwordEncoder.encode(usuariosCreateDTO.getSenha());
+        String hashSenha = passwordEncoder.encode(alunoDTO.getSenha());
         usuario.setHash_senha(hashSenha);
 
         // Definir dados de auditoria
@@ -669,14 +684,14 @@ public class UsuariosService implements IUsuariosService {
             savedUsuario.getId(), savedUsuario.getEmail(), savedUsuario.getMatricula());
 
         // Associar ao campus se fornecido
-        if (usuariosCreateDTO.getCampusId() != null && usuariosCreateDTO.getCampusId() > 0) {
+        if (alunoDTO.getCampusId() != null && alunoDTO.getCampusId() > 0) {
             try {
                 UsuarioCampusCreateDTO usuarioCampusCreateDTO = new UsuarioCampusCreateDTO();
                 usuarioCampusCreateDTO.setUsuarioId(savedUsuario.getId());
-                usuarioCampusCreateDTO.setCampusId(usuariosCreateDTO.getCampusId());
+                usuarioCampusCreateDTO.setCampusId(alunoDTO.getCampusId());
 
                 usuarioCampusService.createUsuarioCampus(usuarioCampusCreateDTO);
-                logger.info("Aluno associado ao campus ID: {}", usuariosCreateDTO.getCampusId());
+                logger.info("Aluno associado ao campus ID: {}", alunoDTO.getCampusId());
             } catch (Exception e) {
                 logger.error("Erro ao associar aluno ao campus: {}", e.getMessage(), e);
             }
@@ -691,33 +706,46 @@ public class UsuariosService implements IUsuariosService {
      */
     @Override
     @CacheEvict(value = "usuarios", allEntries = true)
-    public UsuariosCreateDTO createServidor(UsuariosCreateDTO usuariosCreateDTO) {
+    public UsuariosCreateDTO createServidor(ServidorCreateDTO servidorDTO) {
         logger.info("Iniciando criação de novo servidor");
 
-        if (usuariosCreateDTO == null) {
+        if (servidorDTO == null) {
             throw new ValidationException("Dados do servidor não podem ser nulos");
         }
 
         // Validar CPF obrigatório para servidor
-        if (!StringUtils.hasText(usuariosCreateDTO.getCpf())) {
+        if (!StringUtils.hasText(servidorDTO.getCpf())) {
             throw new ValidationException("O CPF é obrigatório para servidores");
         }
 
         // Validar formato do CPF (11 dígitos)
-        String cleanCpf = usuariosCreateDTO.getCpf().replaceAll("[^0-9]", "");
+        String cleanCpf = servidorDTO.getCpf().replaceAll("[^0-9]", "");
         if (cleanCpf.length() != 11) {
             throw new ValidationException("CPF inválido. Deve conter exatamente 11 dígitos");
         }
 
-        // Validações de entrada (herda do método padrão)
-        validateUsuarioCreation(usuariosCreateDTO);
+        // Validações básicas
+        if (!StringUtils.hasText(servidorDTO.getNomeCompleto()) || servidorDTO.getNomeCompleto().trim().length() < 3) {
+            throw new ValidationException("O nome completo é obrigatório e deve ter pelo menos 3 caracteres");
+        }
+
+        if (!StringUtils.hasText(servidorDTO.getEmail())) {
+            throw new ValidationException("O email é obrigatório");
+        }
+        if (!EMAIL_PATTERN.matcher(servidorDTO.getEmail().trim()).matches()) {
+            throw new ValidationException("Formato de email inválido");
+        }
+
+        if (!StringUtils.hasText(servidorDTO.getSenha()) || servidorDTO.getSenha().length() < 6) {
+            throw new ValidationException("A senha é obrigatória e deve ter pelo menos 6 caracteres");
+        }
 
         // Verificação de duplicatas
-        checkDuplicateEmail(usuariosCreateDTO.getEmail(), null);
+        checkDuplicateEmail(servidorDTO.getEmail(), null);
         checkDuplicateCPF(cleanCpf, null);
 
-        // Mapear DTO para Entidade
-        Usuario usuario = usuariosMapper.fromCreateDTO(usuariosCreateDTO);
+        // Mapear DTO específico para Entidade
+        Usuario usuario = usuariosMapper.fromServidorCreateDTO(servidorDTO);
         usuario.setCpf(cleanCpf); // Garantir que o CPF está limpo
 
         // Definir role SERVIDOR
@@ -726,7 +754,7 @@ public class UsuariosService implements IUsuariosService {
         logger.debug("Role 'SERVIDOR' atribuída ao novo servidor");
 
         // Criptografar senha
-        String hashSenha = passwordEncoder.encode(usuariosCreateDTO.getSenha());
+        String hashSenha = passwordEncoder.encode(servidorDTO.getSenha());
         usuario.setHash_senha(hashSenha);
 
         // Definir dados de auditoria
@@ -739,14 +767,14 @@ public class UsuariosService implements IUsuariosService {
             savedUsuario.getId(), savedUsuario.getEmail(), savedUsuario.getCpf());
 
         // Associar ao campus se fornecido
-        if (usuariosCreateDTO.getCampusId() != null && usuariosCreateDTO.getCampusId() > 0) {
+        if (servidorDTO.getCampusId() != null && servidorDTO.getCampusId() > 0) {
             try {
                 UsuarioCampusCreateDTO usuarioCampusCreateDTO = new UsuarioCampusCreateDTO();
                 usuarioCampusCreateDTO.setUsuarioId(savedUsuario.getId());
-                usuarioCampusCreateDTO.setCampusId(usuariosCreateDTO.getCampusId());
+                usuarioCampusCreateDTO.setCampusId(servidorDTO.getCampusId());
 
                 usuarioCampusService.createUsuarioCampus(usuarioCampusCreateDTO);
-                logger.info("Servidor associado ao campus ID: {}", usuariosCreateDTO.getCampusId());
+                logger.info("Servidor associado ao campus ID: {}", servidorDTO.getCampusId());
             } catch (Exception e) {
                 logger.error("Erro ao associar servidor ao campus: {}", e.getMessage(), e);
             }
