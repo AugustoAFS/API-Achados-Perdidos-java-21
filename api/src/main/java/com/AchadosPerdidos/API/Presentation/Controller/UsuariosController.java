@@ -4,11 +4,12 @@ import com.AchadosPerdidos.API.Application.DTOs.Auth.LoginRequestDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Auth.TokenResponseDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Auth.RedefinirSenhaDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosCreateDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Usuario.AlunoCreateDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Usuario.ServidorCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosUpdateDTO;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuariosService;
 import com.AchadosPerdidos.API.Exeptions.BusinessException;
-import com.AchadosPerdidos.API.Exeptions.ValidationException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -62,33 +63,17 @@ public class UsuariosController {
     }
 
     @PostMapping("/aluno")
-    @Operation(summary = "Criar novo aluno", description = "Cria um novo usuário do tipo ALUNO. A matrícula é obrigatória. A instituição será preenchida automaticamente baseada no campus selecionado.")
-    public ResponseEntity<UsuariosCreateDTO> createAluno(@RequestBody UsuariosCreateDTO usuariosCreateDTO) {
-        try {
-            UsuariosCreateDTO createdAluno = usuariosService.createAluno(usuariosCreateDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdAluno);
-        } catch (BusinessException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (ValidationException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    @Operation(summary = "Criar novo aluno", description = "Cria um novo usuário do tipo ALUNO. A matrícula é obrigatória. Não inclui CPF. A instituição será preenchida automaticamente baseada no campus selecionado.")
+    public ResponseEntity<UsuariosCreateDTO> createAluno(@RequestBody AlunoCreateDTO alunoDTO) {
+        UsuariosCreateDTO createdAluno = usuariosService.createAluno(alunoDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdAluno);
     }
 
     @PostMapping("/servidor")
-    @Operation(summary = "Criar novo servidor", description = "Cria um novo usuário do tipo SERVIDOR. O CPF é obrigatório e deve ter 11 dígitos. A instituição será preenchida automaticamente baseada no campus selecionado.")
-    public ResponseEntity<UsuariosCreateDTO> createServidor(@RequestBody UsuariosCreateDTO usuariosCreateDTO) {
-        try {
-            UsuariosCreateDTO createdServidor = usuariosService.createServidor(usuariosCreateDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdServidor);
-        } catch (BusinessException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (ValidationException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    @Operation(summary = "Criar novo servidor", description = "Cria um novo usuário do tipo SERVIDOR. O CPF é obrigatório e deve ter 11 dígitos. Não inclui matrícula. A instituição será preenchida automaticamente baseada no campus selecionado.")
+    public ResponseEntity<UsuariosCreateDTO> createServidor(@RequestBody ServidorCreateDTO servidorDTO) {
+        UsuariosCreateDTO createdServidor = usuariosService.createServidor(servidorDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdServidor);
     }
 
     @PutMapping("/{id}")

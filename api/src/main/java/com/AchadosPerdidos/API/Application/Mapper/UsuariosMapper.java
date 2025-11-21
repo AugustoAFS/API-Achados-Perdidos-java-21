@@ -4,6 +4,8 @@ import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosUpdateDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Usuario.AlunoCreateDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Usuario.ServidorCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Campus.CampusDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosDTO;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuarioCampusService;
@@ -130,6 +132,46 @@ public class UsuariosMapper {
         usuario.setEmail(dto.getEmail());
         // Nota: O hash da senha é feito no serviço, não no mapper
         usuario.setMatricula(dto.getMatricula());
+        usuario.setNumero_telefone(dto.getNumeroTelefone());
+        usuario.setEndereco_id(toEndereco(dto.getEnderecoId()));
+        
+        return usuario;
+    }
+
+    /**
+     * Converte AlunoCreateDTO para entidade Usuario
+     * Aluno não tem CPF obrigatório, apenas matrícula
+     */
+    public Usuario fromAlunoCreateDTO(AlunoCreateDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+        
+        Usuario usuario = new Usuario();
+        usuario.setNomeCompleto(dto.getNomeCompleto());
+        usuario.setCpf(null); // Aluno não precisa de CPF
+        usuario.setEmail(dto.getEmail());
+        usuario.setMatricula(dto.getMatricula());
+        usuario.setNumero_telefone(dto.getNumeroTelefone());
+        usuario.setEndereco_id(toEndereco(dto.getEnderecoId()));
+        
+        return usuario;
+    }
+
+    /**
+     * Converte ServidorCreateDTO para entidade Usuario
+     * Servidor não tem matrícula, apenas CPF
+     */
+    public Usuario fromServidorCreateDTO(ServidorCreateDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+        
+        Usuario usuario = new Usuario();
+        usuario.setNomeCompleto(dto.getNomeCompleto());
+        usuario.setCpf(dto.getCpf());
+        usuario.setEmail(dto.getEmail());
+        usuario.setMatricula(null); // Servidor não tem matrícula
         usuario.setNumero_telefone(dto.getNumeroTelefone());
         usuario.setEndereco_id(toEndereco(dto.getEnderecoId()));
         
