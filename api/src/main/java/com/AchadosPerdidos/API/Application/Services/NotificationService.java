@@ -62,7 +62,7 @@ public class NotificationService implements INotificationService {
      */
     @Override
     @Async
-    public void notifyItemFound(int itemId, int finderId) {
+    public void sendItemFoundNotification(int itemId, int finderId) {
         try {
             // Busca o item e o usuário que encontrou
             ItemDTO item = itensService.getItemById(itemId);
@@ -103,7 +103,7 @@ public class NotificationService implements INotificationService {
      */
     @Override
     @Async
-    public void notifyItemClaimed(int itemId, int claimantId, int ownerId) {
+    public void sendItemClaimedNotification(int itemId, int claimantId, int ownerId) {
         try {
             ItemDTO item = itensService.getItemById(itemId);
             var claimantList = usuariosService.getUsuarioById(claimantId);
@@ -146,7 +146,7 @@ public class NotificationService implements INotificationService {
      */
     @Override
     @Async
-    public void notifyItemReturned(int itemId, int ownerId, int finderId) {
+    public void sendItemReturnedNotification(int itemId, int ownerId, int finderId) {
         try {
             ItemDTO item = itensService.getItemById(itemId);
             var ownerList = usuariosService.getUsuarioById(ownerId);
@@ -184,7 +184,7 @@ public class NotificationService implements INotificationService {
      */
     @Override
     @Scheduled(cron = "0 0 9 * * ?")
-    public void notifyItemsNearDonationDeadline() {
+    public void sendDonationDeadlineWarning() {
         try {
             // Busca itens ativos e filtra os que estão próximos do prazo (25+ dias desde a criação)
             LocalDateTime deadlineDate = LocalDateTime.now().minus(25, ChronoUnit.DAYS);
@@ -218,7 +218,6 @@ public class NotificationService implements INotificationService {
      * Marca itens como "Doado" após 30 dias sem reivindicação
      * Executado diariamente às 10:00
      */
-    @Override
     @Scheduled(cron = "0 0 10 * * ?")
     public void markItemsAsDonated() {
         try {

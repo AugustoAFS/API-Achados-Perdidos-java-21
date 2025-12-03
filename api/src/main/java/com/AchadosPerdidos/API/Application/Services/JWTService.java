@@ -28,7 +28,7 @@ public class JWTService implements IJWTService {
     }
     
     @Override
-    public String generateToken(String email, String name, String role, String userId) {
+    public String createToken(String email, String name, String role, String userId) {
         try {
             Map<String, Object> claims = new HashMap<>();
             claims.put("sub", userId);
@@ -91,28 +91,6 @@ public class JWTService implements IJWTService {
         }
     }
 
-    @Override
-    @Cacheable(value = "jwtUserIds", key = "#token", unless = "#result == null")
-    public String getUserIdFromToken(String token) {
-        try {
-            Claims claims = getClaims(token);
-            return claims.getSubject();
-        } catch (Exception e) {
-            _log.error("Erro ao extrair ID do usuário do token", e);
-            return null;
-        }
-    }
-
-    @Override
-    public boolean isTokenExpired(String token) {
-        try {
-            Claims claims = getClaims(token);
-            return claims.getExpiration().before(new Date());
-        } catch (Exception e) {
-            _log.error("Erro ao verificar expiração do token", e);
-            return true;
-        }
-    }
 
     private Claims getClaims(String token) {
         return Jwts.parser()

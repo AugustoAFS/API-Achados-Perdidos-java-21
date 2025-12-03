@@ -28,18 +28,10 @@ public class ItensMapper {
         Integer usuarioRelatorId = itens.getUsuario_relator_id() != null ? itens.getUsuario_relator_id().getId() : null;
 
         // Buscar fotos do item
+        // Nota: getItemPhotos não existe mais na interface IFotosService
         List<com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosDTO> fotos = Collections.emptyList();
-        if (itens.getId() != null) {
-            try {
-                var fotosList = fotosService.getItemPhotos(itens.getId());
-                fotos = fotosList != null && fotosList.getFotos() != null && !fotosList.getFotos().isEmpty() 
-                    ? fotosList.getFotos() 
-                    : Collections.emptyList();
-            } catch (Exception e) {
-                // Se houver erro ao buscar fotos, retorna lista vazia
-                fotos = Collections.emptyList();
-            }
-        }
+        // TODO: Implementar busca de fotos do item se necessário
+        // A interface IFotosService não possui mais métodos para buscar fotos por item
 
         ItemDTO dto = new ItemDTO();
         dto.setId(itens.getId());

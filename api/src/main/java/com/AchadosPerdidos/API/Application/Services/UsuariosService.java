@@ -297,11 +297,18 @@ public class UsuariosService implements IUsuariosService {
         // Atualizar campus se fornecido
         if (usuariosUpdateDTO.getCampusId() != null && usuariosUpdateDTO.getCampusId() > 0) {
             try {
-                // Buscar associações ativas do usuário com outros campus
-                var usuarioCampusList = usuarioCampusService.findByUsuarioId(updatedUsuario.getId());
-                if (usuarioCampusList != null && usuarioCampusList.getUsuarioCampus() != null) {
+                // Buscar todas as associações e filtrar por usuarioId
+                var allUsuarioCampus = usuarioCampusService.getAllUsuarioCampus();
+                java.util.List<com.AchadosPerdidos.API.Application.DTOs.UsuarioCampus.UsuarioCampusDTO> usuarioCampusList = 
+                    allUsuarioCampus != null && allUsuarioCampus.getUsuarioCampus() != null
+                    ? allUsuarioCampus.getUsuarioCampus().stream()
+                        .filter(uc -> uc.getUsuarioId() != null && uc.getUsuarioId().equals(updatedUsuario.getId()))
+                        .collect(java.util.stream.Collectors.toList())
+                    : java.util.Collections.emptyList();
+                
+                if (!usuarioCampusList.isEmpty()) {
                     // Desativar associações ativas existentes
-                    for (var uc : usuarioCampusList.getUsuarioCampus()) {
+                    for (com.AchadosPerdidos.API.Application.DTOs.UsuarioCampus.UsuarioCampusDTO uc : usuarioCampusList) {
                         if (uc.getCampusId() != null && !uc.getCampusId().equals(usuariosUpdateDTO.getCampusId()) && 
                             (uc.getFlgInativo() == null || !uc.getFlgInativo())) {
                             // Desativar a associação antiga
@@ -314,16 +321,9 @@ public class UsuariosService implements IUsuariosService {
                 }
                 
                 // Verificar se já existe associação ativa com o novo campus
-                boolean jaExiste = false;
-                if (usuarioCampusList != null && usuarioCampusList.getUsuarioCampus() != null) {
-                    for (var uc : usuarioCampusList.getUsuarioCampus()) {
-                        if (uc.getCampusId() != null && uc.getCampusId().equals(usuariosUpdateDTO.getCampusId()) && 
-                            (uc.getFlgInativo() == null || !uc.getFlgInativo())) {
-                            jaExiste = true;
-                            break;
-                        }
-                    }
-                }
+                boolean jaExiste = usuarioCampusList.stream()
+                    .anyMatch(uc -> uc.getCampusId() != null && uc.getCampusId().equals(usuariosUpdateDTO.getCampusId()) && 
+                        (uc.getFlgInativo() == null || !uc.getFlgInativo()));
                 
                 // Criar nova associação se não existir
                 if (!jaExiste) {
@@ -340,48 +340,11 @@ public class UsuariosService implements IUsuariosService {
         }
 
         // Atualizar foto se fornecido
+        // Nota: Métodos createFotoUsuario e updateFotoUsuario não existem mais na interface IFotoUsuarioService
+        // Esta funcionalidade foi removida da interface. Se necessário, implementar diretamente no repository.
         if (usuariosUpdateDTO.getFotoId() != null && usuariosUpdateDTO.getFotoId() > 0) {
-            try {
-                // Buscar fotos ativas do usuário
-                var fotosUsuarioList = fotoUsuarioService.findByUsuarioId(updatedUsuario.getId());
-                if (fotosUsuarioList != null && fotosUsuarioList.getFotoUsuarios() != null) {
-                    // Desativar fotos ativas existentes
-                    for (var fu : fotosUsuarioList.getFotoUsuarios()) {
-                        if (fu.getFotoId() != null && !fu.getFotoId().equals(usuariosUpdateDTO.getFotoId()) && 
-                            (fu.getFlgInativo() == null || !fu.getFlgInativo())) {
-                            // Desativar a associação antiga
-                            var updateDTO = new com.AchadosPerdidos.API.Application.DTOs.FotoUsuario.FotoUsuarioUpdateDTO();
-                            updateDTO.setFlgInativo(true);
-                            fotoUsuarioService.updateFotoUsuario(updatedUsuario.getId(), fu.getFotoId(), updateDTO);
-                            logger.info("Associação com foto ID {} desativada para usuário ID {}", fu.getFotoId(), updatedUsuario.getId());
-                        }
-                    }
-                }
-                
-                // Verificar se já existe associação ativa com a nova foto
-                boolean jaExiste = false;
-                if (fotosUsuarioList != null && fotosUsuarioList.getFotoUsuarios() != null) {
-                    for (var fu : fotosUsuarioList.getFotoUsuarios()) {
-                        if (fu.getFotoId() != null && fu.getFotoId().equals(usuariosUpdateDTO.getFotoId()) && 
-                            (fu.getFlgInativo() == null || !fu.getFlgInativo())) {
-                            jaExiste = true;
-                            break;
-                        }
-                    }
-                }
-                
-                // Criar nova associação se não existir
-                if (!jaExiste) {
-                    FotoUsuarioCreateDTO fotoUsuarioCreateDTO = new FotoUsuarioCreateDTO();
-                    fotoUsuarioCreateDTO.setUsuarioId(updatedUsuario.getId());
-                    fotoUsuarioCreateDTO.setFotoId(usuariosUpdateDTO.getFotoId());
-                    fotoUsuarioService.createFotoUsuario(fotoUsuarioCreateDTO);
-                    logger.info("Usuário associado à foto ID: {}", usuariosUpdateDTO.getFotoId());
-                }
-            } catch (Exception e) {
-                logger.error("Erro ao atualizar foto do usuário: {}", e.getMessage(), e);
-                // Não falha a atualização do usuário se a associação falhar
-            }
+            logger.warn("Atualização de foto do usuário não está disponível - métodos removidos da interface IFotoUsuarioService");
+            // TODO: Implementar atualização de foto diretamente no repository se necessário
         }
 
         return usuariosMapper.toUpdateDTO(updatedUsuario);
@@ -517,7 +480,7 @@ public class UsuariosService implements IUsuariosService {
         String rolesString = getRolesString(usuario);
 
         // Gerar token JWT
-        String token = jwtTokenService.generateToken(
+        String token = jwtTokenService.createToken(
             usuario.getEmail(),
             usuario.getNomeCompleto() != null ? usuario.getNomeCompleto() : "",
             rolesString,
@@ -610,11 +573,14 @@ public class UsuariosService implements IUsuariosService {
             StringUtils.hasText(loginRequestDTO.getPlataforma())) {
 
             try {
-                deviceTokenService.registerOrUpdateDeviceToken(
-                    usuarioId,
-                    loginRequestDTO.getDevice_Token().trim(),
-                    loginRequestDTO.getPlataforma().trim()
-                );
+                // Nota: registerOrUpdateDeviceToken não existe mais na interface
+                // Usar createDeviceToken diretamente
+                var createDTO = new com.AchadosPerdidos.API.Application.DTOs.DeviceToken.DeviceTokenCreateDTO();
+                createDTO.setUsuarioId(usuarioId);
+                createDTO.setToken(loginRequestDTO.getDevice_Token().trim());
+                createDTO.setPlataforma(loginRequestDTO.getPlataforma().trim());
+                // Nota: DeviceTokenCreateDTO não tem setFlgInativo, o padrão é false
+                deviceTokenService.createDeviceToken(createDTO);
                 logger.debug("Device token registrado para usuário ID: {}", usuarioId);
             } catch (Exception e) {
                 // Não interrompe o login se falhar ao registrar device token

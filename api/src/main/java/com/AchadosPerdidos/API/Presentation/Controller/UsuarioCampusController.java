@@ -33,22 +33,6 @@ public class UsuarioCampusController {
         }
     }
 
-    @GetMapping("/usuario/{usuarioId}/campus/{campusId}")
-    @Operation(summary = "Buscar relacionamento usuário-campus por IDs")
-    public ResponseEntity<UsuarioCampusDTO> getUsuarioCampusByUsuarioIdAndCampusId(
-            @PathVariable Integer usuarioId,
-            @PathVariable Integer campusId) {
-        try {
-            UsuarioCampusDTO usuarioCampus = usuarioCampusService.getUsuarioCampusByUsuarioIdAndCampusId(usuarioId, campusId);
-            return ResponseEntity.ok(usuarioCampus);
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
 
     @PostMapping
     @Operation(summary = "Criar novo relacionamento usuário-campus")
@@ -117,30 +101,5 @@ public class UsuarioCampusController {
         }
     }
 
-    @GetMapping("/usuario/{usuarioId}")
-    @Operation(summary = "Buscar campus por ID do usuário")
-    public ResponseEntity<UsuarioCampusListDTO> findByUsuarioId(@PathVariable Integer usuarioId) {
-        try {
-            UsuarioCampusListDTO usuarioCampus = usuarioCampusService.findByUsuarioId(usuarioId);
-            return ResponseEntity.ok(usuarioCampus);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    @GetMapping("/campus/{campusId}")
-    @Operation(summary = "Buscar usuários por ID do campus")
-    public ResponseEntity<UsuarioCampusListDTO> findByCampusId(@PathVariable Integer campusId) {
-        try {
-            UsuarioCampusListDTO usuarioCampus = usuarioCampusService.findByCampusId(campusId);
-            return ResponseEntity.ok(usuarioCampus);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
 }
 

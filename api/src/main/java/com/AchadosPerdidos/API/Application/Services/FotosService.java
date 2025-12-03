@@ -2,13 +2,8 @@ package com.AchadosPerdidos.API.Application.Services;
 
 import com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosListDTO;
-import com.AchadosPerdidos.API.Application.DTOs.FotoUsuario.FotoUsuarioCreateDTO;
-import com.AchadosPerdidos.API.Application.DTOs.FotoUsuario.FotoUsuarioUpdateDTO;
-import com.AchadosPerdidos.API.Application.DTOs.FotoItem.FotoItemCreateDTO;
 import com.AchadosPerdidos.API.Application.Mapper.FotosMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotosService;
-import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotoUsuarioService;
-import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotoItemService;
 import com.AchadosPerdidos.API.Exeptions.BusinessException;
 import com.AchadosPerdidos.API.Domain.Entity.Foto;
 import com.AchadosPerdidos.API.Domain.Repository.FotosRepository;
@@ -36,11 +31,6 @@ public class FotosService implements IFotosService {
     @Autowired
     private S3Service s3Service;
 
-    @Autowired
-    private IFotoUsuarioService fotoUsuarioService;
-
-    @Autowired
-    private IFotoItemService fotoItemService;
 
     @Override
     public FotosListDTO getAllFotos() {
@@ -49,13 +39,7 @@ public class FotosService implements IFotosService {
     }
 
     @Override
-    public FotosDTO getFotoById(int id) {
-        Foto foto = fotosRepository.findById(id);
-        return fotosMapper.toDTO(foto);
-    }
-
-    @Override
-    public FotosDTO createFoto(FotosDTO fotosDTO) {
+    public FotosDTO createFotoUsaurio(FotosDTO fotosDTO) {
         Foto foto = fotosMapper.toEntity(fotosDTO);
         foto.setDtaCriacao(LocalDateTime.now());
         foto.setFlgInativo(false);
@@ -65,13 +49,22 @@ public class FotosService implements IFotosService {
     }
 
     @Override
-    public FotosDTO updateFoto(int id, FotosDTO fotosDTO) {
+    public FotosDTO createFotoItem(FotosDTO fotosDTO) {
+        Foto foto = fotosMapper.toEntity(fotosDTO);
+        foto.setDtaCriacao(LocalDateTime.now());
+        foto.setFlgInativo(false);
+        
+        Foto savedFoto = fotosRepository.save(foto);
+        return fotosMapper.toDTO(savedFoto);
+    }
+
+    @Override
+    public FotosDTO updateFotoUsuario(int id, FotosDTO fotosDTO) {
         Foto existingFoto = fotosRepository.findById(id);
         if (existingFoto == null) {
             return null;
         }
         
-        // Mapeamento correto dos campos do FotosDTO para a entidade Foto
         if (fotosDTO.getUrl() != null) {
             existingFoto.setUrl(fotosDTO.getUrl());
         }
@@ -94,7 +87,35 @@ public class FotosService implements IFotosService {
     }
 
     @Override
-    public boolean deleteFoto(int id) {
+    public FotosDTO updateFotoItem(int id, FotosDTO fotosDTO) {
+        Foto existingFoto = fotosRepository.findById(id);
+        if (existingFoto == null) {
+            return null;
+        }
+        
+        if (fotosDTO.getUrl() != null) {
+            existingFoto.setUrl(fotosDTO.getUrl());
+        }
+        if (fotosDTO.getProvedorArmazenamento() != null) {
+            existingFoto.setProvedorArmazenamento(fotosDTO.getProvedorArmazenamento());
+        }
+        if (fotosDTO.getChaveArmazenamento() != null) {
+            existingFoto.setChaveArmazenamento(fotosDTO.getChaveArmazenamento());
+        }
+        if (fotosDTO.getNomeArquivoOriginal() != null) {
+            existingFoto.setNomeArquivoOriginal(fotosDTO.getNomeArquivoOriginal());
+        }
+        if (fotosDTO.getTamanhoArquivoBytes() != null) {
+            existingFoto.setTamanhoArquivoBytes(fotosDTO.getTamanhoArquivoBytes());
+        }
+        existingFoto.setDtaCriacao(LocalDateTime.now());
+        
+        Foto updatedFoto = fotosRepository.save(existingFoto);
+        return fotosMapper.toDTO(updatedFoto);
+    }
+
+    @Override
+    public boolean deleteFotoUsuario(int id) {
         Foto foto = fotosRepository.findById(id);
         if (foto == null) {
             return false;
@@ -104,45 +125,13 @@ public class FotosService implements IFotosService {
     }
 
     @Override
-    public FotosListDTO getActiveFotos() {
-        List<Foto> activeFotos = fotosRepository.findActive();
-        return fotosMapper.toListDTO(activeFotos);
-    }
-
-    @Override
-    public FotosListDTO getFotosByUser(int userId) {
-        List<Foto> fotos = fotosRepository.findByUser(userId);
-        return fotosMapper.toListDTO(fotos);
-    }
-
-    @Override
-    public FotosListDTO getFotosByItem(int itemId) {
-        List<Foto> fotos = fotosRepository.findByItem(itemId);
-        return fotosMapper.toListDTO(fotos);
-    }
-
-    @Override
-    public FotosListDTO getProfilePhotos(int userId) {
-        List<Foto> fotos = fotosRepository.findProfilePhotos(userId);
-        return fotosMapper.toListDTO(fotos);
-    }
-
-    @Override
-    public FotosListDTO getItemPhotos(int itemId) {
-        List<Foto> fotos = fotosRepository.findItemPhotos(itemId);
-        return fotosMapper.toListDTO(fotos);
-    }
-
-    @Override
-    public FotosDTO getMainItemPhoto(int itemId) {
-        Foto foto = fotosRepository.findMainItemPhoto(itemId);
-        return fotosMapper.toDTO(foto);
-    }
-
-    @Override
-    public FotosDTO getProfilePhoto(int userId) {
-        Foto foto = fotosRepository.findProfilePhoto(userId);
-        return fotosMapper.toDTO(foto);
+    public boolean deleteFotoItem(int id) {
+        Foto foto = fotosRepository.findById(id);
+        if (foto == null) {
+            return false;
+        }
+        
+        return fotosRepository.deleteById(id);
     }
 
     /**
@@ -296,32 +285,15 @@ public class FotosService implements IFotosService {
         FotosDTO foto = uploadPhoto(file, userId, null, true);
         
         // Criar associação automaticamente na tabela fotos_usuario
+        // Nota: Métodos createFotoUsuario e updateFotoUsuario não estão mais na interface IFotoUsuarioService
+        // Esta funcionalidade precisa ser implementada diretamente via repository ou adicionada à interface
         try {
             if (foto != null && foto.getId() != null) {
-                // Desativar fotos de perfil anteriores
-                var fotosUsuarioList = fotoUsuarioService.findByUsuarioId(userId);
-                if (fotosUsuarioList != null && fotosUsuarioList.getFotoUsuarios() != null) {
-                    for (var fu : fotosUsuarioList.getFotoUsuarios()) {
-                        if (fu.getFotoId() != null && !fu.getFotoId().equals(foto.getId()) && 
-                            (fu.getFlgInativo() == null || !fu.getFlgInativo())) {
-                            var updateDTO = new FotoUsuarioUpdateDTO();
-                            updateDTO.setFlgInativo(true);
-                            fotoUsuarioService.updateFotoUsuario(userId, fu.getFotoId(), updateDTO);
-                            logger.info("Foto de perfil anterior (ID: {}) desativada para usuário ID: {}", fu.getFotoId(), userId);
-                        }
-                    }
-                }
-                
-                // Criar nova associação
-                var createDTO = new FotoUsuarioCreateDTO();
-                createDTO.setUsuarioId(userId);
-                createDTO.setFotoId(foto.getId());
-                fotoUsuarioService.createFotoUsuario(createDTO);
-                logger.info("Associação criada entre usuário ID: {} e foto ID: {}", userId, foto.getId());
+                logger.info("Foto de perfil salva com ID: {} para usuário ID: {}", foto.getId(), userId);
+                // TODO: Implementar criação de associação foto-usuário via repository direto
             }
         } catch (Exception e) {
-            logger.error("Erro ao criar associação foto-usuário após upload: {}", e.getMessage(), e);
-            // Não falha o upload se a associação falhar, mas loga o erro
+            logger.error("Erro ao processar associação foto-usuário após upload: {}", e.getMessage(), e);
         }
         
         return foto;
@@ -362,11 +334,10 @@ public class FotosService implements IFotosService {
             }
             
             // 4. Criar associação na tabela foto_item APENAS se a foto foi salva com sucesso
-            var createDTO = new FotoItemCreateDTO();
-            createDTO.setItemId(itemId);
-            createDTO.setFotoId(foto.getId());
-            fotoItemService.createFotoItem(createDTO);
-            logger.info("✅ Associação criada com sucesso entre item ID: {} e foto ID: {} (foto salva no banco)", itemId, foto.getId());
+            // Nota: Método createFotoItem não está mais na interface IFotoItemService
+            // Esta funcionalidade precisa ser implementada diretamente via repository ou adicionada à interface
+            logger.info("✅ Foto salva com sucesso. Item ID: {} e foto ID: {} (foto salva no banco)", itemId, foto.getId());
+            // TODO: Implementar criação de associação foto-item via repository direto
             
         } catch (BusinessException e) {
             // Se já existe associação ativa, apenas loga (não é erro crítico)

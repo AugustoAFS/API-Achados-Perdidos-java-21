@@ -39,31 +39,26 @@ public class FotosController {
         return ResponseEntity.ok(fotos);
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Buscar foto por ID", description = "Retorna os detalhes de uma foto específica pelo seu ID")
-    public ResponseEntity<FotosDTO> getFotoById(
-            @Parameter(description = "ID da foto a ser buscada") @PathVariable int id) {
-        FotosDTO foto = fotosService.getFotoById(id);
-        if (foto != null) {
-            return ResponseEntity.ok(foto);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @PostMapping
-    @Operation(summary = "Criar nova foto", description = "Cria um novo registro de foto no banco de dados. Para upload de arquivo, use os endpoints /upload")
-    public ResponseEntity<FotosDTO> createFoto(@RequestBody FotosDTO fotosDTO) {
-        FotosDTO createdFoto = fotosService.createFoto(fotosDTO);
+    @PostMapping("/usuario")
+    @Operation(summary = "Criar foto de usuário", description = "Cria um novo registro de foto de usuário no banco de dados")
+    public ResponseEntity<FotosDTO> createFotoUsuario(@RequestBody FotosDTO fotosDTO) {
+        FotosDTO createdFoto = fotosService.createFotoUsaurio(fotosDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdFoto);
     }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Atualizar foto", description = "Atualiza os metadados de uma foto existente (URL, nome do arquivo, etc.)")
-    public ResponseEntity<FotosDTO> updateFoto(
+    @PostMapping("/item")
+    @Operation(summary = "Criar foto de item", description = "Cria um novo registro de foto de item no banco de dados")
+    public ResponseEntity<FotosDTO> createFotoItem(@RequestBody FotosDTO fotosDTO) {
+        FotosDTO createdFoto = fotosService.createFotoItem(fotosDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdFoto);
+    }
+
+    @PutMapping("/usuario/{id}")
+    @Operation(summary = "Atualizar foto de usuário", description = "Atualiza os metadados de uma foto de usuário existente")
+    public ResponseEntity<FotosDTO> updateFotoUsuario(
             @Parameter(description = "ID da foto a ser atualizada") @PathVariable int id, 
             @RequestBody FotosDTO fotosDTO) {
-        FotosDTO updatedFoto = fotosService.updateFoto(id, fotosDTO);
+        FotosDTO updatedFoto = fotosService.updateFotoUsuario(id, fotosDTO);
         if (updatedFoto != null) {
             return ResponseEntity.ok(updatedFoto);
         } else {
@@ -71,11 +66,24 @@ public class FotosController {
         }
     }
 
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Deletar foto (soft delete)", description = "Marca uma foto como inativa no banco de dados. Não remove o arquivo do S3")
-    public ResponseEntity<Void> deleteFoto(
+    @PutMapping("/item/{id}")
+    @Operation(summary = "Atualizar foto de item", description = "Atualiza os metadados de uma foto de item existente")
+    public ResponseEntity<FotosDTO> updateFotoItem(
+            @Parameter(description = "ID da foto a ser atualizada") @PathVariable int id, 
+            @RequestBody FotosDTO fotosDTO) {
+        FotosDTO updatedFoto = fotosService.updateFotoItem(id, fotosDTO);
+        if (updatedFoto != null) {
+            return ResponseEntity.ok(updatedFoto);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/usuario/{id}")
+    @Operation(summary = "Deletar foto de usuário (soft delete)", description = "Marca uma foto de usuário como inativa no banco de dados")
+    public ResponseEntity<Void> deleteFotoUsuario(
             @Parameter(description = "ID da foto a ser deletada") @PathVariable int id) {
-        boolean deleted = fotosService.deleteFoto(id);
+        boolean deleted = fotosService.deleteFotoUsuario(id);
         if (deleted) {
             return ResponseEntity.noContent().build();
         } else {
@@ -83,66 +91,13 @@ public class FotosController {
         }
     }
 
-    // ========== BUSCAS E FILTROS ==========
-
-    @GetMapping("/active")
-    @Operation(summary = "Listar fotos ativas", description = "Retorna apenas as fotos que estão ativas (não foram deletadas)")
-    public ResponseEntity<FotosListDTO> getActiveFotos() {
-        FotosListDTO activeFotos = fotosService.getActiveFotos();
-        return ResponseEntity.ok(activeFotos);
-    }
-
-    @GetMapping("/user/{userId}")
-    @Operation(summary = "Buscar fotos por usuário", description = "Retorna todas as fotos associadas a um usuário específico (perfil e itens)")
-    public ResponseEntity<FotosListDTO> getFotosByUser(
-            @Parameter(description = "ID do usuário") @PathVariable int userId) {
-        FotosListDTO fotos = fotosService.getFotosByUser(userId);
-        return ResponseEntity.ok(fotos);
-    }
-
-    @GetMapping("/item/{itemId}")
-    @Operation(summary = "Buscar fotos por item", description = "Retorna todas as fotos associadas a um item específico")
-    public ResponseEntity<FotosListDTO> getFotosByItem(
-            @Parameter(description = "ID do item") @PathVariable int itemId) {
-        FotosListDTO fotos = fotosService.getFotosByItem(itemId);
-        return ResponseEntity.ok(fotos);
-    }
-
-    @GetMapping("/profile/{userId}")
-    @Operation(summary = "Buscar fotos de perfil do usuário", description = "Retorna todas as fotos de perfil de um usuário específico")
-    public ResponseEntity<FotosListDTO> getProfilePhotos(
-            @Parameter(description = "ID do usuário") @PathVariable int userId) {
-        FotosListDTO fotos = fotosService.getProfilePhotos(userId);
-        return ResponseEntity.ok(fotos);
-    }
-
-    @GetMapping("/item-photos/{itemId}")
-    @Operation(summary = "Buscar fotos de item (alternativo)", description = "Método alternativo para buscar fotos de um item. Funcionalidade similar a /item/{itemId}")
-    public ResponseEntity<FotosListDTO> getItemPhotos(
-            @Parameter(description = "ID do item") @PathVariable int itemId) {
-        FotosListDTO fotos = fotosService.getItemPhotos(itemId);
-        return ResponseEntity.ok(fotos);
-    }
-
-    @GetMapping("/main-item-photo/{itemId}")
-    @Operation(summary = "Buscar foto principal do item", description = "Retorna a foto principal (primeira foto) de um item específico")
-    public ResponseEntity<FotosDTO> getMainItemPhoto(
-            @Parameter(description = "ID do item") @PathVariable int itemId) {
-        FotosDTO foto = fotosService.getMainItemPhoto(itemId);
-        if (foto != null) {
-            return ResponseEntity.ok(foto);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @GetMapping("/profile-photo/{userId}")
-    @Operation(summary = "Buscar foto de perfil principal", description = "Retorna a foto de perfil principal (ativa) de um usuário específico")
-    public ResponseEntity<FotosDTO> getProfilePhoto(
-            @Parameter(description = "ID do usuário") @PathVariable int userId) {
-        FotosDTO foto = fotosService.getProfilePhoto(userId);
-        if (foto != null) {
-            return ResponseEntity.ok(foto);
+    @DeleteMapping("/item/{id}")
+    @Operation(summary = "Deletar foto de item (soft delete)", description = "Marca uma foto de item como inativa no banco de dados")
+    public ResponseEntity<Void> deleteFotoItem(
+            @Parameter(description = "ID da foto a ser deletada") @PathVariable int id) {
+        boolean deleted = fotosService.deleteFotoItem(id);
+        if (deleted) {
+            return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -290,25 +245,14 @@ public class FotosController {
         try {
             byte[] photoData = fotosServiceImpl.downloadPhoto(id);
             
-            // Buscar informações da foto para definir o content-type
-            FotosDTO foto = fotosService.getFotoById(id);
+            // Definir content-type padrão
+            // Nota: getFotoById não existe na interface IFotosService
             String contentType = "image/jpeg"; // Default
-            String fileName = foto != null ? foto.getNomeArquivoOriginal() : null;
-            if (fileName != null) {
-                String lower = fileName.toLowerCase();
-                if (lower.endsWith(".png")) {
-                    contentType = "image/png";
-                } else if (lower.endsWith(".gif")) {
-                    contentType = "image/gif";
-                } else if (lower.endsWith(".webp")) {
-                    contentType = "image/webp";
-                }
-            }
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType(contentType));
             headers.setContentLength(photoData.length);
-            headers.set("Content-Disposition", "inline; filename=\"" + (fileName != null ? fileName : "photo") + "\"");
+            headers.set("Content-Disposition", "inline; filename=\"photo\"");
 
             return ResponseEntity.ok()
                     .headers(headers)

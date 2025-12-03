@@ -37,13 +37,13 @@ public class CampusController {
 
     @PostMapping
     public ResponseEntity<CampusDTO> createCampus(@RequestBody CampusCreateDTO campusCreateDTO) {
-        CampusDTO createdCampus = campusService.createCampusFromDTO(campusCreateDTO);
+        CampusDTO createdCampus = campusService.createCampus(campusCreateDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCampus);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CampusDTO> updateCampus(@PathVariable int id, @RequestBody CampusUpdateDTO campusUpdateDTO) {
-        CampusDTO updatedCampus = campusService.updateCampusFromDTO(id, campusUpdateDTO);
+        CampusDTO updatedCampus = campusService.updateCampus(id, campusUpdateDTO);
         if (updatedCampus != null) {
             return ResponseEntity.ok(updatedCampus);
         } else {

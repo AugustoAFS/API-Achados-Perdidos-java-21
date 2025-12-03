@@ -37,41 +37,11 @@ public class DeviceTokenController {
         }
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Buscar token de dispositivo por ID")
-    public ResponseEntity<DeviceTokenDTO> getDeviceTokenById(@PathVariable Integer id) {
-        try {
-            DeviceTokenDTO deviceToken = deviceTokenService.getDeviceTokenById(id);
-            return ResponseEntity.ok(deviceToken);
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
     @GetMapping("/usuario/{usuarioId}")
     @Operation(summary = "Buscar tokens de dispositivos por ID do usuário")
-    public ResponseEntity<DeviceTokenListDTO> getDeviceTokensByUsuarioId(@PathVariable Integer usuarioId) {
+    public ResponseEntity<DeviceTokenListDTO> getDeviceTokensByUsuario(@PathVariable Integer usuarioId) {
         try {
-            DeviceTokenListDTO deviceTokens = deviceTokenService.getDeviceTokensByUsuarioId(usuarioId);
-            return ResponseEntity.ok(deviceTokens);
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    @GetMapping("/usuario/{usuarioId}/active")
-    @Operation(summary = "Buscar tokens ativos de dispositivos por ID do usuário")
-    public ResponseEntity<DeviceTokenListDTO> getActiveDeviceTokensByUsuarioId(@PathVariable Integer usuarioId) {
-        try {
-            DeviceTokenListDTO deviceTokens = deviceTokenService.getActiveDeviceTokensByUsuarioId(usuarioId);
+            DeviceTokenListDTO deviceTokens = deviceTokenService.getDeviceTokensByUsuario(usuarioId);
             return ResponseEntity.ok(deviceTokens);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
@@ -99,40 +69,6 @@ public class DeviceTokenController {
         }
     }
 
-    @PostMapping("/register")
-    @Operation(summary = "Registrar ou atualizar token de dispositivo (endpoint simplificado para app mobile)")
-    public ResponseEntity<DeviceTokenDTO> registerOrUpdateDeviceToken(
-            @RequestHeader(value = "Authorization", required = false) String authorization,
-            @RequestParam String token,
-            @RequestParam String plataforma) {
-        try {
-            // Valida JWT do header Authorization
-            if (authorization == null || !authorization.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-            }
-
-            String jwtToken = authorization.substring(7);
-            if (!jwtService.validateToken(jwtToken) || jwtService.isTokenExpired(jwtToken)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-            }
-
-            // Extrai userId do JWT
-            String userIdStr = jwtService.getUserIdFromToken(jwtToken);
-            if (userIdStr == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-            }
-
-            Integer usuarioId = Integer.parseInt(userIdStr);
-            DeviceTokenDTO deviceToken = deviceTokenService.registerOrUpdateDeviceToken(usuarioId, token, plataforma);
-            return ResponseEntity.ok(deviceToken);
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
-    }
 
     @PutMapping("/{id}")
     @Operation(summary = "Atualizar token de dispositivo")
@@ -170,15 +106,5 @@ public class DeviceTokenController {
         }
     }
 
-    @GetMapping("/active")
-    @Operation(summary = "Listar todos os tokens de dispositivos ativos")
-    public ResponseEntity<DeviceTokenListDTO> getActiveDeviceTokens() {
-        try {
-            DeviceTokenListDTO activeDeviceTokens = deviceTokenService.getActiveDeviceTokens();
-            return ResponseEntity.ok(activeDeviceTokens);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
 }
 

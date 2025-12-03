@@ -7,7 +7,6 @@ import com.AchadosPerdidos.API.Application.DTOs.Item.ItemUpdateDTO;
 import com.AchadosPerdidos.API.Application.Mapper.ItensMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IItensService;
 import com.AchadosPerdidos.API.Domain.Entity.Itens;
-import com.AchadosPerdidos.API.Domain.Enum.Tipo_Item;
 import com.AchadosPerdidos.API.Domain.Enum.Status_Item;
 import com.AchadosPerdidos.API.Domain.Repository.ItensRepository;
 import com.AchadosPerdidos.API.Domain.Repository.UsuariosRepository;
@@ -124,13 +123,6 @@ public class ItensService implements IItensService {
     }
 
     @Override
-    @Cacheable(value = "itens", key = "'active'")
-    public ItemListDTO getActiveItens() {
-        List<Itens> activeItens = itensRepository.findActive();
-        return itensMapper.toListDTO(activeItens);
-    }
-
-    @Override
     @Cacheable(value = "itens", key = "'user_' + #userId")
     public ItemListDTO getItensByUser(int userId) {
         if (userId <= 0) {
@@ -149,37 +141,6 @@ public class ItensService implements IItensService {
         }
         
         List<Itens> itens = itensRepository.findByCampus(campusId);
-        return itensMapper.toListDTO(itens);
-    }
-
-
-    @Override
-    @Cacheable(value = "itens", key = "'search_' + #searchTerm")
-    public ItemListDTO searchItens(String searchTerm) {
-        if (!StringUtils.hasText(searchTerm)) {
-            throw new IllegalArgumentException("Termo de busca não pode ser vazio");
-        }
-        
-        List<Itens> itens = itensRepository.searchByTerm(searchTerm);
-        return itensMapper.toListDTO(itens);
-    }
-
-    @Override
-    @Cacheable(value = "itens", key = "'tipo_' + #tipo")
-    public ItemListDTO getItensByTipo(String tipo) {
-        if (tipo == null || tipo.trim().isEmpty()) {
-            throw new IllegalArgumentException("Tipo não pode ser vazio");
-        }
-        
-        // Validar tipo usando enum
-        try {
-            Tipo_Item.valueOf(tipo.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException("Item", "buscar", "Tipo deve ser 'PERDIDO', 'ACHADO' ou 'DOADO'");
-        }
-        
-        String tipoUpper = tipo.toUpperCase();
-        List<Itens> itens = itensRepository.findByTipo(tipoUpper);
         return itensMapper.toListDTO(itens);
     }
     

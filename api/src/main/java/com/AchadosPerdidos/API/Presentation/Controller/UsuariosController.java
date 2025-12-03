@@ -105,9 +105,9 @@ public class UsuariosController {
     public ResponseEntity<String> redefinirSenha(@RequestBody RedefinirSenhaDTO redefinirSenhaDTO) {
         try {
             boolean sucesso = usuariosService.redefinirSenha(
-                redefinirSenhaDTO.getCpf_Usuario(),
-                redefinirSenhaDTO.getMatricula(),
-                redefinirSenhaDTO.getNova_Senha()
+                redefinirSenhaDTO.getCpf_Usuario() != null ? redefinirSenhaDTO.getCpf_Usuario() : "",
+                redefinirSenhaDTO.getMatricula() != null ? redefinirSenhaDTO.getMatricula() : "",
+                redefinirSenhaDTO.getNova_Senha() != null ? redefinirSenhaDTO.getNova_Senha() : ""
             );
             if (sucesso) {
                 return ResponseEntity.ok("Senha redefinida com sucesso");

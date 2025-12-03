@@ -45,7 +45,7 @@ public class GoogleAuthController {
     public ResponseEntity<String> loginGoogle() {
         try {
             logger.info("Iniciando processo de login do Google");
-            String authUrl = googleAuthService.buildGoogleAuthorizationUrl();
+            String authUrl = googleAuthService.generateAuthorizationUrl();
             logger.info("Redirecionando para URL de autorização: {}", authUrl);
             return ResponseEntity.status(HttpStatus.FOUND)
                 .header("Location", authUrl)
@@ -72,7 +72,7 @@ public class GoogleAuthController {
             }
             
             logger.info("Recebido código de autorização: {}", code);
-            GoogleUserDTO googleUser = googleAuthService.getUserInfoFromAuthorizationCode(code);
+            GoogleUserDTO googleUser = googleAuthService.exchangeCodeForUserInfo(code);
             
             if (googleUser == null) {
                 logger.warn("Não foi possível obter informações do usuário");
@@ -102,7 +102,7 @@ public class GoogleAuthController {
             logger.info("Informações do usuário obtidas: {}", usuario.getEmail());
             
             // Gerar token JWT com informações do usuário
-            String token = jwtService.generateToken(
+            String token = jwtService.createToken(
                 usuario.getEmail(),
                 usuario.getNomeCompleto(),
                 "User",

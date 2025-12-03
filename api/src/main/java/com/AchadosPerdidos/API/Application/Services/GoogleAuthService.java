@@ -41,7 +41,7 @@ public class GoogleAuthService implements IGoogleAuthService {
     }
     
     @Override
-    public String buildGoogleAuthorizationUrl() {
+    public String generateAuthorizationUrl() {
         try {
             String authUrl = "https://accounts.google.com/o/oauth2/auth?" +
                 "client_id=" + URLEncoder.encode(Client_Id, StandardCharsets.UTF_8) + "&" +
@@ -60,10 +60,10 @@ public class GoogleAuthService implements IGoogleAuthService {
     }
     
     @Override
-    public GoogleUserDTO getUserInfoFromAuthorizationCode(String code) {
+    public GoogleUserDTO exchangeCodeForUserInfo(String authorizationCode) {
         try {
-            _log.info("Iniciando processo de obtenção de informações do usuário com código: {}", code);
-            String accessToken = getAccessToken(code);
+            _log.info("Iniciando processo de obtenção de informações do usuário com código: {}", authorizationCode);
+            String accessToken = getAccessToken(authorizationCode);
 
             return getUserInfo(accessToken);
             
@@ -158,7 +158,7 @@ public class GoogleAuthService implements IGoogleAuthService {
     }
     
     @Override
-    public String getRedirectUri() {
+    public String getRedirectUrl() {
         return Redirect_Uri;
     }
 }

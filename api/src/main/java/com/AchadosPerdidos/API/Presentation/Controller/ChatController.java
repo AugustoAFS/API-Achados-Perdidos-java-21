@@ -22,7 +22,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -196,25 +195,14 @@ public class ChatController {
     }
 
     /**
-     * REST: Buscar mensagens do chat
+     * REST: Buscar mensagens privadas entre dois usuários
      */
-    @Operation(summary = "Buscar mensagens do chat", description = "Retorna mensagens de um chat específico")
-    @GetMapping("/messages/{chatId}")
-    public ResponseEntity<List<ChatMessage>> getChatMessages(
-            @Parameter(description = "ID do chat") @PathVariable String chatId) {
-        List<ChatMessage> messages = chatService.getMessagesByChatId(chatId);
-        return ResponseEntity.ok(messages);
-    }
-
-    /**
-     * REST: Buscar mensagens entre usuários
-     */
-    @Operation(summary = "Buscar mensagens entre usuários", description = "Retorna mensagens entre dois usuários")
+    @Operation(summary = "Buscar mensagens privadas", description = "Retorna mensagens privadas entre dois usuários")
     @GetMapping("/messages/users/{userId1}/{userId2}")
-    public ResponseEntity<List<ChatMessage>> getMessagesBetweenUsers(
+    public ResponseEntity<List<ChatMessage>> getMessagesPrivate(
             @Parameter(description = "ID do primeiro usuário") @PathVariable String userId1,
             @Parameter(description = "ID do segundo usuário") @PathVariable String userId2) {
-        List<ChatMessage> messages = chatService.getMessagesBetweenUsers(userId1, userId2);
+        List<ChatMessage> messages = chatService.getMessagesPrivate(userId1, userId2);
         return ResponseEntity.ok(messages);
     }
 
@@ -223,86 +211,33 @@ public class ChatController {
      */
     @Operation(summary = "Marcar como lidas", description = "Marca mensagens como lidas")
     @PutMapping("/mark-read")
-    public ResponseEntity<String> markAsReadRest(@RequestBody ChatMessage message) {
-        List<ChatMessage> unreadMessages = chatService.getUnreadMessages(message.getId_Usuario_Destino());
-        
-        if (!unreadMessages.isEmpty()) {
-            chatService.markMessagesAsRead(
-                unreadMessages.stream()
-                    .map(ChatMessage::getId)
-                    .toList()
-            );
-            
-            // Notifica via WebSocket
-            String destination = "/topic/private." + message.getId_Usuario_Remetente();
-            ChatMessage notificationMessage = new ChatMessage();
-            notificationMessage.setId_Chat("");
-            notificationMessage.setId_Usuario_Remetente("");
-            notificationMessage.setId_Usuario_Destino("");
-            notificationMessage.setMenssagem("Mensagens marcadas como lidas");
-            notificationMessage.setData_Hora_Menssagem(LocalDateTime.now());
-            notificationMessage.setStatus(Status_Menssagem.LIDA);
-            notificationMessage.setTipo(Tipo_Menssagem.SYSTEM);
-            messagingTemplate.convertAndSend(destination, notificationMessage);
+    public ResponseEntity<String> markAsReadRest(@RequestBody List<String> messageIds) {
+        if (messageIds != null && !messageIds.isEmpty()) {
+            chatService.markMessagesAsRead(messageIds);
         }
-        
         return ResponseEntity.ok("Mensagens marcadas como lidas");
     }
 
     /**
-     * REST: Buscar mensagem por ID
+     * REST: Marcar mensagens como não lidas
      */
-    @Operation(summary = "Buscar mensagem por ID", description = "Retorna uma mensagem específica")
-    @GetMapping("/message/{messageId}")
-    public ResponseEntity<ChatMessage> getMessageById(
-            @Parameter(description = "ID da mensagem") @PathVariable String messageId) {
-        Optional<ChatMessage> message = chatService.getMessageById(messageId);
-        return message.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    /**
-     * REST: Contar mensagens do chat
-     */
-    @Operation(summary = "Contar mensagens", description = "Retorna número de mensagens em um chat")
-    @GetMapping("/count/{chatId}")
-    public ResponseEntity<Long> getMessageCount(
-            @Parameter(description = "ID do chat") @PathVariable String chatId) {
-        long count = chatService.getMessageCountByChat(chatId);
-        return ResponseEntity.ok(count);
-    }
-
-    /**
-     * REST: Buscar histórico de chats do usuário
-     */
-    @Operation(summary = "Buscar histórico de chats", description = "Retorna lista de chats do usuário com última mensagem, contador de não lidas e nome do outro usuário")
-    @GetMapping("/chats/{userId}")
-    public ResponseEntity<com.AchadosPerdidos.API.Application.DTOs.ChatMessage.ChatSummaryListDTO> getUserChats(
-            @Parameter(description = "ID do usuário") @PathVariable String userId) {
-        try {
-            com.AchadosPerdidos.API.Application.DTOs.ChatMessage.ChatSummaryListDTO chats = chatService.getUserChats(userId);
-            return ResponseEntity.ok(chats);
-        } catch (Exception e) {
-            logger.error("Erro ao buscar histórico de chats para usuário {}: {}", userId, e.getMessage(), e);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR).build();
+    @Operation(summary = "Marcar como não lidas", description = "Marca mensagens como não lidas")
+    @PutMapping("/mark-unread")
+    public ResponseEntity<String> markAsUnReadRest(@RequestBody List<String> messageIds) {
+        if (messageIds != null && !messageIds.isEmpty()) {
+            chatService.markMessagesAsUnRead(messageIds);
         }
+        return ResponseEntity.ok("Mensagens marcadas como não lidas");
     }
 
     /**
-     * REST: Buscar mensagens não lidas do usuário
+     * REST: Listar todas as mensagens
      */
-    @Operation(summary = "Buscar mensagens não lidas", description = "Retorna lista de mensagens não lidas do usuário")
-    @GetMapping("/unread/{userId}")
-    public ResponseEntity<List<ChatMessage>> getUnreadMessages(
-            @Parameter(description = "ID do usuário") @PathVariable String userId) {
-        try {
-            List<ChatMessage> unreadMessages = chatService.getUnreadMessages(userId);
-            logger.info("Encontradas {} mensagens não lidas para o usuário {}", unreadMessages.size(), userId);
-            return ResponseEntity.ok(unreadMessages);
-        } catch (Exception e) {
-            logger.error("Erro ao buscar mensagens não lidas para usuário {}: {}", userId, e.getMessage(), e);
-            return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    @Operation(summary = "Listar todas as mensagens", description = "Retorna todas as mensagens do sistema")
+    @GetMapping("/all")
+    public ResponseEntity<List<ChatMessage>> getAllMessages() {
+        List<ChatMessage> messages = chatService.getAllMessages();
+        return ResponseEntity.ok(messages);
     }
 
     /**
@@ -331,8 +266,8 @@ public class ChatController {
                 return;
             }
 
-            // Busca tokens ativos do usuário destinatário
-            DeviceTokenListDTO tokensList = deviceTokenService.getActiveDeviceTokensByUsuarioId(usuarioDestinoId);
+            // Busca tokens do usuário destinatário
+            DeviceTokenListDTO tokensList = deviceTokenService.getDeviceTokensByUsuario(usuarioDestinoId);
             
             if (tokensList == null || tokensList.getDeviceTokens() == null || tokensList.getDeviceTokens().isEmpty()) {
                 logger.debug("Usuário {} não possui tokens de dispositivo ativos", usuarioDestinoId);

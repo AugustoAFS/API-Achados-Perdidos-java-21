@@ -167,14 +167,6 @@ public class EstadoService implements IEstadoService {
         return estadoMapper.toDTO(updatedEstado);
     }
 
-    @Override
-    @Cacheable(value = "estados", key = "'active'")
-    public List<EstadoDTO> getActiveEstados() {
-        List<Estado> activeEstados = estadoRepository.findActive();
-        return activeEstados.stream()
-                .map(estadoMapper::toDTO)
-                .collect(Collectors.toList());
-    }
     private Estado getEstadoOrThrow(Integer id) {
         return estadoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Estado", "ID", id));

@@ -2,8 +2,6 @@ package com.AchadosPerdidos.API.Presentation.Controller;
 
 import com.AchadosPerdidos.API.Application.DTOs.Instituicao.InstituicaoDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Instituicao.InstituicaoListDTO;
-import com.AchadosPerdidos.API.Application.DTOs.Instituicao.InstituicaoCreateDTO;
-import com.AchadosPerdidos.API.Application.DTOs.Instituicao.InstituicaoUpdateDTO;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IInstituicaoService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,14 +34,14 @@ public class InstituicaoController {
     }
 
     @PostMapping
-    public ResponseEntity<InstituicaoDTO> createInstituicao(@RequestBody InstituicaoCreateDTO instituicaoCreateDTO) {
-        InstituicaoDTO createdInstituicao = instituicaoService.createInstituicaoFromDTO(instituicaoCreateDTO);
+    public ResponseEntity<InstituicaoDTO> createInstituicao(@RequestBody InstituicaoDTO instituicaoDTO) {
+        InstituicaoDTO createdInstituicao = instituicaoService.createInstituicao(instituicaoDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdInstituicao);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<InstituicaoDTO> updateInstituicao(@PathVariable int id, @RequestBody InstituicaoUpdateDTO instituicaoUpdateDTO) {
-        InstituicaoDTO updatedInstituicao = instituicaoService.updateInstituicaoFromDTO(id, instituicaoUpdateDTO);
+    public ResponseEntity<InstituicaoDTO> updateInstituicao(@PathVariable int id, @RequestBody InstituicaoDTO instituicaoDTO) {
+        InstituicaoDTO updatedInstituicao = instituicaoService.updateInstituicao(id, instituicaoDTO);
         if (updatedInstituicao != null) {
             return ResponseEntity.ok(updatedInstituicao);
         } else {
@@ -67,9 +65,4 @@ public class InstituicaoController {
         return ResponseEntity.ok(activeInstituicoes);
     }
 
-    @GetMapping("/type/{tipoInstituicao}")
-    public ResponseEntity<InstituicaoListDTO> getInstituicoesByType(@PathVariable String tipoInstituicao) {
-        InstituicaoListDTO instituicoes = instituicaoService.getInstituicoesByType(tipoInstituicao);
-        return ResponseEntity.ok(instituicoes);
-    }
 }

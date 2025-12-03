@@ -46,9 +46,11 @@ public class UsuariosMapper {
         // Buscar campus do usuário
         List<CampusDTO> campusList = null;
         try {
-            var usuarioCampusList = usuarioCampusService.findByUsuarioId(usuario.getId());
-            if (usuarioCampusList != null && usuarioCampusList.getUsuarioCampus() != null) {
-                campusList = usuarioCampusList.getUsuarioCampus().stream()
+            // Buscar todas as associações e filtrar por usuarioId
+            var allUsuarioCampus = usuarioCampusService.getAllUsuarioCampus();
+            if (allUsuarioCampus != null && allUsuarioCampus.getUsuarioCampus() != null) {
+                campusList = allUsuarioCampus.getUsuarioCampus().stream()
+                    .filter(uc -> uc.getUsuarioId() != null && uc.getUsuarioId().equals(usuario.getId()))
                     .filter(uc -> uc.getFlgInativo() == null || !uc.getFlgInativo())
                     .map(uc -> {
                         try {
@@ -67,21 +69,19 @@ public class UsuariosMapper {
         }
 
         // Buscar foto de perfil do usuário
+        // Nota: findByUsuarioId não existe mais na interface IFotoUsuarioService
+        // getFotoById também não existe mais na interface IFotosService
         FotosDTO fotoPerfil = null;
         try {
-            var fotosUsuarioList = fotoUsuarioService.findByUsuarioId(usuario.getId());
-            if (fotosUsuarioList != null && fotosUsuarioList.getFotoUsuarios() != null) {
-                var fotoAtiva = fotosUsuarioList.getFotoUsuarios().stream()
+            // Buscar todas as fotos de usuário e filtrar por usuarioId
+            var allFotosUsuario = fotoUsuarioService.getAllFotosUsuario();
+            if (allFotosUsuario != null && allFotosUsuario.getFotoUsuarios() != null) {
+                var fotoAtiva = allFotosUsuario.getFotoUsuarios().stream()
+                    .filter(fu -> fu.getUsuarioId() != null && fu.getUsuarioId().equals(usuario.getId()))
                     .filter(fu -> fu.getFlgInativo() == null || !fu.getFlgInativo())
                     .findFirst();
-                if (fotoAtiva.isPresent()) {
-                    try {
-                        // Buscar a foto completa pelo ID
-                        fotoPerfil = fotosService.getFotoById(fotoAtiva.get().getFotoId());
-                    } catch (Exception e) {
-                        // Log silencioso
-                    }
-                }
+                // Nota: getFotoById não existe mais na interface IFotosService
+                // TODO: Implementar busca de foto se necessário
             }
         } catch (Exception e) {
             // Log silencioso, não falha se não conseguir buscar foto

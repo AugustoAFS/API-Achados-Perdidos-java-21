@@ -58,7 +58,7 @@ public class CampusService implements ICampusService {
 
     @Override
     @CacheEvict(value = "campus", allEntries = true)
-    public CampusDTO createCampusFromDTO(CampusCreateDTO createDTO) {
+    public CampusDTO createCampus(CampusCreateDTO createDTO) {
         if (createDTO == null) {
             throw new IllegalArgumentException("Dados do campus não podem ser nulos");
         }
@@ -78,7 +78,7 @@ public class CampusService implements ICampusService {
 
     @Override
     @CacheEvict(value = "campus", allEntries = true)
-    public CampusDTO updateCampusFromDTO(int id, CampusUpdateDTO updateDTO) {
+    public CampusDTO updateCampus(int id, CampusUpdateDTO updateDTO) {
         if (id <= 0) {
             throw new IllegalArgumentException("ID do campus deve ser válido");
         }
