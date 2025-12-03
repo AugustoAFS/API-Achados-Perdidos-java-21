@@ -4,6 +4,9 @@ import com.AchadosPerdidos.API.Domain.Entity.Itens;
 import com.AchadosPerdidos.API.Domain.Enum.Tipo_Item;
 import com.AchadosPerdidos.API.Domain.Enum.Status_Item;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.Interfaces.IItensQueries;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.NonNull;
@@ -17,6 +20,9 @@ import java.util.List;
 public class ItensQueries implements IItensQueries {
 
     private final JdbcTemplate jdbcTemplate;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
     
     public ItensQueries(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -117,5 +123,43 @@ public class ItensQueries implements IItensQueries {
         String sql = "UPDATE ap_achados_perdidos.itens SET status_item = 'RESGATADO', usuario_reivindicador_id = ?, dta_reivindicacao = ? WHERE id = ? AND tipo_item = 'PERDIDO' AND status_item = 'ATIVO'";
         int rowsAffected = jdbcTemplate.update(sql, usuarioReivindicadorId, Timestamp.valueOf(LocalDateTime.now()), itemId);
         return rowsAffected > 0;
+    }
+
+    @Override
+    public List<Itens> findByUser(int userId) {
+        TypedQuery<Itens> query = entityManager.createQuery(
+            "SELECT i FROM Itens i WHERE i.Usuario_relator_id.Id = :userId AND i.Flg_Inativo = false ORDER BY i.Dta_Criacao DESC", 
+            Itens.class);
+        query.setParameter("userId", userId);
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Itens> searchByTerm(String searchTerm) {
+        String pattern = "%" + searchTerm + "%";
+        TypedQuery<Itens> query = entityManager.createQuery(
+            "SELECT i FROM Itens i WHERE (i.Nome LIKE :pattern OR i.Descricao LIKE :pattern) AND i.Flg_Inativo = false ORDER BY i.Dta_Criacao DESC", 
+            Itens.class);
+        query.setParameter("pattern", pattern);
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Itens> findByTipo(String tipo) {
+        Tipo_Item tipoItem = Tipo_Item.valueOf(tipo.toUpperCase());
+        TypedQuery<Itens> query = entityManager.createQuery(
+            "SELECT i FROM Itens i WHERE i.Tipo_item = :tipo AND i.Flg_Inativo = false ORDER BY i.Dta_Criacao DESC", 
+            Itens.class);
+        query.setParameter("tipo", tipoItem);
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Itens> findByStatus(Status_Item status) {
+        TypedQuery<Itens> query = entityManager.createQuery(
+            "SELECT i FROM Itens i WHERE i.Status_item = :status AND i.Flg_Inativo = false ORDER BY i.Dta_Criacao DESC", 
+            Itens.class);
+        query.setParameter("status", status);
+        return query.getResultList();
     }
 }

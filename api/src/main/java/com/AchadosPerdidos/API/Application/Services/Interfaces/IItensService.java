@@ -11,9 +11,6 @@ public interface IItensService {
     ItemDTO createItem(ItemCreateDTO createDTO);
     ItemDTO updateItem(int id, ItemUpdateDTO updateDTO);
     boolean deleteItem(int id);
-    ItemListDTO getActiveItens();
     ItemListDTO getItensByUser(int userId);
     ItemListDTO getItensByCampus(int campusId);
-    ItemListDTO searchItens(String searchTerm);
-    ItemListDTO getItensByTipo(String tipo);
 }

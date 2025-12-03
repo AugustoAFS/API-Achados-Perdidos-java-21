@@ -19,6 +19,8 @@ public interface IUsuariosService {
     UsuariosCreateDTO createServidor(ServidorCreateDTO servidorDTO);
     UsuariosUpdateDTO updateUsuario(int id, UsuariosUpdateDTO usuariosDTO);
     boolean deleteUsuario(int id);
+
+    //esses carinhas vão ser usados na controller AuthController que vai ser criada
     boolean redefinirSenha(String cpf, String matricula, String novaSenha);
     TokenResponseDTO login(LoginRequestDTO loginRequestDTO);
 }

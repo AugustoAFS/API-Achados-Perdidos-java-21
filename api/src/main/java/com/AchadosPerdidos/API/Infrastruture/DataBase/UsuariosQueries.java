@@ -2,6 +2,9 @@ package com.AchadosPerdidos.API.Infrastruture.DataBase;
 
 import com.AchadosPerdidos.API.Domain.Entity.Usuario;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.Interfaces.IUsuariosQueries;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.NonNull;
@@ -17,6 +20,9 @@ import java.util.List;
 public class UsuariosQueries implements IUsuariosQueries {
 
     private final JdbcTemplate jdbcTemplate;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public UsuariosQueries(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -104,5 +110,41 @@ public class UsuariosQueries implements IUsuariosQueries {
         } catch (Exception e) {
             return "";
         }
+    }
+
+    @Override
+    public List<Usuario> findByRole(int roleId) {
+        TypedQuery<Usuario> query = entityManager.createQuery(
+            "SELECT u FROM Usuario u WHERE u.Role_id.Id = :roleId AND u.Flg_Inativo = false ORDER BY u.Nome_completo", 
+            Usuario.class);
+        query.setParameter("roleId", roleId);
+        return query.getResultList();
+    }
+
+    @Override
+    public Usuario findByEmail(String email) {
+        TypedQuery<Usuario> query = entityManager.createQuery(
+            "SELECT u FROM Usuario u WHERE u.Email = :email", Usuario.class);
+        query.setParameter("email", email);
+        List<Usuario> resultados = query.getResultList();
+        return resultados.isEmpty() ? null : resultados.get(0);
+    }
+
+    @Override
+    public Usuario findByCpf(String cpf) {
+        TypedQuery<Usuario> query = entityManager.createQuery(
+            "SELECT u FROM Usuario u WHERE u.CPF = :cpf", Usuario.class);
+        query.setParameter("cpf", cpf);
+        List<Usuario> resultados = query.getResultList();
+        return resultados.isEmpty() ? null : resultados.get(0);
+    }
+
+    @Override
+    public Usuario findByMatricula(String matricula) {
+        TypedQuery<Usuario> query = entityManager.createQuery(
+            "SELECT u FROM Usuario u WHERE u.Matricula = :matricula", Usuario.class);
+        query.setParameter("matricula", matricula);
+        List<Usuario> resultados = query.getResultList();
+        return resultados.isEmpty() ? null : resultados.get(0);
     }
 }

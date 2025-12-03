@@ -58,23 +58,6 @@ public class CampusService implements ICampusService {
 
     @Override
     @CacheEvict(value = "campus", allEntries = true)
-    public CampusDTO createCampus(CampusDTO campusDTO) {
-        if (campusDTO == null) {
-            throw new IllegalArgumentException("Dados do campus não podem ser nulos");
-        }
-        
-        validarCampusParaCriacao(campusDTO.getNome(), campusDTO.getInstituicaoId(), campusDTO.getEnderecoId());
-        
-        Campus campus = campusMapper.toEntity(campusDTO);
-        campus.setDtaCriacao(LocalDateTime.now());
-        campus.setFlgInativo(false);
-        
-        Campus savedCampus = campusRepository.save(campus);
-        return campusMapper.toDTO(savedCampus);
-    }
-
-    @Override
-    @CacheEvict(value = "campus", allEntries = true)
     public CampusDTO createCampusFromDTO(CampusCreateDTO createDTO) {
         if (createDTO == null) {
             throw new IllegalArgumentException("Dados do campus não podem ser nulos");
@@ -91,37 +74,6 @@ public class CampusService implements ICampusService {
         
         Campus savedCampus = campusRepository.save(campus);
         return campusMapper.toDTO(savedCampus);
-    }
-
-    @Override
-    @CacheEvict(value = "campus", allEntries = true)
-    public CampusDTO updateCampus(int id, CampusDTO campusDTO) {
-        if (id <= 0) {
-            throw new IllegalArgumentException("ID do campus deve ser válido");
-        }
-        
-        if (campusDTO == null) {
-            throw new IllegalArgumentException("Dados de atualização não podem ser nulos");
-        }
-        
-        Campus existingCampus = getCampusOrThrow(id);
-        
-        if (existingCampus.getDtaRemocao() != null) {
-            throw new BusinessException("Não é possível atualizar um campus que já foi removido");
-        }
-        
-        validarCampusParaCriacao(campusDTO.getNome(), campusDTO.getInstituicaoId(), campusDTO.getEnderecoId());
-        
-        existingCampus.setNome(campusDTO.getNome());
-        existingCampus.setInstituicaoId(validarInstituicaoExiste(campusDTO.getInstituicaoId()));
-        existingCampus.setEnderecoId(validarEnderecoExiste(campusDTO.getEnderecoId()));
-        existingCampus.setFlgInativo(campusDTO.getFlgInativo());
-        if (campusDTO.getDtaRemocao() != null) {
-            existingCampus.setDtaRemocao(campusDTO.getDtaRemocao());
-        }
-        
-        Campus updatedCampus = campusRepository.save(existingCampus);
-        return campusMapper.toDTO(updatedCampus);
     }
 
     @Override

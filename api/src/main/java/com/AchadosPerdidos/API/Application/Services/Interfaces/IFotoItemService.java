@@ -7,12 +7,5 @@ import com.AchadosPerdidos.API.Application.DTOs.FotoItem.FotoItemUpdateDTO;
 
 public interface IFotoItemService {
     FotoItemListDTO getAllFotosItem();
-    FotoItemDTO getFotoItemByItemIdAndFotoId(Integer itemId, Integer fotoId);
-    FotoItemDTO createFotoItem(FotoItemCreateDTO createDTO);
-    FotoItemDTO updateFotoItem(Integer itemId, Integer fotoId, FotoItemUpdateDTO updateDTO);
-    boolean deleteFotoItem(Integer itemId, Integer fotoId);
     FotoItemListDTO getActiveFotosItem();
-    FotoItemListDTO findByItemId(Integer itemId);
-    FotoItemListDTO findByFotoId(Integer fotoId);
 }
-

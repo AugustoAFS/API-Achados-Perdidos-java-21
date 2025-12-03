@@ -13,6 +13,5 @@ public interface IEnderecoService {
     EnderecoDTO updateEndereco(Integer id, EnderecoUpdateDTO updateDTO);
     EnderecoDTO deleteEndereco(Integer id);
     List<EnderecoDTO> getEnderecosByCidade(Integer cidadeId);
-    List<EnderecoDTO> getActiveEnderecos();
 }
 

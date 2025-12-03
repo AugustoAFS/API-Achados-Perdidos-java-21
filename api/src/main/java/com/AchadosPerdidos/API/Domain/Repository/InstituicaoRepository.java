@@ -2,10 +2,11 @@ package com.AchadosPerdidos.API.Domain.Repository;
 
 import com.AchadosPerdidos.API.Domain.Entity.Instituicoes;
 import com.AchadosPerdidos.API.Domain.Repository.Interfaces.IInstituicaoRepository;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,24 +16,59 @@ import java.util.Optional;
  * Usa JPA para CRUD básico
  */
 @Repository
-public interface InstituicaoRepository extends JpaRepository<Instituicoes, Integer>, IInstituicaoRepository {
-    
-    // CRUD básico já vem do JpaRepository: save, findById, findAll, deleteById
+public class InstituicaoRepository implements IInstituicaoRepository {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    // CRUD básico usando JPA
+    @Override
+    public List<Instituicoes> findAll() {
+        TypedQuery<Instituicoes> query = entityManager.createQuery("SELECT i FROM Instituicoes i ORDER BY i.Nome", Instituicoes.class);
+        return query.getResultList();
+    }
+
+    @Override
+    public Optional<Instituicoes> findById(Integer id) {
+        Instituicoes instituicao = entityManager.find(Instituicoes.class, id);
+        return Optional.ofNullable(instituicao);
+    }
+
+    @Override
+    @Transactional
+    public Instituicoes save(Instituicoes instituicao) {
+        if (instituicao.getId() == null || instituicao.getId() == 0) {
+            entityManager.persist(instituicao);
+            return instituicao;
+        } else {
+            return entityManager.merge(instituicao);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteById(Integer id) {
+        Instituicoes instituicao = entityManager.find(Instituicoes.class, id);
+        if (instituicao != null) {
+            entityManager.remove(instituicao);
+        }
+    }
     
     // Queries customizadas (necessário porque o campo é Flg_Inativo com underscore)
-    @Query("SELECT i FROM Instituicoes i WHERE i.Flg_Inativo = false")
-    List<Instituicoes> findByFlgInativoFalse();
-    
-    @Query("SELECT i FROM Instituicoes i WHERE i.Id = :id AND i.Flg_Inativo = false")
-    Optional<Instituicoes> findByIdAndFlgInativoFalse(@Param("id") Integer id);
+    @Override
+    public List<Instituicoes> findActive() {
+        TypedQuery<Instituicoes> query = entityManager.createQuery(
+            "SELECT i FROM Instituicoes i WHERE i.Flg_Inativo = false ORDER BY i.Nome", Instituicoes.class);
+        return query.getResultList();
+    }
     
     // Query customizada simples (sem JOIN)
-    @Query("SELECT i FROM Instituicoes i WHERE i.Tipo = :tipoInstituicao AND i.Flg_Inativo = false ORDER BY i.Nome")
-    List<Instituicoes> findByType(@Param("tipoInstituicao") String tipoInstituicao);
-    
-    // Implementação padrão dos métodos da interface
     @Override
-    default List<Instituicoes> findActive() {
-        return findByFlgInativoFalse();
+    public List<Instituicoes> findByType(String tipoInstituicao) {
+        TypedQuery<Instituicoes> query = entityManager.createQuery(
+            "SELECT i FROM Instituicoes i WHERE i.Tipo = :tipoInstituicao AND i.Flg_Inativo = false ORDER BY i.Nome", 
+            Instituicoes.class);
+        query.setParameter("tipoInstituicao", tipoInstituicao);
+        return query.getResultList();
     }
 }

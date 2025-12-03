@@ -7,12 +7,9 @@ import com.AchadosPerdidos.API.Application.DTOs.UsuarioCampus.UsuarioCampusUpdat
 
 public interface IUsuarioCampusService {
     UsuarioCampusListDTO getAllUsuarioCampus();
-    UsuarioCampusDTO getUsuarioCampusByUsuarioIdAndCampusId(Integer usuarioId, Integer campusId);
     UsuarioCampusDTO createUsuarioCampus(UsuarioCampusCreateDTO createDTO);
+    UsuarioCampusListDTO getActiveUsuarioCampus();
     UsuarioCampusDTO updateUsuarioCampus(Integer usuarioId, Integer campusId, UsuarioCampusUpdateDTO updateDTO);
     boolean deleteUsuarioCampus(Integer usuarioId, Integer campusId);
-    UsuarioCampusListDTO getActiveUsuarioCampus();
-    UsuarioCampusListDTO findByUsuarioId(Integer usuarioId);
-    UsuarioCampusListDTO findByCampusId(Integer campusId);
 }
 

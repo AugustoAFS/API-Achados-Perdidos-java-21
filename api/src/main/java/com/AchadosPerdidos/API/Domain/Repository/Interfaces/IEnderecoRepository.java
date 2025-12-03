@@ -2,6 +2,7 @@ package com.AchadosPerdidos.API.Domain.Repository.Interfaces;
 
 import com.AchadosPerdidos.API.Domain.Entity.Endereco;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Interface do Repository para Endereços
@@ -9,10 +10,13 @@ import java.util.List;
  * Vinculados a Cidades (logradouro, número, bairro, CEP)
  */
 public interface IEnderecoRepository {
+    // Operações CRUD básicas
     List<Endereco> findAll();
-    Endereco findById(Integer id);
+    Optional<Endereco> findById(Integer id);
     Endereco save(Endereco endereco);
-    boolean deleteById(Integer id);
+    void deleteById(Integer id);
+    
+    // Buscas específicas
     List<Endereco> findActive();
     List<Endereco> findByCidade(Integer cidadeId);
 }

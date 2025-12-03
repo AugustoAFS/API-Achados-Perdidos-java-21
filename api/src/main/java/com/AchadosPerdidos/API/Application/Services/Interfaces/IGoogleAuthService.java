@@ -4,9 +4,9 @@ import com.AchadosPerdidos.API.Application.DTOs.Auth.GoogleUserDTO;
 
 public interface IGoogleAuthService {
 
-    String buildGoogleAuthorizationUrl();
+    String generateAuthorizationUrl();
 
-    GoogleUserDTO getUserInfoFromAuthorizationCode(String code);
+    GoogleUserDTO exchangeCodeForUserInfo(String authorizationCode);
 
-    String getRedirectUri();
+    String getRedirectUrl();
 }

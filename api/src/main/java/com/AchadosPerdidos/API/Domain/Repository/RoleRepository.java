@@ -1,10 +1,13 @@
 package com.AchadosPerdidos.API.Domain.Repository;
 
 import com.AchadosPerdidos.API.Domain.Entity.Role;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import com.AchadosPerdidos.API.Domain.Repository.Interfaces.IRoleRepository;
+import com.AchadosPerdidos.API.Infrastruture.DataBase.RoleQueries;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,23 +18,55 @@ import java.util.Optional;
  * Usa JPA para CRUD básico
  */
 @Repository
-public interface RoleRepository extends JpaRepository<Role, Integer> {
+public class RoleRepository implements IRoleRepository {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Autowired
+    private RoleQueries roleQueries;
+
+    // CRUD básico usando JPA
+    @Override
+    public List<Role> findAll() {
+        return entityManager.createQuery("SELECT r FROM Role r ORDER BY r.Nome", Role.class).getResultList();
+    }
+
+    @Override
+    public Optional<Role> findById(Integer id) {
+        Role role = entityManager.find(Role.class, id);
+        return Optional.ofNullable(role);
+    }
+
+    @Override
+    @Transactional
+    public Role save(Role role) {
+        if (role.getId() == null || role.getId() == 0) {
+            entityManager.persist(role);
+            return role;
+        } else {
+            return entityManager.merge(role);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteById(Integer id) {
+        Role role = entityManager.find(Role.class, id);
+        if (role != null) {
+            entityManager.remove(role);
+        }
+    }
     
-    // CRUD básico já vem do JpaRepository: save, findById, findAll, deleteById
+    // Queries customizadas - delegadas para RoleQueries
+    @Override
+    public List<Role> findActive() {
+        return roleQueries.findActive();
+    }
     
-    // Queries customizadas (necessário porque o campo é Flg_Inativo com underscore)
-    @Query("SELECT r FROM Role r WHERE r.Flg_Inativo = false")
-    List<Role> findByFlgInativoFalse();
-    
-    @Query("SELECT r FROM Role r WHERE r.Id = :id AND r.Flg_Inativo = false")
-    Optional<Role> findByIdAndFlgInativoFalse(@Param("id") Integer id);
-    
-    @Query("SELECT r FROM Role r WHERE r.Nome = :nome AND r.Flg_Inativo = false")
-    Optional<Role> findByNome(@Param("nome") String nome);
-    
-    // Métodos customizados
-    default List<Role> findActive() {
-        return findByFlgInativoFalse();
+    @Override
+    public Optional<Role> findByNome(String nome) {
+        return roleQueries.findByNome(nome);
     }
 }
 

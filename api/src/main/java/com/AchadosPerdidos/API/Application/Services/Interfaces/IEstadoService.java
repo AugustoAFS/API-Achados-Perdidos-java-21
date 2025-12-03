@@ -13,6 +13,4 @@ public interface IEstadoService {
     EstadoDTO createEstado(EstadoCreateDTO createDTO);
     EstadoDTO updateEstado(Integer id, EstadoUpdateDTO updateDTO);
     EstadoDTO deleteEstado(Integer id);
-    List<EstadoDTO> getActiveEstados();
 }
-

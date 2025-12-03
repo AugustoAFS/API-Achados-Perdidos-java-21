@@ -7,7 +7,6 @@ import com.AchadosPerdidos.API.Domain.Repository.Interfaces.IItensRepository;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.ItensQueries;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.TypedQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,8 +34,7 @@ public class ItensRepository implements IItensRepository {
     // CRUD básico usando JPA
     @Override
     public List<Itens> findAll() {
-        TypedQuery<Itens> query = entityManager.createQuery("SELECT i FROM Itens i ORDER BY i.Dta_Criacao DESC", Itens.class);
-        return query.getResultList();
+        return entityManager.createQuery("SELECT i FROM Itens i ORDER BY i.Dta_Criacao DESC", Itens.class).getResultList();
     }
 
     @Override
@@ -68,54 +66,34 @@ public class ItensRepository implements IItensRepository {
 
     @Override
     public List<Itens> findActive() {
-        TypedQuery<Itens> query = entityManager.createQuery(
-            "SELECT i FROM Itens i WHERE i.Flg_Inativo = false ORDER BY i.Dta_Criacao DESC", Itens.class);
-        return query.getResultList();
+        return entityManager.createQuery(
+            "SELECT i FROM Itens i WHERE i.Flg_Inativo = false ORDER BY i.Dta_Criacao DESC", Itens.class).getResultList();
     }
 
-    // Queries simples usando JPA
+    // Queries - delegadas para ItensQueries
     @Override
     public List<Itens> findByUser(int userId) {
-        TypedQuery<Itens> query = entityManager.createQuery(
-            "SELECT i FROM Itens i WHERE i.Usuario_relator_id.Id = :userId AND i.Flg_Inativo = false ORDER BY i.Dta_Criacao DESC", 
-            Itens.class);
-        query.setParameter("userId", userId);
-        return query.getResultList();
+        return itensQueries.findByUser(userId);
     }
 
     @Override
     public List<Itens> findByTipo(String tipo) {
-        Tipo_Item tipoItem = Tipo_Item.valueOf(tipo.toUpperCase());
-        TypedQuery<Itens> query = entityManager.createQuery(
-            "SELECT i FROM Itens i WHERE i.Tipo_item = :tipo AND i.Flg_Inativo = false ORDER BY i.Dta_Criacao DESC", 
-            Itens.class);
-        query.setParameter("tipo", tipoItem);
-        return query.getResultList();
+        return itensQueries.findByTipo(tipo);
     }
 
     @Override
     public List<Itens> findByStatus(Status_Item status) {
-        TypedQuery<Itens> query = entityManager.createQuery(
-            "SELECT i FROM Itens i WHERE i.Status_item = :status AND i.Flg_Inativo = false ORDER BY i.Dta_Criacao DESC", 
-            Itens.class);
-        query.setParameter("status", status);
-        return query.getResultList();
+        return itensQueries.findByStatus(status);
     }
 
     @Override
     public List<Itens> searchByTerm(String searchTerm) {
-        String pattern = "%" + searchTerm + "%";
-        TypedQuery<Itens> query = entityManager.createQuery(
-            "SELECT i FROM Itens i WHERE (i.Nome LIKE :pattern OR i.Descricao LIKE :pattern) AND i.Flg_Inativo = false ORDER BY i.Dta_Criacao DESC", 
-            Itens.class);
-        query.setParameter("pattern", pattern);
-        return query.getResultList();
+        return itensQueries.searchByTerm(searchTerm);
     }
 
-    // Operações complexas com JOINs - usam ItensQueries
     @Override
     public List<Itens> findByCampus(int campusId) {
-        return itensQueries.findByCampus(campusId); // Usa JOIN
+        return itensQueries.findByCampus(campusId);
     }
 
     @Override
