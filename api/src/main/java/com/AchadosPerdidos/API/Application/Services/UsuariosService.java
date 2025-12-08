@@ -1,6 +1,8 @@
 package com.AchadosPerdidos.API.Application.Services;
 
+import com.AchadosPerdidos.API.Application.DTOs.Auth.GoogleUserDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Auth.LoginRequestDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Auth.RedefinirSenhaDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Auth.TokenResponseDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosCreateDTO;
@@ -8,14 +10,15 @@ import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosUpdateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.AlunoCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.ServidorCreateDTO;
+import com.AchadosPerdidos.API.Application.DTOs.UsuarioCampus.UsuarioCampusListDTO;
 import com.AchadosPerdidos.API.Application.Mapper.UsuariosMapper;
+import com.AchadosPerdidos.API.Application.Services.Interfaces.IGoogleAuthService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IJWTService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuariosService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IDeviceTokenService;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IUsuarioCampusService;
-import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotoUsuarioService;
+import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotosService;
 import com.AchadosPerdidos.API.Application.DTOs.UsuarioCampus.UsuarioCampusCreateDTO;
-import com.AchadosPerdidos.API.Application.DTOs.FotoUsuario.FotoUsuarioCreateDTO;
 import com.AchadosPerdidos.API.Exeptions.BusinessException;
 import com.AchadosPerdidos.API.Exeptions.ResourceNotFoundException;
 import com.AchadosPerdidos.API.Exeptions.ValidationException;
@@ -67,7 +70,7 @@ public class UsuariosService implements IUsuariosService {
     private IUsuarioCampusService usuarioCampusService;
 
     @Autowired
-    private IFotoUsuarioService fotoUsuarioService;
+    private IFotosService fotoService;
 
     @Autowired
     private RoleRepository roleRepository;
@@ -254,7 +257,6 @@ public class UsuariosService implements IUsuariosService {
     @Override
     @CacheEvict(value = "usuarios", allEntries = true)
     public UsuariosUpdateDTO updateUsuario(int id, UsuariosUpdateDTO usuariosUpdateDTO) {
-        logger.info("Iniciando atualização do usuário ID: {}", id);
 
         if (id <= 0) {
             throw new ValidationException("ID do usuário deve ser válido");
@@ -265,86 +267,38 @@ public class UsuariosService implements IUsuariosService {
         }
         
         Usuario existingUsuario = usuariosRepository.findById(id);
+
         if (existingUsuario == null) {
-            logger.warn("Tentativa de atualizar usuário não encontrado - ID: {}", id);
+            logger.warn("WARN - Usuario não existente id: ", id);
             throw new ResourceNotFoundException("Usuário não encontrado com ID: " + id);
         }
-        
-        if (Boolean.TRUE.equals(existingUsuario.getFlg_Inativo())) {
-            logger.warn("Tentativa de atualizar usuário inativo - ID: {}", id);
-            throw new BusinessException("Não é possível atualizar um usuário inativo");
-        }
-        
-        // Validações parciais (apenas dos campos que foram fornecidos)
-        if (StringUtils.hasText(usuariosUpdateDTO.getNomeCompleto()) && usuariosUpdateDTO.getNomeCompleto().trim().length() < 3) {
-            throw new ValidationException("O nome completo deve ter pelo menos 3 caracteres");
-        }
 
-        if (StringUtils.hasText(usuariosUpdateDTO.getEmail()) && !EMAIL_PATTERN.matcher(usuariosUpdateDTO.getEmail().trim()).matches()) {
-            throw new ValidationException("Formato de email inválido");
-        }
-        
-        // Verificação de duplicatas (excluindo o próprio usuário)
-        checkDuplicateEmail(usuariosUpdateDTO.getEmail(), id);
-        checkDuplicateCPF(usuariosUpdateDTO.getCpf(), id);
-
-        // Atualizar campos
         usuariosMapper.updateFromDTO(existingUsuario, usuariosUpdateDTO);
         
         Usuario updatedUsuario = usuariosRepository.save(existingUsuario);
         logger.info("Usuário atualizado com sucesso - ID: {}, Email: {}", updatedUsuario.getId(), updatedUsuario.getEmail());
 
-        // Atualizar campus se fornecido
         if (usuariosUpdateDTO.getCampusId() != null && usuariosUpdateDTO.getCampusId() > 0) {
             try {
-                // Buscar todas as associações e filtrar por usuarioId
-                var allUsuarioCampus = usuarioCampusService.getAllUsuarioCampus();
-                java.util.List<com.AchadosPerdidos.API.Application.DTOs.UsuarioCampus.UsuarioCampusDTO> usuarioCampusList = 
-                    allUsuarioCampus != null && allUsuarioCampus.getUsuarioCampus() != null
-                    ? allUsuarioCampus.getUsuarioCampus().stream()
-                        .filter(uc -> uc.getUsuarioId() != null && uc.getUsuarioId().equals(updatedUsuario.getId()))
-                        .collect(java.util.stream.Collectors.toList())
-                    : java.util.Collections.emptyList();
-                
-                if (!usuarioCampusList.isEmpty()) {
-                    // Desativar associações ativas existentes
-                    for (com.AchadosPerdidos.API.Application.DTOs.UsuarioCampus.UsuarioCampusDTO uc : usuarioCampusList) {
-                        if (uc.getCampusId() != null && !uc.getCampusId().equals(usuariosUpdateDTO.getCampusId()) && 
-                            (uc.getFlgInativo() == null || !uc.getFlgInativo())) {
-                            // Desativar a associação antiga
-                            var updateDTO = new com.AchadosPerdidos.API.Application.DTOs.UsuarioCampus.UsuarioCampusUpdateDTO();
-                            updateDTO.setFlgInativo(true);
-                            usuarioCampusService.updateUsuarioCampus(updatedUsuario.getId(), uc.getCampusId(), updateDTO);
-                            logger.info("Associação com campus ID {} desativada para usuário ID {}", uc.getCampusId(), updatedUsuario.getId());
-                        }
-                    }
-                }
-                
-                // Verificar se já existe associação ativa com o novo campus
-                boolean jaExiste = usuarioCampusList.stream()
-                    .anyMatch(uc -> uc.getCampusId() != null && uc.getCampusId().equals(usuariosUpdateDTO.getCampusId()) && 
-                        (uc.getFlgInativo() == null || !uc.getFlgInativo()));
-                
-                // Criar nova associação se não existir
-                if (!jaExiste) {
-                    UsuarioCampusCreateDTO usuarioCampusCreateDTO = new UsuarioCampusCreateDTO();
-                    usuarioCampusCreateDTO.setUsuarioId(updatedUsuario.getId());
-                    usuarioCampusCreateDTO.setCampusId(usuariosUpdateDTO.getCampusId());
-                    usuarioCampusService.createUsuarioCampus(usuarioCampusCreateDTO);
-                    logger.info("Usuário associado ao campus ID: {}", usuariosUpdateDTO.getCampusId());
-                }
+                UsuarioCampusCreateDTO usuarioCampusCreateDTO = new UsuarioCampusCreateDTO();
+                usuarioCampusCreateDTO.setUsuarioId(updatedUsuario.getId());
+                usuarioCampusCreateDTO.setCampusId(usuariosUpdateDTO.getCampusId());
+
+                usuarioCampusService.createUsuarioCampus(usuarioCampusCreateDTO);
+                logger.info("Usuário associado ao campus ID: {}", usuariosUpdateDTO.getCampusId());
             } catch (Exception e) {
-                logger.error("Erro ao atualizar campus do usuário: {}", e.getMessage(), e);
-                // Não falha a atualização do usuário se a associação falhar
+                logger.error("Erro ao associar usuário ao campus: {}", e.getMessage(), e);
             }
         }
 
-        // Atualizar foto se fornecido
-        // Nota: Métodos createFotoUsuario e updateFotoUsuario não existem mais na interface IFotoUsuarioService
-        // Esta funcionalidade foi removida da interface. Se necessário, implementar diretamente no repository.
         if (usuariosUpdateDTO.getFotoId() != null && usuariosUpdateDTO.getFotoId() > 0) {
-            logger.warn("Atualização de foto do usuário não está disponível - métodos removidos da interface IFotoUsuarioService");
-            // TODO: Implementar atualização de foto diretamente no repository se necessário
+            try {
+                var fotosDTO = new com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosDTO();
+                fotoService.createFotoUsaurio(fotosDTO);
+                logger.info("Foto do usuário atualizada - Usuário ID: {}, Foto ID: {}", updatedUsuario.getId(), usuariosUpdateDTO.getFotoId());
+            } catch (Exception e) {
+                logger.warn("Erro ao atualizar foto do usuário: {}", e.getMessage());
+            }
         }
 
         return usuariosMapper.toUpdateDTO(updatedUsuario);
@@ -381,29 +335,26 @@ public class UsuariosService implements IUsuariosService {
 
     @Override
     @CacheEvict(value = "usuarios", allEntries = true)
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public boolean redefinirSenha(String cpf, String matricula, String novaSenha) {
         logger.info("Solicitação de redefinição de senha");
 
-        // Validação da nova senha
         if (!StringUtils.hasText(novaSenha) || novaSenha.length() < 6) {
             throw new ValidationException("A nova senha é obrigatória e deve ter pelo menos 6 caracteres");
         }
 
-        // Validação: deve fornecer CPF ou matrícula (pelo menos um)
         if (!StringUtils.hasText(cpf) && !StringUtils.hasText(matricula)) {
             throw new ValidationException("É necessário fornecer CPF ou matrícula para redefinir a senha");
         }
 
-        // Buscar usuário por CPF ou matrícula
         Usuario usuario = findUsuarioForPasswordReset(cpf, matricula);
 
-        // Verificar se usuário está ativo
         if (Boolean.TRUE.equals(usuario.getFlg_Inativo())) {
             logger.warn("Tentativa de redefinir senha de usuário inativo");
             throw new BusinessException("Não é possível redefinir a senha de um usuário inativo");
         }
 
-        // Gera um novo hash BCrypt para a senha
         String hashSenha = passwordEncoder.encode(novaSenha);
         usuario.setHash_senha(hashSenha);
 
@@ -442,26 +393,22 @@ public class UsuariosService implements IUsuariosService {
     public TokenResponseDTO login(LoginRequestDTO loginRequestDTO) {
         logger.info("Tentativa de login");
 
-        // Validação dos campos de entrada
         validateLoginRequest(loginRequestDTO);
 
-        String email = loginRequestDTO.getEmail_Usuario().trim();
-        String senha = loginRequestDTO.getSenha_Hash();
+        String email = loginRequestDTO.getEmailUsuario().trim();
+        String senha = loginRequestDTO.getSenhaHash();
 
-        // Buscar usuário pelo email
         Usuario usuario = usuariosRepository.findByEmail(email);
         if (usuario == null) {
             logger.warn("Tentativa de login com email não cadastrado");
             throw new BusinessException("Email ou senha inválidos");
         }
 
-        // Verificar se o usuário está ativo
         if (Boolean.TRUE.equals(usuario.getFlg_Inativo())) {
             logger.warn("Tentativa de login com usuário inativo: {}", email);
             throw new BusinessException("Usuário inativo. Entre em contato com o administrador.");
         }
 
-        // Verificar senha
         if (!StringUtils.hasText(usuario.getHash_senha())) {
             logger.warn("Usuário sem senha cadastrada: {}", email);
             throw new BusinessException("Usuário não possui senha cadastrada. Use o endpoint de redefinir senha.");
@@ -475,11 +422,9 @@ public class UsuariosService implements IUsuariosService {
 
         logger.info("Login bem-sucedido - Usuário ID: {}", usuario.getId());
 
-        // Buscar informações complementares
         String campusNome = getCampusNome(usuario.getId());
         String rolesString = getRolesString(usuario);
 
-        // Gerar token JWT
         String token = jwtTokenService.createToken(
             usuario.getEmail(),
             usuario.getNomeCompleto() != null ? usuario.getNomeCompleto() : "",
@@ -487,10 +432,81 @@ public class UsuariosService implements IUsuariosService {
             String.valueOf(usuario.getId())
         );
 
-        // Registrar device token se fornecido
         registerDeviceToken(loginRequestDTO, usuario.getId());
 
-        // Retornar apenas o token por questões de segurança
+        return new TokenResponseDTO(token);
+    }
+
+    @Override
+    @CacheEvict(value = "usuarios", allEntries = true)
+    public void redefinirSenha(RedefinirSenhaDTO dto) {
+        logger.info("Redefinindo senha usando DTO");
+
+        if (dto == null) {
+            throw new ValidationException("Dados de redefinição de senha não podem ser nulos");
+        }
+
+        String cpf = dto.getCpf_Usuario() != null ? dto.getCpf_Usuario() : "";
+        String matricula = dto.getMatricula() != null ? dto.getMatricula() : "";
+        String novaSenha = dto.getNova_Senha() != null ? dto.getNova_Senha() : "";
+
+        if (cpf.isEmpty() && matricula.isEmpty()) {
+            throw new ValidationException("CPF ou matrícula são obrigatórios");
+        }
+
+        if (novaSenha.isEmpty() || novaSenha.length() < 6) {
+            throw new ValidationException("Nova senha deve ter pelo menos 6 caracteres");
+        }
+
+        boolean sucesso = redefinirSenha(cpf, matricula, novaSenha);
+
+        if (!sucesso) {
+            throw new BusinessException("Erro ao redefinir senha");
+        }
+
+        logger.info("Senha redefinida com sucesso");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TokenResponseDTO loginWithGoogle(String code, IGoogleAuthService googleAuthService, IJWTService jwtService) {
+        logger.info("Processando login com Google OAuth2");
+
+        // Validar código
+        if (code == null || code.trim().isEmpty()) {
+            throw new ValidationException("Código de autorização do Google é obrigatório");
+        }
+
+        // Obter informações do usuário do Google
+        GoogleUserDTO googleUser = googleAuthService.exchangeCodeForUserInfo(code);
+
+        if (googleUser == null || googleUser.getEmail() == null || googleUser.getEmail().trim().isEmpty()) {
+            throw new ValidationException("Não foi possível obter informações do usuário do Google");
+        }
+
+        logger.info("Buscando usuário no banco de dados com email: {}", googleUser.getEmail());
+
+        // Buscar usuário no banco pelo email
+        UsuariosDTO usuario = getUsuarioByEmail(googleUser.getEmail());
+
+        // Verificar se usuário está ativo
+        if (usuario.getFlgInativo()) {
+            logger.warn("Usuário inativo tentou fazer login via Google: {}", usuario.getEmail());
+            throw new BusinessException("Usuário inativo");
+        }
+
+        logger.info("Autenticação Google bem-sucedida para usuário: {} (ID: {})", usuario.getEmail(), usuario.getId());
+
+        // Gerar token JWT
+        String token = jwtService.createToken(
+                usuario.getEmail(),
+                usuario.getNomeCompleto(),
+                "User",
+                String.valueOf(usuario.getId())
+        );
+
+        logger.info("Token JWT gerado com sucesso para login Google");
+
         return new TokenResponseDTO(token);
     }
 
@@ -504,22 +520,22 @@ public class UsuariosService implements IUsuariosService {
         }
 
         logger.debug("Validando login - Email_Usuario: '{}', Senha_Hash presente: {}", 
-            loginRequestDTO.getEmail_Usuario(), 
-            loginRequestDTO.getSenha_Hash() != null);
+            loginRequestDTO.getEmailUsuario(), 
+            loginRequestDTO.getSenhaHash() != null);
 
-        if (!StringUtils.hasText(loginRequestDTO.getEmail_Usuario())) {
-            logger.error("Email_Usuario está vazio ou nulo. Valor recebido: '{}'", loginRequestDTO.getEmail_Usuario());
+        if (!StringUtils.hasText(loginRequestDTO.getEmailUsuario())) {
+            logger.error("Email_Usuario está vazio ou nulo. Valor recebido: '{}'", loginRequestDTO.getEmailUsuario());
             throw new ValidationException("Email é obrigatório");
         }
 
-        if (!StringUtils.hasText(loginRequestDTO.getSenha_Hash())) {
+        if (!StringUtils.hasText(loginRequestDTO.getSenhaHash())) {
             logger.error("Senha_Hash está vazia ou nula");
             throw new ValidationException("Senha é obrigatória");
         }
 
         // Validar formato do email
-        if (!EMAIL_PATTERN.matcher(loginRequestDTO.getEmail_Usuario().trim()).matches()) {
-            logger.error("Formato de email inválido: '{}'", loginRequestDTO.getEmail_Usuario());
+        if (!EMAIL_PATTERN.matcher(loginRequestDTO.getEmailUsuario().trim()).matches()) {
+            logger.error("Formato de email inválido: '{}'", loginRequestDTO.getEmailUsuario());
             throw new ValidationException("Formato de email inválido");
         }
     }
@@ -569,7 +585,7 @@ public class UsuariosService implements IUsuariosService {
      * Registra o device token para notificações push
      */
     private void registerDeviceToken(LoginRequestDTO loginRequestDTO, int usuarioId) {
-        if (StringUtils.hasText(loginRequestDTO.getDevice_Token()) &&
+        if (StringUtils.hasText(loginRequestDTO.getDeviceToken()) &&
             StringUtils.hasText(loginRequestDTO.getPlataforma())) {
 
             try {
@@ -577,7 +593,7 @@ public class UsuariosService implements IUsuariosService {
                 // Usar createDeviceToken diretamente
                 var createDTO = new com.AchadosPerdidos.API.Application.DTOs.DeviceToken.DeviceTokenCreateDTO();
                 createDTO.setUsuarioId(usuarioId);
-                createDTO.setToken(loginRequestDTO.getDevice_Token().trim());
+                createDTO.setToken(loginRequestDTO.getDeviceToken().trim());
                 createDTO.setPlataforma(loginRequestDTO.getPlataforma().trim());
                 // Nota: DeviceTokenCreateDTO não tem setFlgInativo, o padrão é false
                 deviceTokenService.createDeviceToken(createDTO);

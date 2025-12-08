@@ -5,4 +5,5 @@ import com.AchadosPerdidos.API.Application.DTOs.FotoUsuario.FotoUsuarioListDTO;
 public interface IFotoUsuarioService {
     FotoUsuarioListDTO getAllFotosUsuario();
     FotoUsuarioListDTO getActiveFotosUsuario();
+
 }

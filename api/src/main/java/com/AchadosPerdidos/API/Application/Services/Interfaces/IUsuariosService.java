@@ -2,6 +2,7 @@ package com.AchadosPerdidos.API.Application.Services.Interfaces;
 
 import com.AchadosPerdidos.API.Application.DTOs.Auth.AuthResponseDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Auth.LoginRequestDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Auth.RedefinirSenhaDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Auth.TokenResponseDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosListDTO;
@@ -20,7 +21,27 @@ public interface IUsuariosService {
     UsuariosUpdateDTO updateUsuario(int id, UsuariosUpdateDTO usuariosDTO);
     boolean deleteUsuario(int id);
 
-    //esses carinhas vão ser usados na controller AuthController que vai ser criada
-    boolean redefinirSenha(String cpf, String matricula, String novaSenha);
+    // ========== AUTENTICAÇÃO ==========
+
+    /**
+     * Realiza login com email e senha
+     */
     TokenResponseDTO login(LoginRequestDTO loginRequestDTO);
+
+    /**
+     * Redefine senha usando strings (versão antiga - mantida para compatibilidade)
+     * @deprecated Use {@link #redefinirSenha(RedefinirSenhaDTO)} instead
+     */
+    @Deprecated
+    boolean redefinirSenha(String cpf, String matricula, String novaSenha);
+
+    /**
+     * Redefine senha usando DTO completo com validações
+     */
+    void redefinirSenha(RedefinirSenhaDTO redefinirSenhaDTO);
+
+    /**
+     * Processa login com Google OAuth2
+     */
+    TokenResponseDTO loginWithGoogle(String code, IGoogleAuthService googleAuthService, IJWTService jwtService);
 }

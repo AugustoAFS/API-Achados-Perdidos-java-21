@@ -7,8 +7,8 @@ import com.AchadosPerdidos.API.Application.DTOs.Campus.CampusUpdateDTO;
 
 public interface ICampusService {
     CampusDTO createCampus(CampusCreateDTO createDTO);
-    CampusDTO updateCampus(int id, CampusUpdateDTO updateDTO);
     CampusListDTO getAllCampus();
+    CampusDTO updateCampus(int id, CampusUpdateDTO updateDTO);
     CampusDTO getCampusById(int id);
     CampusListDTO getActiveCampus();
     CampusListDTO getCampusByInstitution(int institutionId);

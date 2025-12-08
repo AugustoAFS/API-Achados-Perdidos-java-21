@@ -37,6 +37,7 @@ public class SecurityConfig {
             "https://www.api-achadosperdidos.com.br"
     );
     private static final List<String> DEFAULT_DEV_ORIGIN_PATTERNS = List.of(
+            "http://localhost:4200",
             "http://localhost:*",
             "http://127.0.0.1:*"
     );
@@ -85,15 +86,33 @@ public class SecurityConfig {
                                 "/actuator/**",
                                 "/error"
                         ).permitAll()
+                        // ========== AUTENTICAÇÃO ==========
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/redefinir-senha").permitAll()
+                        .requestMatchers("/api/auth/google/**").permitAll()
+                        // ========== USUÁRIOS (CRIAÇÃO) ==========
                         .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/aluno").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/servidor").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/usuarios/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/usuarios/redefinir-senha").permitAll()
                         .requestMatchers("/api/usuarios/criar").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/usuarios/*/redefinir-senha").permitAll()
+                        // ========== GOOGLE AUTH (LEGADO) ==========
                         .requestMatchers("/api/google-auth/**").permitAll()
+                        // ========== DADOS BÁSICOS (PÚBLICOS PARA CADASTRO) ==========
                         .requestMatchers(HttpMethod.GET, "/api/campus").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/campus/active").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/campus/institution/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/instituicao").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/instituicao/active").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/estados").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/estados/uf/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/cidades").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/cidades/estado/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/enderecos/cidade/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/roles").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/roles/active").permitAll()
+                        // ========== FOTOS (DOWNLOAD PÚBLICO) ==========
+                        .requestMatchers(HttpMethod.GET, "/api/fotos/download/**").permitAll()
+                        // ========== TODAS AS OUTRAS ROTAS REQUEREM AUTENTICAÇÃO ==========
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -105,17 +124,46 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
-        configuration.setAllowedMethods(new ArrayList<>(parseList(allowedMethodsEnv)));
-        configuration.setAllowedHeaders(new ArrayList<>(parseList(allowedHeadersEnv)));
-        configuration.setExposedHeaders(new ArrayList<>(parseList(exposedHeadersEnv)));
+        
+        // Métodos permitidos - garantir que OPTIONS está incluído
+        List<String> methods = parseList(allowedMethodsEnv);
+        if (methods.isEmpty()) {
+            methods = List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH");
+        }
+        if (!methods.contains("OPTIONS")) {
+            methods = new ArrayList<>(methods);
+            methods.add("OPTIONS");
+        }
+        configuration.setAllowedMethods(methods);
+        
+        // Headers permitidos - permitir todos em desenvolvimento
+        List<String> headers = parseList(allowedHeadersEnv);
+        if (headers.isEmpty() || headers.contains("*")) {
+            headers = List.of("*");
+        }
+        configuration.setAllowedHeaders(headers);
+        
+        // Headers expostos
+        List<String> exposedHeaders = parseList(exposedHeadersEnv);
+        if (exposedHeaders.isEmpty()) {
+            exposedHeaders = List.of("Authorization", "Content-Type", "X-Requested-With", "X-Token-Expiry");
+        }
+        configuration.setExposedHeaders(exposedHeaders);
         configuration.setMaxAge(3600L);
 
         if (environmentConfig.isProduction()) {
+            // Em produção, usar origens específicas
             configuration.setAllowedOrigins(new ArrayList<>(resolveProdOrigins()));
         } else {
+            // Em desenvolvimento, usar padrões para permitir qualquer porta do localhost
             List<String> patterns = parseList(allowedOriginPatternsEnv);
             if (patterns.isEmpty()) {
                 patterns = DEFAULT_DEV_ORIGIN_PATTERNS;
+            }
+            // Garantir que o padrão permite qualquer porta do localhost
+            if (!patterns.contains("http://localhost:*") && !patterns.contains("http://localhost:4200")) {
+                patterns = new ArrayList<>(patterns);
+                patterns.add("http://localhost:*");
             }
             configuration.setAllowedOriginPatterns(new ArrayList<>(patterns));
         }

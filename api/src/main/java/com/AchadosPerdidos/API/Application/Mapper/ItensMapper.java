@@ -6,19 +6,15 @@ import com.AchadosPerdidos.API.Application.DTOs.Item.ItemListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Item.ItemUpdateDTO;
 import com.AchadosPerdidos.API.Domain.Entity.Itens;
 import com.AchadosPerdidos.API.Domain.Entity.Usuario;
-import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotosService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 @Component
 public class ItensMapper {
-
-    @Autowired
-    private IFotosService fotosService;
 
     public ItemDTO toDTO(Itens itens) {
         if (itens == null) {
@@ -27,11 +23,7 @@ public class ItensMapper {
         
         Integer usuarioRelatorId = itens.getUsuario_relator_id() != null ? itens.getUsuario_relator_id().getId() : null;
 
-        // Buscar fotos do item
-        // Nota: getItemPhotos não existe mais na interface IFotosService
         List<com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosDTO> fotos = Collections.emptyList();
-        // TODO: Implementar busca de fotos do item se necessário
-        // A interface IFotosService não possui mais métodos para buscar fotos por item
 
         ItemDTO dto = new ItemDTO();
         dto.setId(itens.getId());

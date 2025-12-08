@@ -5,11 +5,6 @@ import com.AchadosPerdidos.API.Application.DTOs.Item.ItemListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Item.ItemCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Item.ItemUpdateDTO;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IItensService;
-import com.AchadosPerdidos.API.Application.Services.Interfaces.IJWTService;
-import com.AchadosPerdidos.API.Application.Services.Interfaces.INotificationService;
-import com.AchadosPerdidos.API.Application.Services.FotosService;
-import com.AchadosPerdidos.API.Domain.Enum.Tipo_Item;
-import com.AchadosPerdidos.API.Exeptions.BusinessException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,274 +24,77 @@ public class ItensController {
     @Autowired
     private IItensService itensService;
 
-    @Autowired
-    private INotificationService notificationService;
-
-    @Autowired
-    private IJWTService jwtService;
-
-    @Autowired
-    private FotosService fotosService;
 
     @GetMapping
     @Operation(summary = "Listar todos os itens")
     public ResponseEntity<ItemListDTO> getAllItens() {
-        ItemListDTO itens = itensService.getAllItens();
-        return ResponseEntity.ok(itens);
+        return ResponseEntity.ok(itensService.getAllItens());
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Buscar item por ID")
     public ResponseEntity<ItemDTO> getItemById(@PathVariable int id) {
-        ItemDTO item = itensService.getItemById(id);
-        return ResponseEntity.ok(item);
-    }
-
-    @PostMapping
-    @Operation(summary = "Criar novo item", description = "Cria um novo item. O usuário relator é obtido automaticamente do token JWT.")
-    public ResponseEntity<ItemDTO> createItem(@RequestBody ItemCreateDTO itemCreateDTO, HttpServletRequest request) {
-        try {
-            // Extrair token JWT do header Authorization
-            String authHeader = request.getHeader("Authorization");
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-            
-            String token = authHeader.substring(7);
-            
-            // Obter userId do token (usando getEmailFromToken como alternativa)
-            // Nota: getUserIdFromToken não existe na interface IJWTService
-            // TODO: Implementar extração de userId do token ou adicionar método na interface
-            String userIdStr = null; // Precisa ser implementado
-            if (userIdStr == null || userIdStr.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-            
-            Integer usuarioRelatorId = Integer.valueOf(userIdStr);
-            
-            // Definir usuário relator no DTO
-            itemCreateDTO.setUsuarioRelatorId(usuarioRelatorId);
-            
-            // Criar item
-            ItemDTO createdItem = itensService.createItem(itemCreateDTO);
-            
-            // Envia notificação automática quando item é criado
-            if (createdItem != null) {
-                notificationService.sendItemFoundNotification(createdItem.getId(), createdItem.getUsuarioRelatorId());
-            }
-            
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdItem);
-        } catch (BusinessException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    @PutMapping("/{id}")
-    @Operation(summary = "Atualizar item")
-    public ResponseEntity<ItemDTO> updateItem(@PathVariable int id, @RequestBody ItemUpdateDTO itemUpdateDTO) {
-        ItemDTO updatedItem = itensService.updateItem(id, itemUpdateDTO);
-        return ResponseEntity.ok(updatedItem);
-    }
-
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Deletar item (soft delete)")
-    public ResponseEntity<Void> deleteItem(@PathVariable int id) {
-        boolean deleted = itensService.deleteItem(id);
-        if (deleted) {
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-
-    @GetMapping("/user/{userId}")
-    @Operation(summary = "Buscar itens por usuário")
-    public ResponseEntity<ItemListDTO> getItensByUser(@PathVariable int userId) {
-        ItemListDTO itens = itensService.getItensByUser(userId);
-        return ResponseEntity.ok(itens);
+        return ResponseEntity.ok(itensService.getItemById(id));
     }
 
     @GetMapping("/campus/{campusId}")
-    @Operation(summary = "Buscar itens por campus")
-    public ResponseEntity<ItemListDTO> getItensByCampus(@PathVariable int campusId) {
-        ItemListDTO itens = itensService.getItensByCampus(campusId);
-        return ResponseEntity.ok(itens);
-    }
-
-
-
-    @PostMapping(value = "/perdidos", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Criar item perdido", description = "Cria um novo item perdido. O usuário relator é obtido automaticamente do token JWT.")
-    public ResponseEntity<ItemDTO> createItemPerdido(@RequestBody ItemCreateDTO itemCreateDTO, HttpServletRequest request) {
-        try {
-            // Definir tipo como PERDIDO
-            itemCreateDTO.setTipoItem(Tipo_Item.PERDIDO);
-            
-            // Extrair token JWT do header Authorization
-            String authHeader = request.getHeader("Authorization");
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-            
-            String token = authHeader.substring(7);
-            
-            // Obter userId do token (usando getEmailFromToken como alternativa)
-            // Nota: getUserIdFromToken não existe na interface IJWTService
-            // TODO: Implementar extração de userId do token ou adicionar método na interface
-            String userIdStr = null; // Precisa ser implementado
-            if (userIdStr == null || userIdStr.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-            
-            Integer usuarioRelatorId = Integer.valueOf(userIdStr);
-            itemCreateDTO.setUsuarioRelatorId(usuarioRelatorId);
-            
-            // Criar item
-            ItemDTO createdItem = itensService.createItem(itemCreateDTO);
-            
-            // Envia notificação automática quando item é criado
-            if (createdItem != null) {
-                notificationService.sendItemFoundNotification(createdItem.getId(), createdItem.getUsuarioRelatorId());
-            }
-            
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdItem);
-        } catch (BusinessException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    @PostMapping(value = "/perdidos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Criar item perdido com foto(s)", description = "Cria um novo item perdido com uma ou mais fotos em uma única requisição. O usuário relator é obtido automaticamente do token JWT.")
-    public ResponseEntity<ItemDTO> createItemPerdidoWithPhoto(
-            @Parameter(description = "Dados do item (JSON)") @RequestPart("item") ItemCreateDTO itemCreateDTO,
-            @Parameter(description = "Arquivo(s) de imagem do item (pode enviar múltiplas fotos)") @RequestPart(value = "files", required = false) MultipartFile[] files,
-            HttpServletRequest request) {
-        try {
-            // Definir tipo como PERDIDO
-            itemCreateDTO.setTipoItem(Tipo_Item.PERDIDO);
-            
-            // Extrair token JWT do header Authorization
-            String authHeader = request.getHeader("Authorization");
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-            
-            String token = authHeader.substring(7);
-            
-            // Obter userId do token (usando getEmailFromToken como alternativa)
-            // Nota: getUserIdFromToken não existe na interface IJWTService
-            // TODO: Implementar extração de userId do token ou adicionar método na interface
-            String userIdStr = null; // Precisa ser implementado
-            if (userIdStr == null || userIdStr.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-            
-            Integer usuarioRelatorId = Integer.valueOf(userIdStr);
-            itemCreateDTO.setUsuarioRelatorId(usuarioRelatorId);
-            
-            // Criar item
-            ItemDTO createdItem = itensService.createItem(itemCreateDTO);
-            
-            // Se houver fotos, fazer upload e associar ao item
-            if (files != null && files.length > 0 && createdItem != null) {
-                for (MultipartFile file : files) {
-                    if (file != null && !file.isEmpty()) {
-                        try {
-                            fotosService.uploadItemPhoto(file, usuarioRelatorId, createdItem.getId());
-                        } catch (Exception e) {
-                            // Log erro mas não falha a criação do item
-                            // O item já foi criado, apenas esta foto falhou
-                            // A exceção já foi logada no FotosService
-                        }
-                    }
-                }
-            }
-            
-            // Envia notificação automática quando item é criado
-            if (createdItem != null) {
-                notificationService.sendItemFoundNotification(createdItem.getId(), createdItem.getUsuarioRelatorId());
-            }
-            
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdItem);
-        } catch (BusinessException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    @Operation(summary = "Buscar itens por campus", description = "Retorna todos os itens de um campus específico")
+    public ResponseEntity<ItemListDTO> getItensByCampus(
+            @Parameter(description = "ID do campus") @PathVariable int campusId) {
+        return ResponseEntity.ok(itensService.getItensByCampus(campusId));
     }
 
     @PostMapping(value = "/achados", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Criar item achado com foto(s)", description = "Cria um novo item achado com uma ou mais fotos. Pelo menos uma foto é obrigatória. O usuário relator é obtido automaticamente do token JWT.")
+    @Operation(
+        summary = "Criar item achado com foto(s)",
+        description = "Cria um novo item achado com uma ou mais fotos. O usuário relator é obtido automaticamente do token JWT."
+    )
     public ResponseEntity<ItemDTO> createItemAchado(
             @Parameter(description = "Dados do item (JSON)") @RequestPart("item") ItemCreateDTO itemCreateDTO,
-            @Parameter(description = "Arquivo(s) de imagem do item (obrigatório - pode enviar múltiplas fotos)") @RequestPart("files") MultipartFile[] files,
+            @Parameter(description = "Arquivo(s) de imagem do item (obrigatório)") @RequestPart("files") MultipartFile[] files,
             HttpServletRequest request) {
-        try {
-            // Validar se pelo menos uma foto foi enviada (obrigatória para itens achados)
-            if (files == null || files.length == 0 || files[0] == null || files[0].isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(null);
-            }
-            
-            // Definir tipo como ACHADO
-            itemCreateDTO.setTipoItem(Tipo_Item.ACHADO);
-            
-            // Extrair token JWT do header Authorization
-            String authHeader = request.getHeader("Authorization");
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-            
-            String token = authHeader.substring(7);
-            
-            // Obter userId do token (usando getEmailFromToken como alternativa)
-            // Nota: getUserIdFromToken não existe na interface IJWTService
-            // TODO: Implementar extração de userId do token ou adicionar método na interface
-            String userIdStr = null; // Precisa ser implementado
-            if (userIdStr == null || userIdStr.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-            
-            Integer usuarioRelatorId = Integer.valueOf(userIdStr);
-            itemCreateDTO.setUsuarioRelatorId(usuarioRelatorId);
-            
-            // Criar item
-            ItemDTO createdItem = itensService.createItem(itemCreateDTO);
-            
-            // Fazer upload das fotos e associar ao item (obrigatório)
-            if (createdItem != null) {
-                boolean atLeastOneUploaded = false;
-                for (MultipartFile file : files) {
-                    if (file != null && !file.isEmpty()) {
-                        try {
-                            fotosService.uploadItemPhoto(file, usuarioRelatorId, createdItem.getId());
-                            atLeastOneUploaded = true;
-                        } catch (Exception e) {
-                            // Log erro mas continua tentando outras fotos
-                        }
-                    }
-                }
-                // Se nenhuma foto foi enviada com sucesso, retornar erro
-                if (!atLeastOneUploaded) {
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-                }
-            }
-            
-            // Envia notificação automática quando item é criado
-            if (createdItem != null) {
-                notificationService.sendItemFoundNotification(createdItem.getId(), createdItem.getUsuarioRelatorId());
-            }
-            
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdItem);
-        } catch (BusinessException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+
+        String token = extractTokenFromRequest(request);
+        ItemDTO createdItem = itensService.createItemAchadoComFotos(itemCreateDTO, files, token);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdItem);
     }
+
+    @PostMapping(value = "/perdidos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(
+        summary = "Criar item perdido com foto(s)",
+        description = "Cria um novo item perdido com uma ou mais fotos (opcional). O usuário relator é obtido automaticamente do token JWT."
+    )
+    public ResponseEntity<ItemDTO> createItemPerdido(
+            @Parameter(description = "Dados do item (JSON)") @RequestPart("item") ItemCreateDTO itemCreateDTO,
+            @Parameter(description = "Arquivo(s) de imagem do item (opcional)") @RequestPart(value = "files", required = false) MultipartFile[] files,
+            HttpServletRequest request) {
+
+        String token = extractTokenFromRequest(request);
+        ItemDTO createdItem = itensService.createItemPerdidoComFotos(itemCreateDTO, files, token);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdItem);
+    }
+
+    @PutMapping("/update/{id}")
+    @Operation(summary = "Atualizar item")
+    public ResponseEntity<ItemDTO> updateItem(
+            @PathVariable int id,
+            @RequestBody ItemUpdateDTO itemUpdateDTO) {
+        return ResponseEntity.ok(itensService.updateItem(id, itemUpdateDTO));
+    }
+
+    @DeleteMapping("/delete/{id}")
+    @Operation(summary = "Deletar item (soft delete)")
+    public ResponseEntity<Void> deleteItem(@PathVariable int id) {
+        itensService.deleteItem(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    private String extractTokenFromRequest(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        return null;
+    }
+
 }

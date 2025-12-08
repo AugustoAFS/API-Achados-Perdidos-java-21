@@ -58,12 +58,7 @@ public class FotosController {
     public ResponseEntity<FotosDTO> updateFotoUsuario(
             @Parameter(description = "ID da foto a ser atualizada") @PathVariable int id, 
             @RequestBody FotosDTO fotosDTO) {
-        FotosDTO updatedFoto = fotosService.updateFotoUsuario(id, fotosDTO);
-        if (updatedFoto != null) {
-            return ResponseEntity.ok(updatedFoto);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(fotosService.updateFotoUsuario(id, fotosDTO));
     }
 
     @PutMapping("/item/{id}")
@@ -71,36 +66,23 @@ public class FotosController {
     public ResponseEntity<FotosDTO> updateFotoItem(
             @Parameter(description = "ID da foto a ser atualizada") @PathVariable int id, 
             @RequestBody FotosDTO fotosDTO) {
-        FotosDTO updatedFoto = fotosService.updateFotoItem(id, fotosDTO);
-        if (updatedFoto != null) {
-            return ResponseEntity.ok(updatedFoto);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(fotosService.updateFotoItem(id, fotosDTO));
     }
 
     @DeleteMapping("/usuario/{id}")
     @Operation(summary = "Deletar foto de usuário (soft delete)", description = "Marca uma foto de usuário como inativa no banco de dados")
     public ResponseEntity<Void> deleteFotoUsuario(
             @Parameter(description = "ID da foto a ser deletada") @PathVariable int id) {
-        boolean deleted = fotosService.deleteFotoUsuario(id);
-        if (deleted) {
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        fotosService.deleteFotoUsuario(id);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/item/{id}")
     @Operation(summary = "Deletar foto de item (soft delete)", description = "Marca uma foto de item como inativa no banco de dados")
     public ResponseEntity<Void> deleteFotoItem(
             @Parameter(description = "ID da foto a ser deletada") @PathVariable int id) {
-        boolean deleted = fotosService.deleteFotoItem(id);
-        if (deleted) {
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        fotosService.deleteFotoItem(id);
+        return ResponseEntity.noContent().build();
     }
 
     // ========== UPLOAD E DOWNLOAD COM S3 ==========
@@ -192,45 +174,16 @@ public class FotosController {
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
         summary = "Upload genérico de foto", 
-        description = "Faz upload genérico de uma foto para o S3. " +
-                     "Pode ser usado para foto de perfil ou de item, dependendo dos parâmetros fornecidos. " +
-                     "Se itemId for fornecido, a foto será associada ao item. " +
-                     "Se isProfilePhoto for true, será tratada como foto de perfil. " +
-                     "Aceita formatos: JPEG, PNG, GIF, WEBP"
+        description = "Upload genérico para o S3. Se itemId for fornecido, associa ao item. Se isProfilePhoto=true, trata como foto de perfil."
     )
-    public ResponseEntity<?> uploadPhoto(
+    public ResponseEntity<FotosDTO> uploadPhoto(
             @Parameter(description = "Arquivo de imagem a ser enviado") @RequestParam("file") MultipartFile file,
             @Parameter(description = "ID do usuário proprietário da foto") @RequestParam("userId") Integer userId,
-            @Parameter(description = "ID do item (opcional, se fornecido associa a foto ao item)") @RequestParam(value = "itemId", required = false) Integer itemId,
-            @Parameter(description = "Indica se é foto de perfil (padrão: false)") @RequestParam(value = "isProfilePhoto", defaultValue = "false") boolean isProfilePhoto) {
-        try {
-            // Validações básicas
-            if (file == null || file.isEmpty()) {
-                return ResponseEntity.badRequest()
-                    .body("Arquivo não pode estar vazio");
-            }
-            
-            if (userId == null || userId <= 0) {
-                return ResponseEntity.badRequest()
-                    .body("userId é obrigatório e deve ser maior que zero");
-            }
+            @Parameter(description = "ID do item (opcional)") @RequestParam(value = "itemId", required = false) Integer itemId,
+            @Parameter(description = "Indica se é foto de perfil") @RequestParam(value = "isProfilePhoto", defaultValue = "false") boolean isProfilePhoto) {
 
-            FotosDTO foto = fotosServiceImpl.uploadPhoto(file, userId, itemId, isProfilePhoto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(foto);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                .body("Erro de validação: " + e.getMessage());
-        } catch (IllegalStateException e) {
-            // Erro de configuração (ex: bucket S3 não existe)
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Erro de configuração: " + e.getMessage());
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                .body("Erro ao fazer upload: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Erro interno: " + e.getMessage());
-        }
+        FotosDTO foto = fotosServiceImpl.uploadPhoto(file, userId, itemId, isProfilePhoto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(foto);
     }
 
     @GetMapping("/download/{id}")

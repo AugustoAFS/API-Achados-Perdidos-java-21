@@ -3,12 +3,18 @@ package com.AchadosPerdidos.API.Presentation.Controller;
 import com.AchadosPerdidos.API.Application.DTOs.Instituicao.InstituicaoDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Instituicao.InstituicaoListDTO;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IInstituicaoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Controller para gerenciamento de instituições
+ * Responsabilidade: Camada de apresentação - recebe requisições HTTP e delega para os services
+ */
 @RestController
 @RequestMapping("/api/instituicao")
 @Tag(name = "Instituições", description = "API para gerenciamento de instituições")
@@ -18,51 +24,42 @@ public class InstituicaoController {
     private IInstituicaoService instituicaoService;
 
     @GetMapping
+    @Operation(summary = "Listar todas as instituições")
     public ResponseEntity<InstituicaoListDTO> getAllInstituicoes() {
-        InstituicaoListDTO instituicoes = instituicaoService.getAllInstituicoes();
-        return ResponseEntity.ok(instituicoes);
+        return ResponseEntity.ok(instituicaoService.getAllInstituicoes());
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Buscar instituição por ID")
     public ResponseEntity<InstituicaoDTO> getInstituicaoById(@PathVariable int id) {
-        InstituicaoDTO instituicao = instituicaoService.getInstituicaoById(id);
-        if (instituicao != null) {
-            return ResponseEntity.ok(instituicao);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(instituicaoService.getInstituicaoById(id));
     }
 
     @PostMapping
+    @Operation(summary = "Criar nova instituição")
     public ResponseEntity<InstituicaoDTO> createInstituicao(@RequestBody InstituicaoDTO instituicaoDTO) {
-        InstituicaoDTO createdInstituicao = instituicaoService.createInstituicao(instituicaoDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdInstituicao);
+        return ResponseEntity.status(HttpStatus.CREATED).body(instituicaoService.createInstituicao(instituicaoDTO));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<InstituicaoDTO> updateInstituicao(@PathVariable int id, @RequestBody InstituicaoDTO instituicaoDTO) {
-        InstituicaoDTO updatedInstituicao = instituicaoService.updateInstituicao(id, instituicaoDTO);
-        if (updatedInstituicao != null) {
-            return ResponseEntity.ok(updatedInstituicao);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    @Operation(summary = "Atualizar instituição")
+    public ResponseEntity<InstituicaoDTO> updateInstituicao(
+            @Parameter(description = "ID da instituição") @PathVariable int id,
+            @RequestBody InstituicaoDTO instituicaoDTO) {
+        return ResponseEntity.ok(instituicaoService.updateInstituicao(id, instituicaoDTO));
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Deletar instituição")
     public ResponseEntity<Void> deleteInstituicao(@PathVariable int id) {
-        boolean deleted = instituicaoService.deleteInstituicao(id);
-        if (deleted) {
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        instituicaoService.deleteInstituicao(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/active")
+    @Operation(summary = "Listar instituições ativas")
     public ResponseEntity<InstituicaoListDTO> getActiveInstituicoes() {
-        InstituicaoListDTO activeInstituicoes = instituicaoService.getActiveInstituicoes();
-        return ResponseEntity.ok(activeInstituicoes);
+        return ResponseEntity.ok(instituicaoService.getActiveInstituicoes());
     }
 
 }

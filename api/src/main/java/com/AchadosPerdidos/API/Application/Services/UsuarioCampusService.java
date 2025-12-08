@@ -18,6 +18,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UsuarioCampusService implements IUsuarioCampusService {
@@ -36,8 +38,11 @@ public class UsuarioCampusService implements IUsuarioCampusService {
 
     @Override
     @Cacheable(value = "usuarioCampus", key = "'all'")
-    public UsuarioCampusListDTO getAllUsuarioCampus() {
-        return usuarioCampusMapper.toListDTO(usuarioCampusRepository.findAll());
+    public List<UsuarioCampusListDTO> getAllUsuarioCampus() {
+        List<UsuarioCampus> usuarioCampusList = usuarioCampusRepository.findAll();
+        return usuarioCampusList.stream()
+                .map(uc -> usuarioCampusMapper.toListDTO(List.of(uc)))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -79,6 +84,22 @@ public class UsuarioCampusService implements IUsuarioCampusService {
     @Cacheable(value = "usuarioCampus", key = "'active'")
     public UsuarioCampusListDTO getActiveUsuarioCampus() {
         return usuarioCampusMapper.toListDTO(usuarioCampusRepository.findActive());
+    }
+
+    @Override
+    @Cacheable(value = "usuarioCampus", key = "'usuario_' + #id")
+    public List<UsuarioCampusListDTO> getUsuarioCampusByUsuarioId(Integer id) {
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("ID do usuário deve ser válido");
+        }
+
+        List<UsuarioCampus> usuarioCampusList = usuarioCampusRepository.findAll().stream()
+                .filter(uc -> uc.getUsuario_id() != null && uc.getUsuario_id().getId().equals(id))
+                .collect(Collectors.toList());
+
+        return usuarioCampusList.stream()
+                .map(uc -> usuarioCampusMapper.toListDTO(List.of(uc)))
+                .collect(Collectors.toList());
     }
 
     @Override
