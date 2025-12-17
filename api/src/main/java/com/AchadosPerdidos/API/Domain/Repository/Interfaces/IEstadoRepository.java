@@ -2,6 +2,7 @@ package com.AchadosPerdidos.API.Domain.Repository.Interfaces;
 
 import com.AchadosPerdidos.API.Domain.Entity.Estado;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Interface do Repository para Estados (UF)
@@ -9,11 +10,14 @@ import java.util.List;
  * Base da hierarquia de localização: Estado → Cidade → Endereço
  */
 public interface IEstadoRepository {
+    // Operações CRUD básicas
     List<Estado> findAll();
-    Estado findById(Integer id);
-    Estado findByUf(String uf);
+    Optional<Estado> findById(Integer id);
     Estado save(Estado estado);
-    boolean deleteById(Integer id);
+    void deleteById(Integer id);
+    
+    // Buscas específicas
+    Estado findByUf(String uf);
     List<Estado> findActive();
 }
 

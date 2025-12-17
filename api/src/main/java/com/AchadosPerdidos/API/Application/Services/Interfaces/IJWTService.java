@@ -1,8 +1,11 @@
 package com.AchadosPerdidos.API.Application.Services.Interfaces;
 
+import com.AchadosPerdidos.API.Application.DTOs.Auth.TokenValidationDTO;
+import com.AchadosPerdidos.API.Application.DTOs.Usuario.UsuariosDTO;
+
 public interface IJWTService {
 
-    String generateToken(String email, String name, String role, String userId);
+    String createToken(String email, String name, String role, String userId);
 
     boolean validateToken(String token);
 
@@ -10,7 +13,13 @@ public interface IJWTService {
 
     String getRoleFromToken(String token);
 
+    UsuariosDTO getUsuarioFromToken(String token);
+
     String getUserIdFromToken(String token);
 
-    boolean isTokenExpired(String token);
+    String extractToken(String authorizationHeader);
+
+    String logout(String authorizationHeader);
+
+    TokenValidationDTO validateTokenAndGetInfo(String authorizationHeader);
 }

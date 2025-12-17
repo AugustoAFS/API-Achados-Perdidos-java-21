@@ -13,6 +13,4 @@ public interface ICidadeService {
     CidadeDTO updateCidade(Integer id, CidadeUpdateDTO updateDTO);
     CidadeDTO deleteCidade(Integer id);
     List<CidadeDTO> getCidadesByEstado(Integer estadoId);
-    List<CidadeDTO> getActiveCidades();
 }
-

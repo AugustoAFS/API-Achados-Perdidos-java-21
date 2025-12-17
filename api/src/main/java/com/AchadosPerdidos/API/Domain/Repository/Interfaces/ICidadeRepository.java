@@ -2,6 +2,7 @@ package com.AchadosPerdidos.API.Domain.Repository.Interfaces;
 
 import com.AchadosPerdidos.API.Domain.Entity.Cidade;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Interface do Repository para Cidades
@@ -9,10 +10,13 @@ import java.util.List;
  * Vinculadas a Estados (UF)
  */
 public interface ICidadeRepository {
+    // Operações CRUD básicas
     List<Cidade> findAll();
-    Cidade findById(Integer id);
+    Optional<Cidade> findById(Integer id);
     Cidade save(Cidade cidade);
-    boolean deleteById(Integer id);
+    void deleteById(Integer id);
+    
+    // Buscas específicas
     List<Cidade> findActive();
     List<Cidade> findByEstado(Integer estadoId);
 }

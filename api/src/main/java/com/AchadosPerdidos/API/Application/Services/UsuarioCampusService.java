@@ -18,6 +18,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UsuarioCampusService implements IUsuarioCampusService {
@@ -36,25 +38,11 @@ public class UsuarioCampusService implements IUsuarioCampusService {
 
     @Override
     @Cacheable(value = "usuarioCampus", key = "'all'")
-    public UsuarioCampusListDTO getAllUsuarioCampus() {
-        return usuarioCampusMapper.toListDTO(usuarioCampusRepository.findAll());
-    }
-
-    @Override
-    @Cacheable(value = "usuarioCampus", key = "'usuario_' + #usuarioId + '_campus_' + #campusId")
-    public UsuarioCampusDTO getUsuarioCampusByUsuarioIdAndCampusId(Integer usuarioId, Integer campusId) {
-        if (usuarioId == null || usuarioId <= 0) {
-            throw new IllegalArgumentException("ID do usuário deve ser válido");
-        }
-        if (campusId == null || campusId <= 0) {
-            throw new IllegalArgumentException("ID do campus deve ser válido");
-        }
-
-        UsuarioCampus usuarioCampus = usuarioCampusRepository.findByUsuarioIdAndCampusId(usuarioId, campusId);
-        if (usuarioCampus == null) {
-            throw new ResourceNotFoundException("Campus de usuário não encontrado para usuário ID: " + usuarioId + " e campus ID: " + campusId);
-        }
-        return usuarioCampusMapper.toDTO(usuarioCampus);
+    public List<UsuarioCampusListDTO> getAllUsuarioCampus() {
+        List<UsuarioCampus> usuarioCampusList = usuarioCampusRepository.findAll();
+        return usuarioCampusList.stream()
+                .map(uc -> usuarioCampusMapper.toListDTO(List.of(uc)))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -72,16 +60,13 @@ public class UsuarioCampusService implements IUsuarioCampusService {
             throw new BusinessException("UsuarioCampus", "criar", "ID do campus é obrigatório e deve ser válido");
         }
 
-        // Verificar se o usuário existe
         if (usuariosRepository.findById(createDTO.getUsuarioId()) == null) {
             throw new ResourceNotFoundException("Usuário", "ID", createDTO.getUsuarioId());
         }
 
-        // Verificar se o campus existe
         campusRepository.findById(createDTO.getCampusId())
                 .orElseThrow(() -> new ResourceNotFoundException("Campus", "ID", createDTO.getCampusId()));
 
-        // Verificar se já existe a associação
         UsuarioCampus existing = usuarioCampusRepository.findByUsuarioIdAndCampusId(createDTO.getUsuarioId(), createDTO.getCampusId());
         if (existing != null && (existing.getFlg_Inativo() == null || !existing.getFlg_Inativo())) {
             throw new BusinessException("UsuarioCampus", "criar", "Já existe uma associação ativa entre este usuário e este campus");
@@ -93,6 +78,28 @@ public class UsuarioCampusService implements IUsuarioCampusService {
 
         UsuarioCampus savedUsuarioCampus = usuarioCampusRepository.save(usuarioCampus);
         return usuarioCampusMapper.toDTO(savedUsuarioCampus);
+    }
+
+    @Override
+    @Cacheable(value = "usuarioCampus", key = "'active'")
+    public UsuarioCampusListDTO getActiveUsuarioCampus() {
+        return usuarioCampusMapper.toListDTO(usuarioCampusRepository.findActive());
+    }
+
+    @Override
+    @Cacheable(value = "usuarioCampus", key = "'usuario_' + #id")
+    public List<UsuarioCampusListDTO> getUsuarioCampusByUsuarioId(Integer id) {
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("ID do usuário deve ser válido");
+        }
+
+        List<UsuarioCampus> usuarioCampusList = usuarioCampusRepository.findAll().stream()
+                .filter(uc -> uc.getUsuario_id() != null && uc.getUsuario_id().getId().equals(id))
+                .collect(Collectors.toList());
+
+        return usuarioCampusList.stream()
+                .map(uc -> usuarioCampusMapper.toListDTO(List.of(uc)))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -136,30 +143,6 @@ public class UsuarioCampusService implements IUsuarioCampusService {
         }
 
         return usuarioCampusRepository.deleteByUsuarioIdAndCampusId(usuarioId, campusId);
-    }
-
-    @Override
-    @Cacheable(value = "usuarioCampus", key = "'active'")
-    public UsuarioCampusListDTO getActiveUsuarioCampus() {
-        return usuarioCampusMapper.toListDTO(usuarioCampusRepository.findActive());
-    }
-
-    @Override
-    @Cacheable(value = "usuarioCampus", key = "'usuario_' + #usuarioId")
-    public UsuarioCampusListDTO findByUsuarioId(Integer usuarioId) {
-        if (usuarioId == null || usuarioId <= 0) {
-            throw new IllegalArgumentException("ID do usuário deve ser válido");
-        }
-        return usuarioCampusMapper.toListDTO(usuarioCampusRepository.findByUsuarioId(usuarioId));
-    }
-
-    @Override
-    @Cacheable(value = "usuarioCampus", key = "'campus_' + #campusId")
-    public UsuarioCampusListDTO findByCampusId(Integer campusId) {
-        if (campusId == null || campusId <= 0) {
-            throw new IllegalArgumentException("ID do campus deve ser válido");
-        }
-        return usuarioCampusMapper.toListDTO(usuarioCampusRepository.findByCampusId(campusId));
     }
 }
 

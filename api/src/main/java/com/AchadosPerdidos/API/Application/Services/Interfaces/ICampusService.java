@@ -6,13 +6,11 @@ import com.AchadosPerdidos.API.Application.DTOs.Campus.CampusCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Campus.CampusUpdateDTO;
 
 public interface ICampusService {
+    CampusDTO createCampus(CampusCreateDTO createDTO);
     CampusListDTO getAllCampus();
+    CampusDTO updateCampus(int id, CampusUpdateDTO updateDTO);
     CampusDTO getCampusById(int id);
-    CampusDTO createCampus(CampusDTO campusDTO);
-    CampusDTO updateCampus(int id, CampusDTO campusDTO);
-    boolean deleteCampus(int id);
     CampusListDTO getActiveCampus();
     CampusListDTO getCampusByInstitution(int institutionId);
-    CampusDTO createCampusFromDTO(CampusCreateDTO createDTO);
-    CampusDTO updateCampusFromDTO(int id, CampusUpdateDTO updateDTO);
+    boolean deleteCampus(int id);
 }

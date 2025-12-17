@@ -2,6 +2,7 @@ package com.AchadosPerdidos.API.Domain.Repository.Interfaces;
 
 import com.AchadosPerdidos.API.Domain.Entity.DeviceToken;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Interface do Repository para DeviceToken
@@ -9,13 +10,16 @@ import java.util.List;
  * Gerencia tokens FCM para Push Notifications (OneSignal)
  */
 public interface IDeviceTokenRepository {
+    // Operações CRUD básicas
     List<DeviceToken> findAll();
-    DeviceToken findById(Integer id);
+    Optional<DeviceToken> findById(Integer id);
+    DeviceToken save(DeviceToken deviceToken);
+    void deleteById(Integer id);
+    
+    // Buscas específicas
     List<DeviceToken> findByUsuarioId(Integer usuarioId);
     DeviceToken findByUsuarioIdAndToken(Integer usuarioId, String token);
     List<DeviceToken> findActiveTokensByUsuarioId(Integer usuarioId);
-    DeviceToken save(DeviceToken deviceToken);
-    boolean deleteById(Integer id);
     List<DeviceToken> findActive();
 }
 

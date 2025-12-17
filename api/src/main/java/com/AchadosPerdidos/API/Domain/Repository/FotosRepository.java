@@ -5,7 +5,6 @@ import com.AchadosPerdidos.API.Domain.Repository.Interfaces.IFotosRepository;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.FotosQueries;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.TypedQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,8 +27,7 @@ public class FotosRepository implements IFotosRepository {
     // CRUD básico usando JPA
     @Override
     public List<Foto> findAll() {
-        TypedQuery<Foto> query = entityManager.createQuery("SELECT f FROM Foto f ORDER BY f.Dta_Criacao DESC", Foto.class);
-        return query.getResultList();
+        return entityManager.createQuery("SELECT f FROM Foto f ORDER BY f.Dta_Criacao DESC", Foto.class).getResultList();
     }
 
     @Override
@@ -61,9 +59,8 @@ public class FotosRepository implements IFotosRepository {
 
     @Override
     public List<Foto> findActive() {
-        TypedQuery<Foto> query = entityManager.createQuery(
-            "SELECT f FROM Foto f WHERE f.Flg_Inativo = false ORDER BY f.Dta_Criacao DESC", Foto.class);
-        return query.getResultList();
+        return entityManager.createQuery(
+            "SELECT f FROM Foto f WHERE f.Flg_Inativo = false ORDER BY f.Dta_Criacao DESC", Foto.class).getResultList();
     }
 
     // Operações complexas com JOINs - usam FotosQueries

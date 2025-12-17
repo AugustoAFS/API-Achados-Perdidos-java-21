@@ -2,16 +2,16 @@ package com.AchadosPerdidos.API.Application.Services;
 
 import com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosListDTO;
-import com.AchadosPerdidos.API.Application.DTOs.FotoUsuario.FotoUsuarioCreateDTO;
-import com.AchadosPerdidos.API.Application.DTOs.FotoUsuario.FotoUsuarioUpdateDTO;
-import com.AchadosPerdidos.API.Application.DTOs.FotoItem.FotoItemCreateDTO;
 import com.AchadosPerdidos.API.Application.Mapper.FotosMapper;
 import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotosService;
-import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotoUsuarioService;
-import com.AchadosPerdidos.API.Application.Services.Interfaces.IFotoItemService;
 import com.AchadosPerdidos.API.Exeptions.BusinessException;
 import com.AchadosPerdidos.API.Domain.Entity.Foto;
+import com.AchadosPerdidos.API.Domain.Entity.FotoUsuario;
+import com.AchadosPerdidos.API.Domain.Entity.FotoItem;
+import com.AchadosPerdidos.API.Domain.Entity.Usuario;
 import com.AchadosPerdidos.API.Domain.Repository.FotosRepository;
+import com.AchadosPerdidos.API.Domain.Repository.FotoUsuarioRepository;
+import com.AchadosPerdidos.API.Domain.Repository.FotoItemRepository;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,6 +26,7 @@ import java.util.List;
 public class FotosService implements IFotosService {
 
     private static final Logger logger = LoggerFactory.getLogger(FotosService.class);
+    private static final int SIGNED_URL_EXPIRATION_MINUTES = 60; // 1 hora
 
     @Autowired
     private FotosRepository fotosRepository;
@@ -37,41 +38,96 @@ public class FotosService implements IFotosService {
     private S3Service s3Service;
 
     @Autowired
-    private IFotoUsuarioService fotoUsuarioService;
+    private FotoUsuarioRepository fotoUsuarioRepository;
 
     @Autowired
-    private IFotoItemService fotoItemService;
+    private FotoItemRepository fotoItemRepository;
+
 
     @Override
     public FotosListDTO getAllFotos() {
         List<Foto> fotos = fotosRepository.findAll();
-        return fotosMapper.toListDTO(fotos);
+        FotosListDTO listDTO = fotosMapper.toListDTO(fotos);
+
+        if (listDTO != null && listDTO.getFotos() != null) {
+            listDTO.getFotos().forEach(this::generateSignedUrlIfNeeded);
+        }
+
+        return listDTO;
     }
 
     @Override
-    public FotosDTO getFotoById(int id) {
-        Foto foto = fotosRepository.findById(id);
-        return fotosMapper.toDTO(foto);
-    }
-
-    @Override
-    public FotosDTO createFoto(FotosDTO fotosDTO) {
+    public FotosDTO createFotoUsaurio(FotosDTO fotosDTO) {
         Foto foto = fotosMapper.toEntity(fotosDTO);
         foto.setDtaCriacao(LocalDateTime.now());
         foto.setFlgInativo(false);
         
         Foto savedFoto = fotosRepository.save(foto);
-        return fotosMapper.toDTO(savedFoto);
+        FotosDTO dto = fotosMapper.toDTO(savedFoto);
+
+        generateSignedUrlIfNeeded(dto);
+
+        return dto;
     }
 
     @Override
-    public FotosDTO updateFoto(int id, FotosDTO fotosDTO) {
+    public FotosDTO createFotoItem(FotosDTO fotosDTO) {
+        Foto foto = fotosMapper.toEntity(fotosDTO);
+        foto.setDtaCriacao(LocalDateTime.now());
+        foto.setFlgInativo(false);
+        
+        Foto savedFoto = fotosRepository.save(foto);
+        FotosDTO dto = fotosMapper.toDTO(savedFoto);
+
+        generateSignedUrlIfNeeded(dto);
+
+        return dto;
+    }
+
+    @Override
+    public FotosDTO updateFotoUsuario(int id, FotosDTO fotosDTO) {
         Foto existingFoto = fotosRepository.findById(id);
         if (existingFoto == null) {
             return null;
         }
         
-        // Mapeamento correto dos campos do FotosDTO para a entidade Foto
+        if (fotosDTO.getUrl() != null) {
+            existingFoto.setUrl(fotosDTO.getUrl());
+        }
+
+        if (fotosDTO.getProvedorArmazenamento() != null) {
+            existingFoto.setProvedorArmazenamento(fotosDTO.getProvedorArmazenamento());
+        }
+
+        if (fotosDTO.getChaveArmazenamento() != null) {
+            existingFoto.setChaveArmazenamento(fotosDTO.getChaveArmazenamento());
+        }
+
+        if (fotosDTO.getNomeArquivoOriginal() != null) {
+            existingFoto.setNomeArquivoOriginal(fotosDTO.getNomeArquivoOriginal());
+        }
+
+        if (fotosDTO.getTamanhoArquivoBytes() != null) {
+            existingFoto.setTamanhoArquivoBytes(fotosDTO.getTamanhoArquivoBytes());
+        }
+
+        existingFoto.setDtaCriacao(LocalDateTime.now());
+        
+        Foto updatedFoto = fotosRepository.save(existingFoto);
+        FotosDTO dto = fotosMapper.toDTO(updatedFoto);
+
+        generateSignedUrlIfNeeded(dto);
+
+        return dto;
+    }
+
+    @Override
+    public FotosDTO updateFotoItem(int id, FotosDTO fotosDTO) {
+        Foto existingFoto = fotosRepository.findById(id);
+        if (existingFoto == null) {
+            return null;
+        }
+        
         if (fotosDTO.getUrl() != null) {
             existingFoto.setUrl(fotosDTO.getUrl());
         }
@@ -90,11 +146,15 @@ public class FotosService implements IFotosService {
         existingFoto.setDtaCriacao(LocalDateTime.now());
         
         Foto updatedFoto = fotosRepository.save(existingFoto);
-        return fotosMapper.toDTO(updatedFoto);
+        FotosDTO dto = fotosMapper.toDTO(updatedFoto);
+
+        generateSignedUrlIfNeeded(dto);
+
+        return dto;
     }
 
     @Override
-    public boolean deleteFoto(int id) {
+    public boolean deleteFotoUsuario(int id) {
         Foto foto = fotosRepository.findById(id);
         if (foto == null) {
             return false;
@@ -104,60 +164,19 @@ public class FotosService implements IFotosService {
     }
 
     @Override
-    public FotosListDTO getActiveFotos() {
-        List<Foto> activeFotos = fotosRepository.findActive();
-        return fotosMapper.toListDTO(activeFotos);
+    public boolean deleteFotoItem(int id) {
+        Foto foto = fotosRepository.findById(id);
+        if (foto == null) {
+            return false;
+        }
+        
+        return fotosRepository.deleteById(id);
     }
 
-    @Override
-    public FotosListDTO getFotosByUser(int userId) {
-        List<Foto> fotos = fotosRepository.findByUser(userId);
-        return fotosMapper.toListDTO(fotos);
-    }
-
-    @Override
-    public FotosListDTO getFotosByItem(int itemId) {
-        List<Foto> fotos = fotosRepository.findByItem(itemId);
-        return fotosMapper.toListDTO(fotos);
-    }
-
-    @Override
-    public FotosListDTO getProfilePhotos(int userId) {
-        List<Foto> fotos = fotosRepository.findProfilePhotos(userId);
-        return fotosMapper.toListDTO(fotos);
-    }
-
-    @Override
-    public FotosListDTO getItemPhotos(int itemId) {
-        List<Foto> fotos = fotosRepository.findItemPhotos(itemId);
-        return fotosMapper.toListDTO(fotos);
-    }
-
-    @Override
-    public FotosDTO getMainItemPhoto(int itemId) {
-        Foto foto = fotosRepository.findMainItemPhoto(itemId);
-        return fotosMapper.toDTO(foto);
-    }
-
-    @Override
-    public FotosDTO getProfilePhoto(int userId) {
-        Foto foto = fotosRepository.findProfilePhoto(userId);
-        return fotosMapper.toDTO(foto);
-    }
-
-    /**
-     * Faz upload de uma foto para o S3 e salva no banco de dados
-     * @param file Arquivo da foto
-     * @param userId ID do usuário
-     * @param itemId ID do item (opcional)
-     * @param isProfilePhoto Se é foto de perfil
-     * @return DTO da foto salva
-     */
     public FotosDTO uploadPhoto(MultipartFile file, Integer userId, Integer itemId, boolean isProfilePhoto) {
         logger.info("Iniciando upload de foto - userId: {}, itemId: {}, isProfilePhoto: {}", userId, itemId, isProfilePhoto);
         
         try {
-            // Validar arquivo
             if (file == null || file.isEmpty()) {
                 logger.warn("Tentativa de upload com arquivo vazio");
                 throw new IllegalArgumentException("Arquivo não pode estar vazio");
@@ -166,20 +185,17 @@ public class FotosService implements IFotosService {
             logger.debug("Arquivo recebido: nome={}, tamanho={}, contentType={}", 
                 file.getOriginalFilename(), file.getSize(), file.getContentType());
 
-            // Validar tipo de arquivo
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 logger.warn("Tentativa de upload de arquivo que não é imagem: {}", contentType);
                 throw new IllegalArgumentException("Arquivo deve ser uma imagem. Tipo recebido: " + contentType);
             }
 
-            // Validar userId
             if (userId == null || userId <= 0) {
                 logger.warn("Tentativa de upload com userId inválido: {}", userId);
                 throw new IllegalArgumentException("userId é obrigatório e deve ser maior que zero");
             }
 
-            // Fazer upload para S3
             byte[] fileBytes;
             try {
                 fileBytes = file.getBytes();
@@ -200,7 +216,6 @@ public class FotosService implements IFotosService {
             );
             logger.info("Upload para S3 concluído. S3Key: {}, URL: {}", uploadResult.getS3Key(), uploadResult.getFileUrl());
 
-            // Criar entidade Foto
             Foto foto = new Foto();
             foto.setProvedorArmazenamento("s3");
             foto.setChaveArmazenamento(uploadResult.getS3Key());
@@ -210,16 +225,12 @@ public class FotosService implements IFotosService {
             foto.setFlgInativo(false);
             foto.setDtaCriacao(LocalDateTime.now());
 
-            // Salvar no banco de dados
             logger.debug("Salvando foto no banco de dados...");
             Foto savedFoto = fotosRepository.save(foto);
             logger.info("Foto salva com sucesso. ID: {}", savedFoto.getId());
             
             FotosDTO fotoDTO = fotosMapper.toDTO(savedFoto);
-            
-            // A associação foto-item será criada pelo método uploadItemPhoto se necessário
-            // Não criar aqui para evitar duplicação - uploadItemPhoto é responsável por isso
-            
+
             return fotoDTO;
 
         } catch (IllegalArgumentException e) {
@@ -227,10 +238,8 @@ public class FotosService implements IFotosService {
             throw e;
         } catch (IllegalStateException e) {
             logger.error("Erro de configuração S3: {}", e.getMessage());
-            // Preserva a mensagem original do IllegalStateException para que seja mais clara
             throw e;
         } catch (RuntimeException e) {
-            // Verifica se é um erro de bucket não encontrado
             if (e.getMessage() != null && e.getMessage().contains("Bucket S3") && e.getMessage().contains("não existe")) {
                 logger.error("Bucket S3 não encontrado: {}", e.getMessage());
                 throw new IllegalStateException(e.getMessage(), e);
@@ -243,11 +252,6 @@ public class FotosService implements IFotosService {
         }
     }
 
-    /**
-     * Baixa uma foto do S3
-     * @param fotoId ID da foto
-     * @return Conteúdo da foto em bytes
-     */
     public byte[] downloadPhoto(int fotoId) {
         Foto foto = fotosRepository.findById(fotoId);
         if (foto == null) {
@@ -261,11 +265,6 @@ public class FotosService implements IFotosService {
         return s3Service.downloadFile(foto.getChaveArmazenamento());
     }
 
-    /**
-     * Deleta uma foto do S3 e do banco de dados
-     * @param fotoId ID da foto
-     * @return true se deletada com sucesso
-     */
     public boolean deletePhoto(int fotoId) {
         Foto foto = fotosRepository.findById(fotoId);
         if (foto == null) {
@@ -273,12 +272,10 @@ public class FotosService implements IFotosService {
         }
 
         try {
-            // Deletar do S3 se for S3
             if ("s3".equals(foto.getProvedorArmazenamento())) {
                 s3Service.deleteFile(foto.getChaveArmazenamento());
             }
 
-            // Deletar do banco de dados
             return fotosRepository.deleteById(fotoId);
 
         } catch (RuntimeException e) {
@@ -286,56 +283,44 @@ public class FotosService implements IFotosService {
         }
     }
 
-    /**
-     * Faz upload de foto de perfil
-     * @param file Arquivo da foto
-     * @param userId ID do usuário
-     * @return DTO da foto salva
-     */
     public FotosDTO uploadProfilePhoto(MultipartFile file, Integer userId) {
+        logger.info("Iniciando upload de foto de perfil para usuário ID: {}", userId);
+
         FotosDTO foto = uploadPhoto(file, userId, null, true);
-        
-        // Criar associação automaticamente na tabela fotos_usuario
-        try {
-            if (foto != null && foto.getId() != null) {
-                // Desativar fotos de perfil anteriores
-                var fotosUsuarioList = fotoUsuarioService.findByUsuarioId(userId);
-                if (fotosUsuarioList != null && fotosUsuarioList.getFotoUsuarios() != null) {
-                    for (var fu : fotosUsuarioList.getFotoUsuarios()) {
-                        if (fu.getFotoId() != null && !fu.getFotoId().equals(foto.getId()) && 
-                            (fu.getFlgInativo() == null || !fu.getFlgInativo())) {
-                            var updateDTO = new FotoUsuarioUpdateDTO();
-                            updateDTO.setFlgInativo(true);
-                            fotoUsuarioService.updateFotoUsuario(userId, fu.getFotoId(), updateDTO);
-                            logger.info("Foto de perfil anterior (ID: {}) desativada para usuário ID: {}", fu.getFotoId(), userId);
-                        }
-                    }
-                }
-                
-                // Criar nova associação
-                var createDTO = new FotoUsuarioCreateDTO();
-                createDTO.setUsuarioId(userId);
-                createDTO.setFotoId(foto.getId());
-                fotoUsuarioService.createFotoUsuario(createDTO);
-                logger.info("Associação criada entre usuário ID: {} e foto ID: {}", userId, foto.getId());
-            }
-        } catch (Exception e) {
-            logger.error("Erro ao criar associação foto-usuário após upload: {}", e.getMessage(), e);
-            // Não falha o upload se a associação falhar, mas loga o erro
+
+        if (foto == null || foto.getId() == null) {
+            logger.error("Foto de perfil não foi salva no banco. UserId: {}", userId);
+            throw new RuntimeException("Erro: Foto de perfil não foi salva no banco de dados");
         }
-        
+
+        try {
+            FotoUsuario fotoUsuario = new FotoUsuario();
+            Usuario usuario = new Usuario();
+            usuario.setId(userId);
+            fotoUsuario.setUsuarioId(usuario);
+
+            Foto fotoEntity = new Foto();
+            fotoEntity.setId(foto.getId());
+            fotoUsuario.setFotoId(fotoEntity);
+
+            fotoUsuario.setDtaCriacao(LocalDateTime.now());
+            fotoUsuario.setFlgInativo(false);
+
+            FotoUsuario savedFotoUsuario = fotoUsuarioRepository.save(fotoUsuario);
+            logger.info("Associação foto-usuário criada com sucesso. ID: {}, Foto ID: {}, Usuário ID: {}",
+                savedFotoUsuario.getId(), foto.getId(), userId);
+
+        } catch (Exception e) {
+            logger.error("Erro ao criar associação foto-usuário: {}", e.getMessage(), e);
+            throw new RuntimeException("Foto salva, mas erro ao criar associação: " + e.getMessage(), e);
+        }
+
         return foto;
     }
 
-    /**
-     * Faz upload de foto de item e cria associação na tabela foto_item
-     * A associação só é criada se a foto for salva no banco com sucesso
-     * @param file Arquivo da foto
-     * @param userId ID do usuário
-     * @param itemId ID do item
-     * @return DTO da foto salva
-     */
     public FotosDTO uploadItemPhoto(MultipartFile file, Integer userId, Integer itemId) {
+        logger.info("Iniciando upload de foto de item. UserId: {}, ItemId: {}", userId, itemId);
+
         if (itemId == null || itemId <= 0) {
             throw new IllegalArgumentException("ID do item é obrigatório para upload de foto de item");
         }
@@ -344,43 +329,87 @@ public class FotosService implements IFotosService {
             throw new IllegalArgumentException("Arquivo de foto não pode ser nulo ou vazio");
         }
         
-        // 1. Fazer upload da foto e salvar no banco
         FotosDTO foto = uploadPhoto(file, userId, itemId, false);
         
-        // 2. Verificar se a foto foi criada com sucesso no banco antes de criar associação
         if (foto == null || foto.getId() == null) {
-            logger.error("❌ Foto não foi salva no banco, não é possível criar associação. ItemId: {}", itemId);
+            logger.error("Foto não foi salva no banco. ItemId: {}", itemId);
             throw new RuntimeException("Erro: Foto não foi salva no banco de dados");
         }
         
-        // 3. Verificar se a foto realmente existe no banco antes de associar
         try {
             Foto fotoVerificada = fotosRepository.findById(foto.getId());
             if (fotoVerificada == null) {
-                logger.error("❌ Foto ID {} não encontrada no banco após upload. ItemId: {}", foto.getId(), itemId);
+                logger.error("Foto ID {} não encontrada no banco após upload. ItemId: {}", foto.getId(), itemId);
                 throw new RuntimeException("Erro: Foto não encontrada no banco após upload");
             }
-            
-            // 4. Criar associação na tabela foto_item APENAS se a foto foi salva com sucesso
-            var createDTO = new FotoItemCreateDTO();
-            createDTO.setItemId(itemId);
-            createDTO.setFotoId(foto.getId());
-            fotoItemService.createFotoItem(createDTO);
-            logger.info("✅ Associação criada com sucesso entre item ID: {} e foto ID: {} (foto salva no banco)", itemId, foto.getId());
-            
+
+            FotoItem fotoItem = new FotoItem();
+            fotoItem.setItemId(itemId);
+
+            Foto fotoEntity = new Foto();
+            fotoEntity.setId(foto.getId());
+            fotoItem.setFotoId(fotoEntity);
+
+            fotoItem.setDtaCriacao(LocalDateTime.now());
+            fotoItem.setFlgInativo(false);
+
+            FotoItem savedFotoItem = fotoItemRepository.save(fotoItem);
+            logger.info("Associação foto-item criada com sucesso. ID: {}, Foto ID: {}, Item ID: {}",
+                savedFotoItem.getId(), foto.getId(), itemId);
+
         } catch (BusinessException e) {
-            // Se já existe associação ativa, apenas loga (não é erro crítico)
             if (e.getMessage() != null && e.getMessage().contains("Já existe uma associação ativa")) {
-                logger.warn("⚠️ Associação já existe entre item ID: {} e foto ID: {}", itemId, foto.getId());
+                logger.warn("Associação já existe entre item ID: {} e foto ID: {}", itemId, foto.getId());
             } else {
-                logger.error("❌ Erro de negócio ao criar associação foto-item: {}", e.getMessage());
-                throw e; // Re-lança exceções de negócio
+                logger.error("Erro de negócio ao criar associação foto-item: {}", e.getMessage());
+                throw e;
             }
         } catch (Exception e) {
-            logger.error("❌ Erro ao criar associação foto-item após upload bem-sucedido: {}", e.getMessage(), e);
-            throw new RuntimeException("Erro ao criar associação foto-item: " + e.getMessage(), e);
+            logger.error("Erro ao criar associação foto-item: {}", e.getMessage(), e);
+            throw new RuntimeException("Foto salva, mas erro ao criar associação: " + e.getMessage(), e);
         }
         
         return foto;
+    }
+
+    private void generateSignedUrlIfNeeded(FotosDTO fotosDTO) {
+        if (fotosDTO == null) {
+            return;
+        }
+
+        if ("s3".equalsIgnoreCase(fotosDTO.getProvedorArmazenamento()) &&
+            fotosDTO.getChaveArmazenamento() != null &&
+            !fotosDTO.getChaveArmazenamento().isBlank()) {
+
+            try {
+                logger.debug("Gerando Signed URL para foto ID: {}, S3 Key: {}",
+                    fotosDTO.getId(), fotosDTO.getChaveArmazenamento());
+
+                String signedUrl = s3Service.generateSignedUrl(
+                    fotosDTO.getChaveArmazenamento(),
+                    SIGNED_URL_EXPIRATION_MINUTES
+                );
+
+                if (signedUrl != null) {
+                    fotosDTO.setUrl(signedUrl);
+                    logger.debug("Signed URL gerada com sucesso para foto ID: {}", fotosDTO.getId());
+                } else {
+                    logger.warn("Falha ao gerar Signed URL para foto ID: {}, usando URL do banco",
+                        fotosDTO.getId());
+                }
+            } catch (Exception e) {
+                logger.error("❌ Erro ao gerar Signed URL para foto ID: {}: {}",
+                    fotosDTO.getId(), e.getMessage());
+            }
+        }
+    }
+
+    private void generateSignedUrlsInBatch(List<FotosDTO> fotosDTOList) {
+        if (fotosDTOList == null || fotosDTOList.isEmpty()) {
+            return;
+        }
+
+        logger.debug("Gerando Signed URLs em lote para {} fotos", fotosDTOList.size());
+        fotosDTOList.parallelStream().forEach(this::generateSignedUrlIfNeeded);
     }
 }

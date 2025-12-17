@@ -36,19 +36,8 @@ public class DeviceTokenService implements IDeviceTokenService {
     }
 
     @Override
-    @Cacheable(value = "deviceTokens", key = "'id_' + #id")
-    public DeviceTokenDTO getDeviceTokenById(Integer id) {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("ID do token deve ser válido");
-        }
-
-        DeviceToken deviceToken = getDeviceTokenOrThrow(id);
-        return deviceTokenMapper.toDTO(deviceToken);
-    }
-
-    @Override
     @Cacheable(value = "deviceTokens", key = "'usuario_' + #usuarioId")
-    public DeviceTokenListDTO getDeviceTokensByUsuarioId(Integer usuarioId) {
+    public DeviceTokenListDTO getDeviceTokensByUsuario(Integer usuarioId) {
         if (usuarioId == null || usuarioId <= 0) {
             throw new IllegalArgumentException("ID do usuário deve ser válido");
         }
@@ -58,20 +47,6 @@ public class DeviceTokenService implements IDeviceTokenService {
         }
 
         return deviceTokenMapper.toListDTO(deviceTokenRepository.findByUsuarioId(usuarioId));
-    }
-
-    @Override
-    @Cacheable(value = "deviceTokens", key = "'active_usuario_' + #usuarioId")
-    public DeviceTokenListDTO getActiveDeviceTokensByUsuarioId(Integer usuarioId) {
-        if (usuarioId == null || usuarioId <= 0) {
-            throw new IllegalArgumentException("ID do usuário deve ser válido");
-        }
-
-        if (usuariosRepository.findById(usuarioId) == null) {
-            throw new ResourceNotFoundException("Usuário não encontrado com ID: " + usuarioId);
-        }
-
-        return deviceTokenMapper.toListDTO(deviceTokenRepository.findActiveTokensByUsuarioId(usuarioId));
     }
 
     @Override
@@ -148,49 +123,6 @@ public class DeviceTokenService implements IDeviceTokenService {
 
     @Override
     @CacheEvict(value = "deviceTokens", allEntries = true)
-    public DeviceTokenDTO registerOrUpdateDeviceToken(Integer usuarioId, String token, String plataforma) {
-        if (usuarioId == null || usuarioId <= 0) {
-            throw new IllegalArgumentException("ID do usuário deve ser válido");
-        }
-
-        if (token == null || token.trim().isEmpty()) {
-            throw new IllegalArgumentException("Token do dispositivo não pode ser vazio");
-        }
-
-        if (plataforma == null || plataforma.trim().isEmpty()) {
-            throw new IllegalArgumentException("Plataforma do dispositivo deve ser informada");
-        }
-
-        String plataformaUpper = plataforma.toUpperCase();
-        if (!plataformaUpper.equals("ANDROID") && !plataformaUpper.equals("IOS")) {
-            throw new IllegalArgumentException("Plataforma deve ser ANDROID ou IOS");
-        }
-
-        if (usuariosRepository.findById(usuarioId) == null) {
-            throw new ResourceNotFoundException("Usuário não encontrado com ID: " + usuarioId);
-        }
-
-        // Busca token existente
-        DeviceToken existing = deviceTokenRepository.findByUsuarioIdAndToken(usuarioId, token);
-        
-        if (existing != null) {
-            // Se existe, atualiza (reativa se estiver inativo)
-            existing.setFlg_Inativo(false);
-            existing.setDta_Remocao(null);
-            existing.setDta_Atualizacao(LocalDateTime.now());
-            existing.setPlataforma(plataformaUpper);
-            return deviceTokenMapper.toDTO(deviceTokenRepository.save(existing));
-        } else {
-            // Se não existe, cria novo
-            DeviceTokenCreateDTO createDTO = new DeviceTokenCreateDTO(usuarioId, token, plataformaUpper);
-            DeviceToken deviceToken = deviceTokenMapper.toEntity(createDTO);
-            DeviceToken saved = deviceTokenRepository.save(deviceToken);
-            return deviceTokenMapper.toDTO(saved);
-        }
-    }
-
-    @Override
-    @CacheEvict(value = "deviceTokens", allEntries = true)
     public boolean deleteDeviceToken(Integer id) {
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("ID do token deve ser válido");
@@ -201,12 +133,6 @@ public class DeviceTokenService implements IDeviceTokenService {
         return true;
     }
 
-    @Override
-    @Cacheable(value = "deviceTokens", key = "'active'")
-    public DeviceTokenListDTO getActiveDeviceTokens() {
-        return deviceTokenMapper.toListDTO(deviceTokenRepository.findActive());
-    }
-    
     private DeviceToken getDeviceTokenOrThrow(Integer id) {
         return deviceTokenRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Token de dispositivo não encontrado com ID: " + id));

@@ -10,15 +10,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LoginRequestDTO {
     @JsonProperty("Email_Usuario")
-    private String Email_Usuario;
+    private String emailUsuario;
     
     @JsonProperty("Senha_Hash")
-    private String Senha_Hash;
+    private String senhaHash;
     
     @JsonProperty("Device_Token")
-    private String Device_Token;
+    private String deviceToken;
     
     @JsonProperty("Plataforma")
-    private String Plataforma;
-
+    private String plataforma;
 }

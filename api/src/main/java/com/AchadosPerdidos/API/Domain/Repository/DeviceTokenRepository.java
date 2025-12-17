@@ -1,10 +1,12 @@
 package com.AchadosPerdidos.API.Domain.Repository;
 
 import com.AchadosPerdidos.API.Domain.Entity.DeviceToken;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import com.AchadosPerdidos.API.Domain.Repository.Interfaces.IDeviceTokenRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,35 +16,80 @@ import java.util.Optional;
  * Usa JPA para CRUD básico
  */
 @Repository
-public interface DeviceTokenRepository extends JpaRepository<DeviceToken, Integer> {
-    
-    // CRUD básico já vem do JpaRepository: save, findById, findAll, deleteById
-    
-    // Queries customizadas (necessário porque o campo é Flg_Inativo com underscore)
-    @Query("SELECT dt FROM DeviceToken dt WHERE dt.Flg_Inativo = false")
-    List<DeviceToken> findByFlgInativoFalse();
-    
-    @Query("SELECT dt FROM DeviceToken dt WHERE dt.Id = :id AND dt.Flg_Inativo = false")
-    Optional<DeviceToken> findByIdAndFlgInativoFalse(@Param("id") Integer id);
-    
-    // Queries customizadas simples
-    @Query("SELECT dt FROM DeviceToken dt WHERE dt.Usuario_id.Id = :usuarioId AND dt.Flg_Inativo = false")
-    List<DeviceToken> findByUsuarioId(@Param("usuarioId") Integer usuarioId);
-    
-    @Query("SELECT dt FROM DeviceToken dt WHERE dt.Usuario_id.Id = :usuarioId AND dt.Token = :token")
-    Optional<DeviceToken> findByUsuarioIdAndTokenOptional(@Param("usuarioId") Integer usuarioId, @Param("token") String token);
-    
-    @Query("SELECT dt FROM DeviceToken dt WHERE dt.Usuario_id.Id = :usuarioId AND dt.Flg_Inativo = false ORDER BY dt.Dta_Atualizacao DESC")
-    List<DeviceToken> findActiveTokensByUsuarioId(@Param("usuarioId") Integer usuarioId);
-    
-    // Métodos customizados
-    default List<DeviceToken> findActive() {
-        return findByFlgInativoFalse();
+public class DeviceTokenRepository implements IDeviceTokenRepository {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    // CRUD básico usando JPA
+    @Override
+    public List<DeviceToken> findAll() {
+        TypedQuery<DeviceToken> query = entityManager.createQuery("SELECT dt FROM DeviceToken dt ORDER BY dt.Dta_Atualizacao DESC", DeviceToken.class);
+        return query.getResultList();
+    }
+
+    @Override
+    public Optional<DeviceToken> findById(Integer id) {
+        DeviceToken deviceToken = entityManager.find(DeviceToken.class, id);
+        return Optional.ofNullable(deviceToken);
+    }
+
+    @Override
+    @Transactional
+    public DeviceToken save(DeviceToken deviceToken) {
+        if (deviceToken.getId() == null || deviceToken.getId() == 0) {
+            entityManager.persist(deviceToken);
+            return deviceToken;
+        } else {
+            return entityManager.merge(deviceToken);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteById(Integer id) {
+        DeviceToken deviceToken = entityManager.find(DeviceToken.class, id);
+        if (deviceToken != null) {
+            entityManager.remove(deviceToken);
+        }
     }
     
-    // Conversão para compatibilidade com interface
-    default DeviceToken findByUsuarioIdAndToken(Integer usuarioId, String token) {
-        return findByUsuarioIdAndTokenOptional(usuarioId, token).orElse(null);
+    // Queries customizadas (necessário porque o campo é Flg_Inativo com underscore)
+    @Override
+    public List<DeviceToken> findActive() {
+        TypedQuery<DeviceToken> query = entityManager.createQuery(
+            "SELECT dt FROM DeviceToken dt WHERE dt.Flg_Inativo = false ORDER BY dt.Dta_Atualizacao DESC", DeviceToken.class);
+        return query.getResultList();
+    }
+    
+    // Queries customizadas simples
+    @Override
+    public List<DeviceToken> findByUsuarioId(Integer usuarioId) {
+        TypedQuery<DeviceToken> query = entityManager.createQuery(
+            "SELECT dt FROM DeviceToken dt WHERE dt.Usuario_id.Id = :usuarioId AND dt.Flg_Inativo = false", 
+            DeviceToken.class);
+        query.setParameter("usuarioId", usuarioId);
+        return query.getResultList();
+    }
+    
+    @Override
+    public DeviceToken findByUsuarioIdAndToken(Integer usuarioId, String token) {
+        TypedQuery<DeviceToken> query = entityManager.createQuery(
+            "SELECT dt FROM DeviceToken dt WHERE dt.Usuario_id.Id = :usuarioId AND dt.Token = :token", 
+            DeviceToken.class);
+        query.setParameter("usuarioId", usuarioId);
+        query.setParameter("token", token);
+        List<DeviceToken> resultados = query.getResultList();
+        return resultados.isEmpty() ? null : resultados.get(0);
+    }
+    
+    @Override
+    public List<DeviceToken> findActiveTokensByUsuarioId(Integer usuarioId) {
+        TypedQuery<DeviceToken> query = entityManager.createQuery(
+            "SELECT dt FROM DeviceToken dt WHERE dt.Usuario_id.Id = :usuarioId AND dt.Flg_Inativo = false ORDER BY dt.Dta_Atualizacao DESC", 
+            DeviceToken.class);
+        query.setParameter("usuarioId", usuarioId);
+        return query.getResultList();
     }
 }
 

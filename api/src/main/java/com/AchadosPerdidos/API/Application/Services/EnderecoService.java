@@ -180,15 +180,6 @@ public class EnderecoService implements IEnderecoService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    @Cacheable(value = "enderecos", key = "'active'")
-    public List<EnderecoDTO> getActiveEnderecos() {
-        List<Endereco> activeEnderecos = enderecoRepository.findActive();
-        return activeEnderecos.stream()
-                .map(enderecoMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
     private Endereco getEnderecoOrThrow(Integer id) {
         return enderecoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Endereço", "ID", id));

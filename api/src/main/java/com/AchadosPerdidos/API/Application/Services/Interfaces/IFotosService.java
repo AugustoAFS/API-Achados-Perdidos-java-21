@@ -5,15 +5,10 @@ import com.AchadosPerdidos.API.Application.DTOs.Fotos.FotosListDTO;
 
 public interface IFotosService {
     FotosListDTO getAllFotos();
-    FotosDTO getFotoById(int id);
-    FotosDTO createFoto(FotosDTO fotosDTO);
-    FotosDTO updateFoto(int id, FotosDTO fotosDTO);
-    boolean deleteFoto(int id);
-    FotosListDTO getActiveFotos();
-    FotosListDTO getFotosByUser(int userId);
-    FotosListDTO getFotosByItem(int itemId);
-    FotosListDTO getProfilePhotos(int userId);
-    FotosListDTO getItemPhotos(int itemId);
-    FotosDTO getMainItemPhoto(int itemId);
-    FotosDTO getProfilePhoto(int userId);
+    FotosDTO createFotoUsaurio(FotosDTO fotosDTO);
+    FotosDTO createFotoItem(FotosDTO fotosDTO);
+    FotosDTO updateFotoUsuario(int id, FotosDTO fotosDTO);
+    FotosDTO updateFotoItem(int id, FotosDTO fotosDTO);
+    boolean deleteFotoUsuario(int id);
+    boolean deleteFotoItem(int id);
 }

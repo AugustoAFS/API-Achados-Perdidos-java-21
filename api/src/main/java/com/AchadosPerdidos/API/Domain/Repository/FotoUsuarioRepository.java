@@ -2,10 +2,11 @@ package com.AchadosPerdidos.API.Domain.Repository;
 
 import com.AchadosPerdidos.API.Domain.Entity.FotoUsuario;
 import com.AchadosPerdidos.API.Domain.Repository.Interfaces.IFotoUsuarioRepository;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,46 +16,91 @@ import java.util.Optional;
  * Usa JPA para CRUD básico
  */
 @Repository
-public interface FotoUsuarioRepository extends JpaRepository<FotoUsuario, Integer>, IFotoUsuarioRepository {
-    
-    // CRUD básico já vem do JpaRepository: save, findById, findAll, deleteById
+public class FotoUsuarioRepository implements IFotoUsuarioRepository {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    // CRUD básico usando JPA
+    @Override
+    public List<FotoUsuario> findAll() {
+        TypedQuery<FotoUsuario> query = entityManager.createQuery("SELECT fu FROM FotoUsuario fu", FotoUsuario.class);
+        return query.getResultList();
+    }
+
+    @Override
+    public Optional<FotoUsuario> findById(Integer id) {
+        FotoUsuario fotoUsuario = entityManager.find(FotoUsuario.class, id);
+        return Optional.ofNullable(fotoUsuario);
+    }
+
+    @Override
+    @Transactional
+    public FotoUsuario save(FotoUsuario fotoUsuario) {
+        if (fotoUsuario.getId() == null || fotoUsuario.getId() == 0) {
+            entityManager.persist(fotoUsuario);
+            return fotoUsuario;
+        } else {
+            return entityManager.merge(fotoUsuario);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteById(Integer id) {
+        FotoUsuario fotoUsuario = entityManager.find(FotoUsuario.class, id);
+        if (fotoUsuario != null) {
+            entityManager.remove(fotoUsuario);
+        }
+    }
     
     // Queries customizadas (necessário porque o campo é Flg_Inativo com underscore)
-    @Query("SELECT fu FROM FotoUsuario fu WHERE fu.Flg_Inativo = false")
-    List<FotoUsuario> findByFlgInativoFalse();
-    
-    @Query("SELECT fu FROM FotoUsuario fu WHERE fu.Id = :id AND fu.Flg_Inativo = false")
-    Optional<FotoUsuario> findByIdAndFlgInativoFalse(@Param("id") Integer id);
+    @Override
+    public List<FotoUsuario> findActive() {
+        TypedQuery<FotoUsuario> query = entityManager.createQuery(
+            "SELECT fu FROM FotoUsuario fu WHERE fu.Flg_Inativo = false", FotoUsuario.class);
+        return query.getResultList();
+    }
     
     // Queries customizadas simples
-    @Query("SELECT fu FROM FotoUsuario fu WHERE fu.Usuario_id.Id = :usuarioId AND fu.Foto_id.Id = :fotoId")
-    Optional<FotoUsuario> findByUsuarioIdAndFotoIdOptional(@Param("usuarioId") Integer usuarioId, @Param("fotoId") Integer fotoId);
-    
-    @Query("SELECT fu FROM FotoUsuario fu WHERE fu.Usuario_id.Id = :usuarioId AND fu.Flg_Inativo = false")
-    List<FotoUsuario> findByUsuarioId(@Param("usuarioId") Integer usuarioId);
-    
-    @Query("SELECT fu FROM FotoUsuario fu WHERE fu.Foto_id.Id = :fotoId AND fu.Flg_Inativo = false")
-    List<FotoUsuario> findByFotoId(@Param("fotoId") Integer fotoId);
-    
-    // Implementação padrão dos métodos da interface
     @Override
-    default List<FotoUsuario> findActive() {
-        return findByFlgInativoFalse();
+    public FotoUsuario findByUsuarioIdAndFotoId(Integer usuarioId, Integer fotoId) {
+        TypedQuery<FotoUsuario> query = entityManager.createQuery(
+            "SELECT fu FROM FotoUsuario fu WHERE fu.Usuario_id.Id = :usuarioId AND fu.Foto_id.Id = :fotoId", 
+            FotoUsuario.class);
+        query.setParameter("usuarioId", usuarioId);
+        query.setParameter("fotoId", fotoId);
+        List<FotoUsuario> resultados = query.getResultList();
+        return resultados.isEmpty() ? null : resultados.get(0);
     }
     
     @Override
-    default boolean deleteByUsuarioIdAndFotoId(Integer usuarioId, Integer fotoId) {
-        Optional<FotoUsuario> fotoUsuario = findByUsuarioIdAndFotoIdOptional(usuarioId, fotoId);
-        if (fotoUsuario.isPresent()) {
-            delete(fotoUsuario.get());
+    @Transactional
+    public boolean deleteByUsuarioIdAndFotoId(Integer usuarioId, Integer fotoId) {
+        FotoUsuario fotoUsuario = findByUsuarioIdAndFotoId(usuarioId, fotoId);
+        if (fotoUsuario != null) {
+            entityManager.remove(fotoUsuario);
             return true;
         }
         return false;
     }
     
-    // Conversão para compatibilidade com interface
-    default FotoUsuario findByUsuarioIdAndFotoId(Integer usuarioId, Integer fotoId) {
-        return findByUsuarioIdAndFotoIdOptional(usuarioId, fotoId).orElse(null);
+    @Override
+    public List<FotoUsuario> findByUsuarioId(Integer usuarioId) {
+        TypedQuery<FotoUsuario> query = entityManager.createQuery(
+            "SELECT fu FROM FotoUsuario fu WHERE fu.Usuario_id.Id = :usuarioId AND fu.Flg_Inativo = false", 
+            FotoUsuario.class);
+        query.setParameter("usuarioId", usuarioId);
+        return query.getResultList();
+    }
+    
+    @Override
+    public List<FotoUsuario> findByFotoId(Integer fotoId) {
+        TypedQuery<FotoUsuario> query = entityManager.createQuery(
+            "SELECT fu FROM FotoUsuario fu WHERE fu.Foto_id.Id = :fotoId AND fu.Flg_Inativo = false", 
+            FotoUsuario.class);
+        query.setParameter("fotoId", fotoId);
+        return query.getResultList();
     }
 }
 

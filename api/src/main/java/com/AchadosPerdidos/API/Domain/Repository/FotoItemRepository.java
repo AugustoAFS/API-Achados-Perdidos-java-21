@@ -2,10 +2,11 @@ package com.AchadosPerdidos.API.Domain.Repository;
 
 import com.AchadosPerdidos.API.Domain.Entity.FotoItem;
 import com.AchadosPerdidos.API.Domain.Repository.Interfaces.IFotoItemRepository;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,46 +16,91 @@ import java.util.Optional;
  * Usa JPA para CRUD básico
  */
 @Repository
-public interface FotoItemRepository extends JpaRepository<FotoItem, Integer>, IFotoItemRepository {
-    
-    // CRUD básico já vem do JpaRepository: save, findById, findAll, deleteById
+public class FotoItemRepository implements IFotoItemRepository {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    // CRUD básico usando JPA
+    @Override
+    public List<FotoItem> findAll() {
+        TypedQuery<FotoItem> query = entityManager.createQuery("SELECT fi FROM FotoItem fi", FotoItem.class);
+        return query.getResultList();
+    }
+
+    @Override
+    public Optional<FotoItem> findById(Integer id) {
+        FotoItem fotoItem = entityManager.find(FotoItem.class, id);
+        return Optional.ofNullable(fotoItem);
+    }
+
+    @Override
+    @Transactional
+    public FotoItem save(FotoItem fotoItem) {
+        if (fotoItem.getId() == null || fotoItem.getId() == 0) {
+            entityManager.persist(fotoItem);
+            return fotoItem;
+        } else {
+            return entityManager.merge(fotoItem);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteById(Integer id) {
+        FotoItem fotoItem = entityManager.find(FotoItem.class, id);
+        if (fotoItem != null) {
+            entityManager.remove(fotoItem);
+        }
+    }
     
     // Queries customizadas (necessário porque o campo é Flg_Inativo com underscore)
-    @Query("SELECT fi FROM FotoItem fi WHERE fi.Flg_Inativo = false")
-    List<FotoItem> findByFlgInativoFalse();
-    
-    @Query("SELECT fi FROM FotoItem fi WHERE fi.Id = :id AND fi.Flg_Inativo = false")
-    Optional<FotoItem> findByIdAndFlgInativoFalse(@Param("id") Integer id);
+    @Override
+    public List<FotoItem> findActive() {
+        TypedQuery<FotoItem> query = entityManager.createQuery(
+            "SELECT fi FROM FotoItem fi WHERE fi.Flg_Inativo = false", FotoItem.class);
+        return query.getResultList();
+    }
     
     // Queries customizadas simples
-    @Query("SELECT fi FROM FotoItem fi WHERE fi.Item_id = :itemId AND fi.Foto_id.Id = :fotoId")
-    Optional<FotoItem> findByItemIdAndFotoIdOptional(@Param("itemId") Integer itemId, @Param("fotoId") Integer fotoId);
-    
-    @Query("SELECT fi FROM FotoItem fi WHERE fi.Item_id = :itemId AND fi.Flg_Inativo = false")
-    List<FotoItem> findByItemId(@Param("itemId") Integer itemId);
-    
-    @Query("SELECT fi FROM FotoItem fi WHERE fi.Foto_id.Id = :fotoId AND fi.Flg_Inativo = false")
-    List<FotoItem> findByFotoId(@Param("fotoId") Integer fotoId);
-    
-    // Implementação padrão dos métodos da interface
     @Override
-    default List<FotoItem> findActive() {
-        return findByFlgInativoFalse();
+    public FotoItem findByItemIdAndFotoId(Integer itemId, Integer fotoId) {
+        TypedQuery<FotoItem> query = entityManager.createQuery(
+            "SELECT fi FROM FotoItem fi WHERE fi.Item_id = :itemId AND fi.Foto_id.Id = :fotoId", 
+            FotoItem.class);
+        query.setParameter("itemId", itemId);
+        query.setParameter("fotoId", fotoId);
+        List<FotoItem> resultados = query.getResultList();
+        return resultados.isEmpty() ? null : resultados.get(0);
     }
     
     @Override
-    default boolean deleteByItemIdAndFotoId(Integer itemId, Integer fotoId) {
-        Optional<FotoItem> fotoItem = findByItemIdAndFotoIdOptional(itemId, fotoId);
-        if (fotoItem.isPresent()) {
-            delete(fotoItem.get());
+    @Transactional
+    public boolean deleteByItemIdAndFotoId(Integer itemId, Integer fotoId) {
+        FotoItem fotoItem = findByItemIdAndFotoId(itemId, fotoId);
+        if (fotoItem != null) {
+            entityManager.remove(fotoItem);
             return true;
         }
         return false;
     }
     
-    // Conversão para compatibilidade com interface
-    default FotoItem findByItemIdAndFotoId(Integer itemId, Integer fotoId) {
-        return findByItemIdAndFotoIdOptional(itemId, fotoId).orElse(null);
+    @Override
+    public List<FotoItem> findByItemId(Integer itemId) {
+        TypedQuery<FotoItem> query = entityManager.createQuery(
+            "SELECT fi FROM FotoItem fi WHERE fi.Item_id = :itemId AND fi.Flg_Inativo = false", 
+            FotoItem.class);
+        query.setParameter("itemId", itemId);
+        return query.getResultList();
+    }
+    
+    @Override
+    public List<FotoItem> findByFotoId(Integer fotoId) {
+        TypedQuery<FotoItem> query = entityManager.createQuery(
+            "SELECT fi FROM FotoItem fi WHERE fi.Foto_id.Id = :fotoId AND fi.Flg_Inativo = false", 
+            FotoItem.class);
+        query.setParameter("fotoId", fotoId);
+        return query.getResultList();
     }
 }
 

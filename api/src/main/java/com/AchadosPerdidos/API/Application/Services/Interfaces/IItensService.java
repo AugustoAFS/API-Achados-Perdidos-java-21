@@ -4,6 +4,7 @@ import com.AchadosPerdidos.API.Application.DTOs.Item.ItemDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Item.ItemListDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Item.ItemCreateDTO;
 import com.AchadosPerdidos.API.Application.DTOs.Item.ItemUpdateDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface IItensService {
     ItemListDTO getAllItens();
@@ -11,9 +12,10 @@ public interface IItensService {
     ItemDTO createItem(ItemCreateDTO createDTO);
     ItemDTO updateItem(int id, ItemUpdateDTO updateDTO);
     boolean deleteItem(int id);
-    ItemListDTO getActiveItens();
     ItemListDTO getItensByUser(int userId);
     ItemListDTO getItensByCampus(int campusId);
-    ItemListDTO searchItens(String searchTerm);
-    ItemListDTO getItensByTipo(String tipo);
+
+    // Novos métodos para criar itens com fotos
+    ItemDTO createItemAchadoComFotos(ItemCreateDTO itemCreateDTO, MultipartFile[] files, String token);
+    ItemDTO createItemPerdidoComFotos(ItemCreateDTO itemCreateDTO, MultipartFile[] files, String token);
 }

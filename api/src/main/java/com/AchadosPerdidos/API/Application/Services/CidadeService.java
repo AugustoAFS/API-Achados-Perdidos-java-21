@@ -147,15 +147,6 @@ public class CidadeService implements ICidadeService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    @Cacheable(value = "cidades", key = "'active'")
-    public List<CidadeDTO> getActiveCidades() {
-        List<Cidade> activeCidades = cidadeRepository.findActive();
-        return activeCidades.stream()
-                .map(cidadeMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
     private Cidade getCidadeOrThrow(Integer id) {
         return cidadeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cidade", "ID", id));

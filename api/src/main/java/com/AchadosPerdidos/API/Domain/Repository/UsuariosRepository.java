@@ -5,7 +5,6 @@ import com.AchadosPerdidos.API.Domain.Repository.Interfaces.IUsuariosRepository;
 import com.AchadosPerdidos.API.Infrastruture.DataBase.UsuariosQueries;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.TypedQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,8 +27,7 @@ public class UsuariosRepository implements IUsuariosRepository {
     // CRUD básico usando JPA
     @Override
     public List<Usuario> findAll() {
-        TypedQuery<Usuario> query = entityManager.createQuery("SELECT u FROM Usuario u ORDER BY u.Nome_completo", Usuario.class);
-        return query.getResultList();
+        return entityManager.createQuery("SELECT u FROM Usuario u ORDER BY u.Nome_completo", Usuario.class).getResultList();
     }
 
     @Override
@@ -61,37 +59,24 @@ public class UsuariosRepository implements IUsuariosRepository {
 
     @Override
     public List<Usuario> findActive() {
-        TypedQuery<Usuario> query = entityManager.createQuery(
-            "SELECT u FROM Usuario u WHERE u.Flg_Inativo = false ORDER BY u.Nome_completo", Usuario.class);
-        return query.getResultList();
+        return entityManager.createQuery(
+            "SELECT u FROM Usuario u WHERE u.Flg_Inativo = false ORDER BY u.Nome_completo", Usuario.class).getResultList();
     }
 
-    // Queries simples usando JPA
+    // Queries - delegadas para UsuariosQueries
     @Override
     public Usuario findByEmail(String email) {
-        TypedQuery<Usuario> query = entityManager.createQuery(
-            "SELECT u FROM Usuario u WHERE u.Email = :email", Usuario.class);
-        query.setParameter("email", email);
-        List<Usuario> resultados = query.getResultList();
-        return resultados.isEmpty() ? null : resultados.get(0);
+        return usuariosQueries.findByEmail(email);
     }
 
     @Override
     public Usuario findByCpf(String cpf) {
-        TypedQuery<Usuario> query = entityManager.createQuery(
-            "SELECT u FROM Usuario u WHERE u.CPF = :cpf", Usuario.class);
-        query.setParameter("cpf", cpf);
-        List<Usuario> resultados = query.getResultList();
-        return resultados.isEmpty() ? null : resultados.get(0);
+        return usuariosQueries.findByCpf(cpf);
     }
 
     @Override
     public Usuario findByMatricula(String matricula) {
-        TypedQuery<Usuario> query = entityManager.createQuery(
-            "SELECT u FROM Usuario u WHERE u.Matricula = :matricula", Usuario.class);
-        query.setParameter("matricula", matricula);
-        List<Usuario> resultados = query.getResultList();
-        return resultados.isEmpty() ? null : resultados.get(0);
+        return usuariosQueries.findByMatricula(matricula);
     }
 
     @Override
@@ -103,11 +88,7 @@ public class UsuariosRepository implements IUsuariosRepository {
 
     @Override
     public List<Usuario> findByRole(int roleId) {
-        TypedQuery<Usuario> query = entityManager.createQuery(
-            "SELECT u FROM Usuario u WHERE u.Role_id.Id = :roleId AND u.Flg_Inativo = false ORDER BY u.Nome_completo", 
-            Usuario.class);
-        query.setParameter("roleId", roleId);
-        return query.getResultList();
+        return usuariosQueries.findByRole(roleId);
     }
 
     @Override
